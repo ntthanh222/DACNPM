@@ -1,0 +1,111 @@
+# CyberSec Assistant Platform - Prometheus Configuration
+# Prometheus monitoring configuration for local development
+
+global:
+  scrape_interval: 15s # Default scrape interval
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
+  external_labels:
+    cluster: 'cybersec-platform-local'
+    environment: 'development'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Rule files
+rule_files:
+  # - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # ============================================
+  # Prometheus self-monitoring
+  # ============================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ============================================
+  # Backend API monitoring
+  # ============================================
+  - job_name: 'backend-api'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # ============================================
+  # PostgreSQL monitoring (requires postgres_exporter)
+  # ============================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # ============================================
+  # Redis monitoring (requires redis_exporter)
+  # ============================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # ============================================
+  # Node Exporter (system metrics)
+  # ============================================
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # ============================================
+  # cAdvisor (container metrics)
+  # ============================================
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+  # ============================================
+  # Rasa monitoring
+  # ============================================
+  - job_name: 'rasa'
+    static_configs:
+      - targets: ['rasa:5005']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # ============================================
+  # ChromaDB monitoring (if available)
+  # ============================================
+  - job_name: 'chromadb'
+    static_configs:
+      - targets: ['chromadb:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+# Recording rules (optional)
+# recording_rules:
+#   - name: 'api_request_rate'
+#     interval: 30s
+#     rules:
+#       - record: job:http_requests:rate1m
+#         expr: sum(rate(http_requests_total[1m])) by (job)
+
+# Alert rules (optional)
+# alert_rules:
+#   - name: 'api_alerts'
+#     interval: 30s
+#     rules:
+#       - alert: HighErrorRate
+#         expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+#         for: 5m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "High error rate detected"
+#           description: "Error rate is {{ $value }} errors/sec"

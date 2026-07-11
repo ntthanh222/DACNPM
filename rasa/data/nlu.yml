@@ -1,0 +1,650 @@
+version: "3.1"
+
+nlu:
+# ============================================================================
+# PHISHING DETECTION INTENT (50+ examples)
+# ============================================================================
+- intent: check_phishing
+  examples: |
+    - Kiểm tra xem url [http://example.com](url) có phải lừa đảo không
+    - Quét link này [https://susicious-site.net](url) xem an toàn không
+    - Có thể giúp tôi check URL [https://phishing-attempt.com](url) không?
+    - Tôi muốn kiểm tra website [http://fake-bank-login.com](url) có an toàn không
+    - Nhờ quét URL này xem có phải là trang lừa đảo không: [https://malware-download.xyz](url)
+    - Check xem link [https://scam-website.org](url) có độc hại không
+    - URL [http://suspicious-page.com](url) có thể là phishing không?
+    - Hãy kiểm tra tính an toàn của website: [https://dangerous-url.co](url)
+    - Quét URL này xem có chứa mã độc không: [http://malicious-site.org](url)
+    - Tôi cần kiểm tra link [https://fraudulent-login.com](url) có phải giả mạo không
+    - Kiểm tra URL [http://trojan-distribution.net](url) có an toàn để truy cập không
+    - Nhờ bạn scan URL [https://credential-stealer.com](url) xem có phải trang lừa đảo không
+    - Website này có phải scam không: [http://fake-payment-gateway.net](url)
+    - Check URL [https://data-harvesting.com](url) xem có nguy hiểm không
+    - Quét link này [http://spyware-distribution.org](url) có an toàn không
+    - Kiểm tra website [https://suspicious-login-page.com](url) có phải trang giả mạo không
+    - Nhờ phân tích URL [http://malware-hosting.net](url) xem có độc hại không
+    - Check link này [https://phishing-email-link.com](url) có an toàn không
+    - Tôi muốn quét URL [http://fake-antivirus-download.com](url) xem có chứa virus không
+    - Website [https://suspicious-banking-site.com](url) có phải lừa đảo không?
+    - Kiểm tra link [http://fake-tech-support.net](url) xem có nguy hiểm không
+    - Quét URL [https://credential-phishing.com](url) xem có phải trang scam không
+    - Check website [http://malware-distribution.org](url) có an toàn không
+    - Tôi muốn kiểm tra link [https://fake-shopping-site.com](url) có phải lừa đảo không
+    - Nhờ bạn check URL [http://suspicious-download-site.net](url) xem có độc hại không
+    - Website [https://phishing-attempt-banking.com](url) có phải giả mạo không?
+    - Quét link [http://fake-login-page.com](url) xem có chứa mã độc không
+    - Kiểm tra URL [https://suspicious-email-attachment.com](url) có an toàn không
+    - Check website [http://malware-hosting-site.com](url) xem có phải trang lừa đảo không
+    - Tôi cần phân tích link [https://credential-harvesting.com](url) xem có nguy hiểm không
+    - Nhờ quét URL [http://fake-payment-processor.net](url) xem có phải scam không
+    - Website [https://suspicious-file-sharing.com](url) có an toàn không?
+    - Check link [http://phishing-social-media.com](url) xem có độc hại không
+    - Kiểm tra URL [http://fake-software-download.com](url) có phải trang giả mạo không
+    - Quét website [https://suspicious-cloud-storage.com](url) xem có chứa virus không
+    - Tôi muốn check link [https://credential-stealing-site.com](url) có an toàn không
+    - Nhờ bạn phân tích URL [http://fake-document-sharing.net](url) xem có độc hại không
+    - Website [https://phishing-gaming-account.com](url) có phải lừa đảo không?
+    - Check URL [http://malware-hosting-platform.com](url) xem có nguy hiểm không
+    - Quét link [http://fake-streaming-service.com](url) xem có phải trang scam không
+    - Kiểm tra website [https://suspicious-gaming-site.com](url) có an toàn không
+    - Tôi cần scan URL [http://fake-email-service.net](url) xem có chứa mã độc không
+    - Nhờ check link [https://credential-phishing-page.com](url) có phải giả mạo không
+    - Website [https://phishing-crypto-wallet.com](url) có độc hại không?
+    - Quét URL [http://fake-investment-platform.com](url) xem có nguy hiểm không
+    - Check link [http://malware-distribution-hub.com](url) có an toàn không
+    - Kiểm tra website [https://suspicious-online-store.com](url) có phải lừa đảo không
+    - Tôi muốn phân tích URL [http://fake-payment-gateway-2.com](url) xem có độc hại không
+
+# ============================================================================
+# PASSWORD STRENGTH CHECKING INTENT (50+ examples)
+# ============================================================================
+- intent: check_password
+  examples: |
+    - Kiểm tra độ mạnh của mật khẩu [MyP@ssw0rd123](password)
+    - Đánh giá xem mật khẩu [admin123](password) có đủ mạnh không
+    - Hãy check password này xem có an toàn không: [P@ssw0rd](password)!
+    - Mật khẩu [123456](password) có yếu không?
+    - Nhờ bạn đánh giá độ mạnh của mật khẩu: [S3cur3P@ss](password)
+    - Password [Test1234](password) có đủ mạnh để bảo vệ tài khoản không?
+    - Check xem mật khẩu [abcdef](password) có dễ bị hack không
+    - Đánh giá độ mạnh password: [MyL0veIsSecurity2024](password)
+    - Mật khẩu [Qwerty123](password) có an toàn không?
+    - Kiểm tra mật khẩu [P@$$w0rdStrong](password) có đạt chuẩn bảo mật không
+    - Password [welcome1](password) có đủ mạnh không?
+    - Hãy đánh giá độ an toàn của mật khẩu: [MyS3cr3tK3y](password)
+    - Mật khẩu [Admin@2024](password) có mạnh không?
+    - Check password này xem có dễ bị brute force không: [p@ssw0rd](password)
+    - Đánh giá xem mật khẩu [Security@123](password) có đủ bảo mật không
+    - Mật khẩu [12345678](password) có đủ mạnh không?
+    - Check xem password [password123](password) có an toàn không
+    - Đánh giá độ mạnh của mật khẩu: [MyN3wP@ssw0rd](password)!
+    - Password [qwertyuiop](password) có yếu không?
+    - Kiểm tra xem mật khẩu [Admin@123](password) có đủ bảo mật không
+    - Nhờ bạn check password: [S3cur1tyP@ss2024](password)
+    - Mật khẩu [letmein](password) có an toàn không?
+    - Đánh giá xem password [MyP@ssw0rdIsStrong](password)! có đủ mạnh không
+    - Check mật khẩu [123qwe](password) xem có yếu không
+    - Password [SecurityFirst@2024](password) có đạt chuẩn không?
+    - Kiểm tra độ mạnh của: [MyS3cr3tPass](password)!
+    - Mật khẩu [welcome](password) có đủ mạnh không?
+    - Đánh giá xem password [AdminP@ssw0rd123](password) có an toàn không
+    - Check xem [MyL0ngP@ssw0rdWithNumbers](password)! có mạnh không
+    - Mật khẩu [111111](password) có yếu không?
+    - Nhờ đánh giá password: [S3cur3P@ssw0rdWithSymbol](password)!
+    - Password [sunshine](password) có đủ bảo mật không?
+    - Kiểm tra xem [MyC0mpl3xP@ssw0rd](password)!@# có mạnh không
+    - Mật khẩu [password](password) có an toàn không?
+    - Đánh giá độ mạnh password: [AdminSecur1ty@2024](password)
+    - Check mật khẩu [123123](password) xem có đủ mạnh không
+    - Password [MyP@ssw0rdIsVeryStrong](password)!123 có đạt chuẩn không?
+    - Kiểm tra độ mạnh của: [S3cur1tyFirst@2024](password)
+    - Mật khẩu [football](password) có đủ an toàn không?
+    - Đánh giá xem password [MyL0ngAndC0mpl3xP@ssw0rd](password)! có đủ bảo mật không
+    - Check xem [MyS3cr3tK3yIsStr0ng](password)! có mạnh không
+    - Mật khẩu [monkey](password) có yếu không?
+    - Nhờ đánh giá password: [AdminP@ssw0rdWithNumbers](password)!
+    - Password [MyP@ssw0rdC0ntain5Sp3cialChars](password)! có đủ bảo mật không?
+    - Kiểm tra xem [S3cur1tyP@ssw0rd2024](password) có an toàn không
+    - Mật khẩu [dragon](password) có đủ mạnh không?
+    - Đánh giá độ mạnh password: [MyC0mpl3xP@ssw0rdWithEverything](password)!
+    - Check mật khẩu [baseball](password) xem có đủ bảo mật không
+    - Password [MyP@ssw0rdIsV3ryStr0ngAndL0ng](password)! có đạt chuẩn không?
+    - Kiểm tra độ mạnh của: [S3cur1tyP@ssw0rdWithMultipleChars](password)!
+
+# ============================================================================
+# CVE LOOKUP INTENT (50+ examples)
+# ============================================================================
+- intent: lookup_cve
+  examples: |
+    - Tra cứu thông tin về [CVE-2024-1234](cve_id)
+    - Tìm hiểu về lỗ hổng [CVE-2024-0012](cve_id)
+    - Cho tôi biết thông tin về [CVE-2024-5678](cve_id)
+    - [CVE-2024-9999](cve_id) là lỗ hổng gì?
+    - Tra cứu [CVE-2024-0001](cve_id) xem chi tiết
+    - Tìm kiếm thông tin [CVE-2024-8888](cve_id)
+    - Hãy tra cứu [CVE-2024-7777](cve_id) cho tôi
+    - [CVE-2024-6666](cve_id) có nguy hiểm không?
+    - Cho tôi biết chi tiết về [CVE-2024-5555](cve_id)
+    - Tra cứu lỗ hổng [CVE-2024-4444](cve_id)
+    - Thông tin về [CVE-2024-3333](cve_id) là gì?
+    - Tìm kiếm [CVE-2024-2222](cve_id) xem severity
+    - [CVE-2024-1111](cve_id) có bản fix chưa?
+    - Tra cứu [CVE-2024-0000](cve_id) xem mô tả
+    - Cho tôi biết [CVE-2024-9998](cve_id) ảnh hưởng gì
+    - Tìm hiểu về [CVE-2023-1234](cve_id)
+    - [CVE-2023-5678](cve_id) severity level là gì?
+    - Tra cứu [CVE-2023-9999](cve_id) xem có nguy hiểm không
+    - Cho tôi biết thông tin chi tiết về [CVE-2023-0001](cve_id)
+    - [CVE-2023-8888](cve_id) là lỗ hổng loại gì?
+    - Tìm kiếm [CVE-2023-7777](cve_id) xem mô tả
+    - Tra cứu [CVE-2023-6666](cve_id) cho tôi
+    - [CVE-2023-5555](cve_id) có bản vá lỗi không?
+    - Cho tôi biết severity của [CVE-2023-4444](cve_id)
+    - Tìm hiểu về [CVE-2023-3333](cve_id)
+    - [CVE-2023-2222](cve_id) ảnh hưởng hệ thống gì?
+    - Tra cứu [CVE-2023-1111](cve_id) xem chi tiết
+    - Cho tôi biết [CVE-2022-1234](cve_id) có nguy hiểm không
+    - Tìm kiếm [CVE-2022-5678](cve_id) xem thông tin
+    - [CVE-2022-9999](cve_id) severity là gì?
+    - Tra cứu [CVE-2022-0001](cve_id) xem mô tả chi tiết
+    - Cho tôi biết về [CVE-2022-8888](cve_id)
+    - [CVE-2022-7777](cve_id) là lỗ hổng gì?
+    - Tìm kiếm [CVE-2022-6666](cve_id) xem có bản fix không
+    - Tra cứu [CVE-2022-5555](cve_id) cho tôi
+    - [CVE-2022-4444](cve_id) có nguy hiểm không?
+    - Cho tôi biết chi tiết [CVE-2022-3333](cve_id)
+    - Tìm hiểu về [CVE-2022-2222](cve_id)
+    - [CVE-2022-1111](cve_id) ảnh hưởng gì?
+    - Tra cứu [CVE-2021-1234](cve_id) xem severity
+    - Cho tôi biết [CVE-2021-5678](cve_id) có bản vá chưa
+    - Tìm kiếm [CVE-2021-9999](cve_id) xem thông tin chi tiết
+    - [CVE-2021-0001](cve_id) là lỗ hổng loại gì?
+    - Tra cứu [CVE-2021-8888](cve_id) cho tôi
+    - Cho tôi biết [CVE-2021-7777](cve_id) severity level
+    - [CVE-2021-6666](cve_id) có nguy hiểm không?
+    - Tìm hiểu về [CVE-2021-5555](cve_id)
+    - Tra cứu [CVE-2021-4444](cve_id) xem mô tả
+    - Cho tôi biết [CVE-2021-3333](cve_id) ảnh hưởng hệ thống gì
+    - Tìm kiếm [CVE-2021-2222](cve_id) xem có bản fix không
+    - [CVE-2021-1111](cve_id) là lỗ hổng gì?
+    - Tra cứu [CVE-2020-1234](cve_id) xem chi tiết
+    - Cho tôi biết severity của [CVE-2020-5678](cve_id)
+
+# ============================================================================
+# SECURITY TIPS INTENT (50+ examples)
+# ============================================================================
+- intent: ask_security_tips
+  examples: |
+    - Hãy cho tôi một số mẹo bảo mật mạng
+    - Làm thế nào để phòng tránh tấn công mạng?
+    - Những cách bảo vệ tài khoản online an toàn nhất
+    - Mẹo tránh bị lừa đảo qua email
+    - Cách bảo vệ dữ liệu cá nhân online
+    - Làm sao để tránh bị hack?
+    - Cho tôi biết các biện pháp bảo mật cơ bản
+    - Cách nhận diện và tránh phishing
+    - Bảo mật khi sử dụng wifi công cộng như thế nào?
+    - Mẹo tạo mật khẩu mạnh và khó bị hack
+    - Làm sao để bảo vệ tài khoản ngân hàng online?
+    - Cách tránh bị lừa đảo qua tin nhắn
+    - Bảo mật khi mua sắm online cần lưu ý gì?
+    - Mẹo bảo mật khi sử dụng mạng xã hội
+    - Cách phát hiện và tránh ransomware
+    - Làm sao để bảo vệ email khỏi bị hack?
+    - Những dấu hiệu nhận biết website lừa đảo
+    - Cách thiết lập xác thực 2 yếu tố an toàn
+    - Mẹo bảo mật cho điện thoại di động
+    - Làm thế nào để tránh bị tấn công brute force?
+    - Cách bảo vệ dữ liệu trên cloud
+    - Mẹo nhận diện email phishing
+    - Làm sao để giữ an toàn khi online banking?
+    - Cách thiết lập mật khẩu mạnh cho từng tài khoản
+    - Bảo mật khi sử dụng mạng xã hội như thế nào?
+    - Những cách tránh bị malware tấn công
+    - Làm sao để bảo vệ wifi nhà mình?
+    - Mẹo bảo mật khi làm việc từ xa
+    - Cách nhận diện và tránh social engineering
+    - Làm thế nào để bảo vệ dữ liệu quan trọng?
+    - Những biện pháp bảo mật cho doanh nghiệp nhỏ
+    - Cách tránh bị tấn công qua tin nhắn lừa đảo
+    - Mẹo bảo mật khi sử dụng ứng dụng mobile
+    - Làm sao để phát hiện website không an toàn?
+    - Cách bảo vệ tài khoản mạng xã hội
+    - Những cách tránh bị lừa đảo online
+    - Bảo mật khi sử dụng công cụ fintech như thế nào?
+    - Làm sao để bảo vệ máy tính khỏi virus?
+    - Mẹo bảo mật khi mua hàng online
+    - Cách nhận diện link độc hại
+    - Làm thế nào để tránh bị tấn công DDoS?
+    - Bảo mật dữ liệu cá nhân trên internet
+    - Những cách bảo vệ email khỏi spam
+    - Mẹo bảo mật khi sử dụng dịch vụ cloud
+    - Làm sao để tránh bị tấn công phishing qua điện thoại?
+    - Cách bảo vệ thiết bị IoT của bạn
+    - Những biện pháp bảo mật khi làm việc online
+    - Làm thế nào để phát hiện ransomware sớm?
+    - Mẹo bảo mật khi sử dụng VPN
+    - Cách bảo vệ tài khoản khỏi bị hack
+    - Làm sao để tránh bị lừa đảo qua chat?
+    - Những cách bảo mật cho smart home
+    - Cách phát hiện và tránh malware trên mobile
+    - Mẹo bảo mật khi sử dụng email công việc
+    - cung cấp mẹo bảo mật
+    - cung cấp tips bảo mật
+    - cho tôi tips bảo mật
+    - cho mẹo bảo mật
+    - cần mẹo an ninh mạng
+    - cung cấp mẹo an ninh
+    - cho biết về bảo mật
+    - mẹo bảo mật đi
+
+# ============================================================================
+# SECURITY NEWS INTENT (30+ examples)
+# ============================================================================
+- intent: get_security_news
+  examples: |
+    - Cho tôi tin tức bảo mật mới nhất
+    - Cập nhật bảo mật hôm nay là gì?
+    - Tin tức an ninh mạng gần đây
+    - Có lỗ hổng bảo mật mới nào không?
+    - Cập nhật về các cuộc tấn công mạng gần đây
+    - Tin tức về ransomware mới nhất
+    - Có thông tin về CVE mới không?
+    - Cập nhật bảo mật cybersecurity
+    - Tin tức về lừa đảo online gần đây
+    - Có cảnh báo bảo mật mới nào không?
+    - Cập nhật về malware mới
+    - Tin tức an ninh mạng ngày hôm nay
+    - Có thông tin về cuộc tấn công mới không?
+    - Cập nhật về lỗ hổng zero-day
+    - Tin tức về bảo mật mobile
+    - Có cảnh báo về phishing mới không?
+    - Cập nhật về bảo mật cloud
+    - Tin tức về bảo mật doanh nghiệp
+    - Có thông tin về breach mới không?
+    - Cập nhật về bảo mật web
+    - Tin tức về social engineering mới
+    - Có cảnh báo ransomware mới không?
+    - Cập nhật về bảo mật IoT
+    - Tin tức về bảo mật mạng xã hội
+    - Có thông tin về attack vector mới không?
+    - Cập nhật về bảo mật API
+    - Tin tức về bảo mật fintech
+    - Có cảnh báo về malware mới không?
+    - Cập nhật về bảo mật AI/ML
+    - Tin tức về bảo mật blockchain
+
+# ============================================================================
+# VULNERABILITY ASSESSMENT INTENT (20+ examples)
+# ============================================================================
+- intent: assess_vulnerability
+  examples: |
+    - Đánh giá lỗ hổng bảo mật cho tôi
+    - Kiểm tra xem hệ thống có lỗ hổng không
+    - Phân tích rủi ro bảo mật
+    - Đánh giá mức độ rủi ro của lỗ hổng này
+    - Kiểm tra xem có lỗ hổng SQL injection không
+    - Phân tích xem có XSS không
+    - Đánh giá rủi ro CSRF
+    - Kiểm tra bảo mật web application
+    - Phân tích lỗ hổng authentication
+    - Đánh giá rủi ro authorization
+    - Kiểm tra xem có vulnerability không
+    - Phân tích bảo mật hệ thống
+    - Đánh giá mức độ nghiêm trọng của lỗ hổng
+    - Kiểm tra xem có zero-day không
+    - Phân tích rủi ro bảo mật mạng
+    - Đánh giá xem hệ thống có an toàn không
+    - Kiểm tra bảo mật database
+    - Phân tích lỗ hổng API
+    - Đánh giá rủi ro insider threat
+    - Kiểm tra xem có breach không
+
+# ============================================================================
+# INCIDENT RESPONSE INTENT (20+ examples)
+# ============================================================================
+- intent: incident_response
+  examples: |
+    - Tôi bị hack thì làm sao?
+    - Tài khoản bị compromised thì xử lý thế nào?
+    - Phản ứng khi phát hiện breach
+    - Cách xử lý khi bị ransomware
+    - Tài khoản bị steal thì làm gì?
+    - Phản ứng khi phát hiện malware
+    - Cách xử lý khi bị phishing
+    - Tài khoản bị brute force thì sao?
+    - Phản ứng khi phát hiện data leak
+    - Cách xử lý khi bị social engineering
+    - Tài khoản bị compromised qua email thì làm gì?
+    - Phản ứng khi phát hiện unauthorized access
+    - Cách xử lý khi bị attack
+    - Tài khoản bị hack qua social media thì sao?
+    - Phản ứng khi phát hiện suspicious activity
+    - Cách xử lý khi bị credential stuffing
+    - Tài khoản bị compromise qua mobile thì làm gì?
+    - Phản ứng khi phát hiện breach
+    - Cách xử lý khi bị scam online
+    - Tài khoản bị tấn công thì làm sao?
+
+# ============================================================================
+# AUTHENTICATION HELP INTENT (15+ examples)
+# ============================================================================
+- intent: auth_help
+  examples: |
+    - Cách thiết lập xác thực 2 yếu tố
+    - Làm sao để bật 2FA?
+    - Cấu hình MFA như thế nào?
+    - Thiết lập bảo mật đa yếu tố
+    - Cách sử dụng authenticator app
+    - Làm sao để bật xác thực 2 bước?
+    - Cấu hình bảo mật tài khoản
+    - Thiết lập password manager
+    - Cách sử dụng biometric authentication
+    - Làm sao để thiết lập security questions?
+    - Cấu hình account recovery
+    - Thiết lập login notifications
+    - Cách sử dụng hardware token
+    - Làm sao để thiết lập session timeout?
+    - Cấu hình IP whitelist
+
+# ============================================================================
+# GREETING INTENT (20+ examples)
+# ============================================================================
+- intent: greet
+  examples: |
+    - Xin chào
+    - Chào bạn
+    - Hello
+    - Hi
+    - Chào buổi sáng
+    - Chào buổi tối
+    - Hôm nay thế nào
+    - Bạn khỏe không
+    - Chào mừng
+    - Rất vui được gặp bạn
+    - Xin chào cyber security assistant
+    - Hello assistant
+    - Hi there
+    - Chào các bạn
+    - Chào admin
+    - Greetings
+    - Good morning
+    - Good afternoon
+    - Good evening
+    - Hey there
+    - Chào mừng trở lại
+
+# ============================================================================
+# GOODBYE INTENT (15+ examples)
+# ============================================================================
+- intent: goodbye
+  examples: |
+    - Tạm biệt
+    - Bye
+    - Hẹn gặp lại
+    - Gặp lại sau nhé
+    - Chào nhé
+    - Cảm ơn, tạm biệt
+    - See you later
+    - Goodbye
+    - Have a nice day
+    - Chào tạm biệt
+    - Hẹn gặp lại bạn
+    - Bye bye
+    - See ya
+    - Tạm biệt nhé
+    - Gặp lại sau
+
+# ============================================================================
+# THANKS INTENT (15+ examples)
+# ============================================================================
+- intent: thanks
+  examples: |
+    - Cảm ơn
+    - Thanks
+    - Cảm ơn nhiều
+    - Rất cảm ơn
+    - Được giúp đỡ lắm
+    - Cảm ơn bạn
+    - Thank you
+    - Cảm ơn trợ lý
+    - Rất hữu ích
+    - Cảm ơn thông tin
+    - Thanks a lot
+    - Cảm ơn nhiều nhé
+    - Rất cảm ơn sự giúp đỡ
+    - Cảm ơn bạn rất nhiều
+    - Thank you so much
+
+# ============================================================================
+# GET CHAT HISTORY INTENT (20+ examples)
+# ============================================================================
+- intent: get_chat_history
+  examples: |
+    - Cho tôi xem lịch sử trò chuyện
+    - Lịch sử chat của tôi là gì?
+    - Xem lại các tin nhắn trước
+    - Cho tôi xem những gì chúng ta đã thảo luận
+    - Hiển thị lịch sử trò chuyện
+    - Tôi muốn xem lại cuộc trò chuyện
+    - Cho tôi biết tôi đã hỏi gì trước đó
+    - Lịch sử hội thoại của tôi
+    - Xem lại tin nhắn cũ
+    - Cho tôi xem log cuộc trò chuyện
+    - Những câu hỏi tôi đã đưa ra là gì?
+    - Hiển thị các cuộc hội thoại trước
+    - Tôi muốn xem lại những gì đã chat
+    - Cho tôi xem lịch sử chat
+    - Xem lại các cuộc trò chuyện trước đó
+    - Những gì chúng ta đã nói là gì?
+    - Lịch sử tin nhắn của tôi
+    - Cho tôi xem lại các câu hỏi cũ
+    - Tôi muốn xem lịch sử hội thoại
+    - Hiển thị những gì đã thảo luận
+
+# ============================================================================
+# REGEX PATTERNS FOR ENTITY EXTRACTION (Phase 1.3)
+# ============================================================================
+
+# URL Pattern - matches http/https URLs and domain names
+- regex: url
+  examples: |
+    - \b(https?://|www\.)[^\s/$.?#].[^\s]*\b
+    - \b[a-zA-Z0-9-]+\.(com|net|org|vn|io|co|gov|edu|info|biz)\b
+
+# IPv4 Address Pattern
+- regex: ip_address
+  examples: |
+    - \b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b
+
+# CVE ID Pattern (CVE-YYYY-NNNN or CVE-YYYY-NNNNN)
+- regex: cve_id
+  examples: |
+    - \bCVE-20\d{2}-\d{4,}\b
+    - \bcve-20\d{2}-\d{4,}\b
+
+# File Hash Patterns (MD5, SHA1, SHA256, SHA512)
+# Note: All hash patterns map to the same entity 'file_hash'
+- regex: file_hash
+  examples: |
+    - \b[a-fA-F0-9]{32}\b
+    - \b[a-fA-F0-9]{40}\b
+    - \b[a-fA-F0-9]{64}\b
+
+# Email Address Pattern
+- regex: email
+  examples: |
+    - \b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b
+
+# Domain Name Pattern
+- regex: domain
+  examples: |
+    - \b[a-zA-Z0-9-]+\.[a-zA-Z]{2,}\b
+
+# Port Number Pattern
+- regex: port
+  examples: |
+    - \b:(\d{1,5})\b
+    - \bport\s+(\d{1,5})\b
+
+# File Hash Lookup Terms
+- lookup: file_hash
+  examples: |
+    - md5
+    - sha1
+    - sha256
+    - sha512
+    - hash
+    - mã băm
+    - fingerprint
+
+# Synonyms for URL entity
+- synonym: url
+  examples: |
+    - link
+    - đường dẫn
+    - liên kết
+    - website
+    - web site
+    - trang web
+
+# Synonyms for CVE entity
+- synonym: cve_id
+  examples: |
+    - CVE
+    - cve
+    - lỗ hổng
+    - vulnerability
+    - security hole
+    - bug bảo mật
+
+# Synonyms for password entity
+- synonym: password
+  examples: |
+    - pass
+    - pwd
+    - mật khẩu
+    - mk
+    - password
+
+# Security Severity Terms
+- lookup: severity
+  examples: |
+    - critical
+    - high
+    - medium
+    - low
+    - info
+    - none
+    - nghiêm trọng
+    - cao
+    - trung bình
+    - thấp
+    - thông tin
+
+# Device Types
+- lookup: device_type
+  examples: |
+    - router
+    - switch
+    - firewall
+    - server
+    - workstation
+    - laptop
+    - mobile
+    - iot
+    - thiết bị mạng
+    - máy chủ
+
+# Operating Systems
+- lookup: os_name
+  examples: |
+    - windows
+    - linux
+    - macos
+    - android
+    - ios
+    - cisco ios
+    - juniper junos
+
+# Security Actions
+- lookup: security_action
+  examples: |
+    - scan
+    - quét
+    - check
+    - kiểm tra
+    - analyze
+    - phân tích
+    - assess
+    - đánh giá
+
+# ============================================================================
+# KNOWLEDGE BASE INTENTS (Phase 3.2: Semantic Graph Search)
+# ============================================================================
+
+- intent: ask_device_vulnerability
+  examples: |
+    - Router Cisco IOS 15.1 có lỗ hổng nào không
+    - Thiết bị của tôi có bị ảnh hưởng bởi CVE nào
+    - Firewall Palo Alto có vulnerability nào
+    - Server Windows 2019 có lỗ hổng bảo mật không
+    - Kiểm tra xem router có bị CVE ảnh hưởng không
+    - Quét lỗi bảo mật cho firewall Fortinet
+    - Device XYZ có bị CVE-2024-1234 ảnh hưởng không
+    - Tìm các lỗ hổng bảo mật cho router của tôi
+    - Kiểm tra vulnerability cho switch Cisco
+    - Server Linux có bị lỗ hổng nào
+    - Scan CVE affecting my devices
+    - What vulnerabilities affect router Cisco
+    - Check if my firewall is vulnerable
+    - Device security check
+    - Vulnerability assessment for infrastructure
+    - Router có bị ảnh hưởng bởi CVE nào không
+    - Firewall có CVE nào cần patch không
+    - Server có lỗ hổng bảo mật nghiêm trọng nào
+    - Thiết bị mạng của tôi có an toàn không
+    - Kiểm tra security holes cho router
+
+- intent: ask_cve_device_impact
+  examples: |
+    - CVE-2024-1234 ảnh hưởng thiết bị nào
+    - Which devices are affected by CVE-2024-1234
+    - Thiết bị nào bị CVE này ảnh hưởng
+    - CVE-2024-5678 impacts what devices
+    - Router nào bị ảnh hưởng bởi CVE-2024-9999
+    - Firewall nào bị CVE này ảnh hưởng
+    - Device impact for CVE-2024-1111
+    - Check CVE impact on devices
+    - Xem ảnh hưởng của CVE lên thiết bị
+    - CVE ảnh hưởng infrastructure nào
+    - My devices có bị CVE này ảnh hưởng không
+    - What infrastructure is affected by this CVE
+    - Các thiết bị bị ảnh hưởng bởi CVE là gì
+    - Device affected by CVE-2024-2222
+    - Router có bị CVE này hit không
+    - Firewall có bị CVE này ảnh hưởng không
+    - Server bị CVE này impact như thế nào
+
+- intent: ask_patch_availability
+  examples: |
+    - Patch cho CVE-2024-1234 có sẵn chưa
+    - Is there a patch for CVE-2024-1234
+    - Bản vá cho CVE này có chưa
+    - CVE-2024-5678 đã có patch chưa
+    - Khi nào có patch cho CVE-2024-9999
+    - Patch available cho CVE-2024-1111
+    - CVE-2024-2222 đã có bản vá chưa
+    - Check patch availability for CVE
+    - Kiểm tra xem CVE đã có patch chưa
+    - Bản vá cho lỗ hổng này có chưa
+    - Has CVE-2024-1234 been patched
+    - Làm sao để patch CVE này
+    - Cách patch CVE-2024-5678
+    - Update version để fix CVE này
+    - Phiên bản nào đã patch CVE-2024-9999
+    - Patch cho CVE này什么时候有
+    - CVE đã được fix ở phiên bản nào
+    - Làm sao để khắc phục CVE này
+    - Version nào không bị CVE này ảnh hưởng
+    - Safe version for CVE-2024-1111

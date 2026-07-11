@@ -1,0 +1,63 @@
+# Python Dependencies for CyberSec Assistant - Python 3.14 Compatible
+
+# Core Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.6
+
+# Rate Limiting
+slowapi>=0.1.9
+
+# JWT Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Supabase
+supabase>=2.4.0
+
+# Database - asyncpg for better async support
+asyncpg>=0.29.0
+
+# Redis Caching
+redis>=5.0.0
+
+# Configuration
+pyyaml>=6.0.1
+pydantic>=2.7.0
+pydantic[email]>=2.7.0
+pydantic-settings>=2.11.0
+python-dotenv>=1.0.0
+
+# Web Server
+requests>=2.31.0
+
+# Data Processing
+python-dateutil>=2.8.2
+
+# Web Scraping
+selenium>=4.21.0
+
+# Additional dependencies
+aiofiles>=23.2.1
+
+# LLM Integration
+google-genai>=1.0.0
+
+# Rasa-specific dependencies
+# rasa-sdk==3.6.2  # DISABLED: Incompatible with Python 3.14
+
+# RAG System Dependencies
+chromadb>=1.5.0
+sentence-transformers>=2.2.0
+torch>=2.0.0
+transformers>=4.30.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Task Scheduling
+apscheduler>=3.11.3
+
+# Performance Profiling
+memory_profiler>=0.61.0
+psutil>=7.2.2

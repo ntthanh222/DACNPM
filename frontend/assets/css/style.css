@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #070709;
+}
+::-webkit-scrollbar-thumb {
+    background: #1c1c24;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #2c2c36;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+h1, h2, h3, h4, .font-headline {
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Smooth Fade-in and Slide-up Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-fade-in {
+    animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-fade-in-down {
+    animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth Pulse/Bounce for Typing Indicator */
+@keyframes typingBounce {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
+.animate-typing-dot {
+    animation: typingBounce 1.2s infinite ease-in-out;
+}
+
+/* Markdown Rendering Styling */
+.markdown-content p {
+    margin-bottom: 0.75rem;
+}
+.markdown-content p:last-child {
+    margin-bottom: 0;
+}
+.markdown-content strong {
+    color: #fbf8fc;
+    font-weight: 700;
+}
+.markdown-content ul, .markdown-content ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1.25rem;
+}
+.markdown-content ul {
+    list-style-type: disc;
+}
+.markdown-content ol {
+    list-style-type: decimal;
+}
+.markdown-content li {
+    margin-bottom: 0.35rem;
+}
+.markdown-content li:last-child {
+    margin-bottom: 0;
+}
+.markdown-content code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    color: #76efa0;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.markdown-content pre {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #030305;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 1rem;
+    overflow-x: auto;
+}
+.markdown-content pre code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: #e4e2e4;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}

@@ -1,0 +1,47 @@
+# ===== Secrets & credentials — NEVER commit =====
+.env
+.env.*
+!.env.example
+*.secret
+backend/ADMIN_CREDENTIALS.txt
+ADMIN_CREDENTIALS.txt
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+venv/
+.venv/
+env/
+backend/venv/
+rasa/venv/
+
+# ===== Node =====
+node_modules/
+npm-debug.log*
+
+# ===== ZCode / Claude / agents / AI =====
+.zcode/
+.claude/
+.agents/
+.codex/
+.benchmarks/
+skills-lock.json
+claude.md
+
+# ===== Logs & runtime =====
+logs/
+*.log
+backend/logs/
+
+# ===== OS / IDE =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ===== Rasa models (large) =====
+rasa/models/*.tar.gz

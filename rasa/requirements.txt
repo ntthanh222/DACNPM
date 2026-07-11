@@ -1,0 +1,8 @@
+# Rasa dependencies with compatibility fixes
+
+# Pin SQLAlchemy to < 2.0 to avoid deprecation warnings
+# Rasa 3.6.0 uses SQLAlchemy 1.4.x APIs that are deprecated in 2.0
+sqlalchemy<2.0
+
+# Other Rasa dependencies are managed by Rasa itself
+# This file is used to override specific versions

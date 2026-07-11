@@ -1,0 +1,189 @@
+# CyberSec Assistant Platform - Docker Compose Configuration
+# Local development and testing environment
+# Database: Supabase Cloud (không dùng PostgreSQL local nữa)
+
+services:
+  # ============================================
+  # Redis Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: cybersec-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cybersec-network
+    command: redis-server --appendonly yes
+
+  # ============================================
+  # ChromaDB Vector Database
+  # ============================================
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: cybersec-chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    networks:
+      - cybersec-network
+
+  # ============================================
+  # Rasa NLU Server
+  # ============================================
+  rasa:
+    image: rasa/rasa:3.6.21-full
+    container_name: cybersec-rasa
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./rasa/models:/app/models
+      - ./rasa/data:/app/data
+      - ./rasa/config.yml:/app/config.yml
+    command: run --enable-api --cors "*"
+    networks:
+      - cybersec-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Backend API Server
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: cybersec-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMADB_HOST=http://chromadb:8000
+      - RASA_URL=http://rasa:5005
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+      # Supabase credentials - cần set trong .env hoặc ở đây
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+      rasa:
+        condition: service_started
+    networks:
+      - cybersec-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Frontend Server
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cybersec-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - API_BASE_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - cybersec-network
+
+  # ============================================
+  # Redis Commander (Redis Management)
+  # ============================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: cybersec-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - cybersec-network
+
+  # ============================================
+  # Prometheus (Monitoring)
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cybersec-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - cybersec-network
+
+  # ============================================
+  # Grafana (Visualization)
+  # ============================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cybersec-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - cybersec-network
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  cybersec-network:
+    driver: bridge
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  redis_data:
+    driver: local
+  chromadb_data:
+    driver: local
+  backend_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

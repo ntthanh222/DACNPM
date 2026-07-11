@@ -1,0 +1,159 @@
+import os
+import logging
+from pathlib import Path
+from pydantic_settings import BaseSettings
+from pydantic import field_validator, Field, model_validator
+from typing import Optional
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Get the directory where this file is located
+# Note: since this file is now in backend/config/settings.py, parent is backend/config and parent.parent is backend/
+BASE_DIR = Path(__file__).parent.parent.absolute()
+PROJECT_ROOT = BASE_DIR.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+
+class Settings(BaseSettings):
+    # Project Paths
+    BASE_DIR: Path = BASE_DIR
+    PROJECT_ROOT: Path = PROJECT_ROOT
+
+    # Supabase Configuration
+    supabase_url: str
+    supabase_key: str
+    supabase_service_role_key: str
+    supabase_secret: str = ""
+    supabase_publishable_key: str = ""
+
+    # JWT Configuration
+    jwt_secret: str = "change-this-to-a-secure-random-key-in-production"
+    access_token_expire_minutes: int = 1440
+
+    # Database Connection (for direct PostgreSQL connections)
+    db_host: str = "localhost"
+    db_port: int = 5432
+    db_name: str = "postgres"
+    db_user: str = "postgres"
+    db_password: str = ""
+
+    # API Configuration
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
+    api_debug: bool = os.getenv("API_DEBUG", "False").lower() == "true"
+
+    # CORS Configuration
+    cors_origins: str = "http://localhost:3000,http://localhost:8000"
+
+    def get_cors_origins(self) -> list[str]:
+        """Parse CORS origins from comma-separated string"""
+        if isinstance(self.cors_origins, str):
+            origins = [origin.strip() for origin in self.cors_origins.split(",")]
+
+            # Add common development origins if in development mode
+            if self.is_development():
+                origins.append("http://localhost:3000")
+                origins.append("http://localhost:8000")
+                origins.append("http://localhost:5005")
+                origins.append("http://127.0.0.1:3000")
+                origins.append("http://127.0.0.1:8000")
+                origins.append("http://127.0.0.1:5005")
+
+            return list(set(origins))  # Remove duplicates
+        return self.cors_origins
+
+    # External APIs - loaded from .env with warnings for missing keys
+    virustotal_api_key: str = Field(default="", description="VirusTotal API key for URL scanning")
+    nist_nvd_api_key: str = Field(default="", description="NIST NVD API key for CVE lookup")
+
+    # LLM Configuration
+    llm_provider: str = Field(default="gemini", description="LLM provider: gemini, openai, claude")
+    llm_model: str = Field(default="gemini-1.5-flash", description="Model name")
+    llm_api_key: str = Field(default="", description="LLM API key")
+    llm_max_tokens: int = Field(default=2048, description="Maximum tokens in response")
+    llm_temperature: float = Field(default=0.7, description="Response creativity (0-1)")
+    llm_memory_window: int = Field(default=5, description="Number of recent messages to include")
+
+    # Rasa Configuration
+    rasa_server_host: str = "localhost"
+    rasa_server_port: int = 5005
+    rasa_action_server_port: int = 5055
+    rasa_websocket_url: str = "ws://localhost:5005/websocket"
+    rasa_url: Optional[str] = None
+
+    @model_validator(mode='after')
+    def parse_rasa_url(self) -> 'Settings':
+        if self.rasa_url:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(self.rasa_url)
+                if parsed.hostname:
+                    self.rasa_server_host = parsed.hostname
+                if parsed.port:
+                    self.rasa_server_port = parsed.port
+                self.rasa_websocket_url = f"ws://{self.rasa_server_host}:{self.rasa_server_port}/websocket"
+            except Exception as e:
+                logger.warning(f"Failed to parse rasa_url {self.rasa_url}: {e}")
+        return self
+
+    # Environment Configuration
+    environment: str = "development"
+
+    @field_validator('virustotal_api_key', 'nist_nvd_api_key', 'llm_api_key')
+    @classmethod
+    def validate_api_keys(cls, v: str, info) -> str:
+        """Validate API key format - warn but don't fail for optional keys"""
+        if v and not isinstance(v, str):
+            raise ValueError('API key must be a string')
+        # Basic validation: API keys should not be too short
+        if v and len(v) < 10:
+            logger.warning(f'API key appears to be invalid (too short): {info.field_name}')
+        return v
+
+    @field_validator('environment')
+    @classmethod
+    def validate_environment(cls, v: str) -> str:
+        """Validate environment setting"""
+        allowed = ['development', 'production', 'staging']
+        if v not in allowed:
+            raise ValueError(f'Environment must be one of {allowed}')
+        return v
+
+    def is_production(self) -> bool:
+        """Check if running in production"""
+        return self.environment == 'production'
+
+    def is_development(self) -> bool:
+        return self.environment == 'development'
+
+    model_config = {
+        "env_file": [
+            str(ENV_FILE),
+            str(BASE_DIR / ".env"),
+            str(PROJECT_ROOT / ".env")
+        ],  # Check backend directory and project root
+        "env_file_encoding": "utf-8",
+        "extra": "allow"
+    }
+
+# Try to load settings, but handle errors gracefully
+try:
+    settings = Settings()
+except Exception as e:
+    print(f"Warning: Could not load settings: {e}")
+    print("Make sure .env file exists in backend directory")
+    # Provide fallback settings for development
+    settings = Settings(
+        supabase_url="",
+        supabase_key="",
+        supabase_service_role_key="",
+        api_host="0.0.0.0",
+        api_port=8000,
+        api_debug=False,
+        cors_origins="http://localhost:3000,http://localhost:8000",
+        environment="development",
+        rasa_server_host="localhost",
+        rasa_server_port=5005,
+        rasa_action_server_port=5055,
+        rasa_websocket_url="ws://localhost:5005/websocket"
+    )

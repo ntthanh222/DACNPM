@@ -1,0 +1,148 @@
+# Crawler Configuration
+# This file contains configuration for all news source crawlers
+
+# Global crawler settings
+global_settings:
+  headless: false
+  timeout: 10
+  page_load_delay: 2
+  max_retries: 3
+  retry_delay: 2
+
+# Individual crawler configurations
+thehackernews:
+  enabled: true
+  max_articles: 10
+  base_url: "https://thehackernews.com"
+  target_url: "https://thehackernews.com/"
+  source_name: "The Hacker News"
+  selectors:
+    article_container: "a.latest-link, article, .latest-link"
+    title: "h2, h3, h1, .title, .post-title, .entry-title"
+    description: "p, .excerpt, .summary, .post-excerpt, .entry-summary"
+    date: "time, .date, .published, .post-date, .entry-date, span[class*='date']"
+  date_formats:
+    - "%b %d, %Y %H:%M %Z"  # Oct 30, 2024 08:30 UTC
+    - "%B %d, %Y %H:%M %Z"  # October 30, 2024 08:30 UTC
+  url_patterns:
+    - "thehackernews.com"
+
+vnexpress:
+  enabled: true
+  max_articles: 10
+  base_url: "https://vnexpress.net"
+  target_url: "https://vnexpress.net/cong-nghe/"
+  source_name: "VnExpress"
+  selectors:
+    article_container: "article, .item-news, .news-item"
+    title: "h2, h3, .title, a[href*='/cong-nghe/']"
+    description: "p, .description, .summary, .lead"
+    date: "time, .date, .published"
+  date_formats:
+    - "%d/%m/%Y"  # 30/10/2024
+    - "%Y-%m-%d"  # 2024-10-30
+  url_patterns:
+    - "vnexpress.net"
+
+darkreading:
+  enabled: true
+  max_articles: 10
+  base_url: "https://www.darkreading.com"
+  target_url: "https://www.darkreading.com/security.asp"
+  source_name: "Dark Reading"
+  selectors:
+    article_container: "article, .blog-item, .news-item"
+    title: "h2, h3, .title, a[href*='/security/']"
+    description: "p, .excerpt, .description, .summary"
+    date: "time, .date, .published, .post-date"
+  date_formats:
+    - "%B %d, %Y"  # October 30, 2024
+    - "%b %d, %Y"  # Oct 30, 2024
+    - "%Y-%m-%d"   # 2024-10-30
+  url_patterns:
+    - "darkreading.com"
+
+securityweek:
+  enabled: true
+  max_articles: 10
+  base_url: "https://www.securityweek.com"
+  target_url: "https://www.securityweek.com/"
+  source_name: "Security Week"
+  selectors:
+    article_container: "article, .news-item, .story"
+    title: "h2, h3, .title"
+    description: "p, .excerpt, .summary"
+    date: "time, .date, .published"
+  date_formats:
+    - "%B %d, %Y"  # October 30, 2024
+    - "%Y-%m-%d"   # 2024-10-30
+  url_patterns:
+    - "securityweek.com"
+
+krebsonsecurity:
+  enabled: true
+  max_articles: 10
+  base_url: "https://krebsonsecurity.com"
+  target_url: "https://krebsonsecurity.com/"
+  source_name: "Krebs on Security"
+  selectors:
+    article_container: "article, .post, .entry"
+    title: "h2, h3, .title, .entry-title"
+    description: "p, .excerpt, .summary"
+    date: "time, .date, .published"
+  date_formats:
+    - "%B %d, %Y"  # October 30, 2024
+    - "%b %d, %Y"  # Oct 30, 2024
+  url_patterns:
+    - "krebsonsecurity.com"
+
+bleepingcomputer:
+  enabled: true
+  max_articles: 10
+  base_url: "https://www.bleepingcomputer.com"
+  target_url: "https://www.bleepingcomputer.com/"
+  source_name: "Bleeping Computer"
+  selectors:
+    article_container: "article, .news-item, .post"
+    title: "h2, h3, .title"
+    description: "p, .excerpt, .summary"
+    date: "time, .date, .published"
+  date_formats:
+    - "%B %d, %Y"  # October 30, 2024
+    - "%Y-%m-%d"   # 2024-10-30
+  url_patterns:
+    - "bleepingcomputer.com"
+
+helpnetsecurity:
+  enabled: true
+  max_articles: 10
+  base_url: "https://www.helpnetsecurity.com"
+  target_url: "https://www.helpnetsecurity.com/"
+  source_name: "Help Net Security"
+  selectors:
+    article_container: "article, .post, .entry"
+    title: "h2, h3, .title"
+    description: "p, .excerpt, .summary"
+    date: "time, .date, .published"
+  date_formats:
+    - "%B %d, %Y"  # October 30, 2024
+    - "%Y-%m-%d"   # 2024-10-30
+  url_patterns:
+    - "helpnetsecurity.com"
+
+theregister:
+  enabled: true
+  max_articles: 10
+  base_url: "https://www.theregister.com"
+  target_url: "https://www.theregister.com/"
+  source_name: "The Register"
+  selectors:
+    article_container: "article, .story, .news-item"
+    title: "h2, h3, .title"
+    description: "p, .excerpt, .summary"
+    date: "time, .date, .published"
+  date_formats:
+    - "%B %d, %Y"  # October 30, 2024
+    - "%Y-%m-%d"   # 2024-10-30
+  url_patterns:
+    - "theregister.com"

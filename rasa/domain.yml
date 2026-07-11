@@ -1,0 +1,223 @@
+version: "3.1"
+
+intents:
+  - check_phishing
+  - check_password
+  - lookup_cve
+  - ask_security_tips
+  - get_security_news
+  - assess_vulnerability
+  - incident_response
+  - auth_help
+  - get_chat_history
+  - greet
+  - goodbye
+  - thanks
+  - nlu_fallback
+  # Phase 3.2: Knowledge Base intents
+  - ask_device_vulnerability
+  - ask_cve_device_impact
+  - ask_patch_availability
+
+entities:
+  - url
+  - password
+  - cve_id
+  - ip_address
+  - file_hash
+  - email
+  - datetime
+  - domain
+  - port
+  - severity
+  - device_type
+  - os_name
+
+slots:
+  url:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: url
+
+  password:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: password
+
+  cve_id:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: cve_id
+
+  # Phase 1.3: New entity slots
+  ip_address:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: ip_address
+
+  file_hash:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: file_hash
+
+  email:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: email
+
+  domain:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: domain
+
+  severity:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: severity
+
+  device_type:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: device_type
+
+  os_name:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: os_name
+
+  # Existing custom slots
+  user_id:
+    type: text
+    mappings:
+      - type: custom
+
+  security_context:
+    type: text
+    mappings:
+      - type: custom
+
+  previous_scan_results:
+    type: text
+    mappings:
+      - type: custom
+
+  conversation_state:
+    type: text
+    mappings:
+      - type: custom
+
+  # Phase 1.4: Form slot
+  requested_slot:
+    type: text
+    mappings:
+      - type: custom
+
+# ============================================================================
+# FORMS (Phase 1.4: Rasa Forms for multi-turn slot filling)
+# ============================================================================
+
+forms:
+  phishing_form:
+    required_slots:
+      - url
+
+  password_form:
+    required_slots:
+      - password
+
+  cve_lookup_form:
+    required_slots:
+      - cve_id
+
+responses:
+  utter_greet:
+  - text: "Xin chào! Tôi là CyberSec Assistant, trợ lý AI chuyên về an ninh mạng. Tôi có thể giúp gì cho bạn?"
+  - text: "Chào bạn! Tôi sẵn sàng hỗ trợ bạn với các vấn đề bảo mật mạng. Bạn cần giúp gì không?"
+  - text: "Hello! Tôi là trợ lý bảo mật mạng của bạn. Hãy cho tôi biết nếu bạn cần kiểm tra URL, mật khẩu, hoặc tra cứu thông tin CVE."
+  - text: "Chào mừng! Tôi có thể giúp bạn kiểm tra tính an toàn của websites, đánh giá độ mạnh mật khẩu, hoặc tra cứu các lỗ hổng bảo mật."
+
+  utter_goodbye:
+  - text: "Tạm biệt! Chúc bạn luôn an toàn trên mạng. Hãy liên hệ lại nếu cần hỗ trợ bảo mật!"
+  - text: "Bye bye! Nhớ luôn cập nhật bảo mật và giữ an toàn online nhé. Hẹn gặp lại!"
+  - text: "Chào tạm biệt! Nếu có bất kỳ câu hỏi bảo mật nào, đừng ngần ngại liên hệ tôi. Chúc bạn an toàn!"
+  - text: "Gặp lại bạn sau! Luôn cảnh giác với các mối đe dọa bảo mật nhé. Tạm biệt!"
+
+  utter_thanks:
+  - text: "Rất vui được giúp đỡ bạn! Nếu cần thêm thông tin bảo mật, cứ hỏi tôi nhé."
+  - text: "Không có gì! Đó là nhiệm vụ của tôi. Cần hỗ trợ thêm gì không?"
+  - text: "Cảm ơn bạn đã tin tưởng sử dụng dịch vụ bảo mật của chúng tôi. Hãy luôn giữ an toàn!"
+  - text: "Rất hân hạnh được hỗ trợ! Nếu có câu hỏi bảo mật nào khác, cứ hỏi nhé."
+
+  utter_default:
+  - text: "Xin lỗi, tôi không hiểu yêu cầu của bạn. Bạn có thể nhắc lại không? Tôi có thể giúp bạn kiểm tra URL, mật khẩu, tra cứu CVE, hoặc cung cấp mẹo bảo mật."
+  - text: "Tôi chưa hiểu rõ. Bạn có muốn kiểm tra tính an toàn của một URL, đánh giá mật khẩu, hay cần thông tin về lỗ hổng bảo mật?"
+  - text: "Xin lỗi, tôi cần thêm thông tin. Hãy cho tôi biết URL cần kiểm tra, mật khẩu cần đánh giá, hoặc CVE ID cần tra cứu."
+  - text: "Tôi không chắc về yêu cầu của bạn. Bạn cần giúp gì về bảo mật mạng? Tôi có thể hỗ trợ kiểm tra phishing, đánh giá mật khẩu, hoặc tra cứu CVE."
+
+  utter_ask_security_tips:
+  - text: "Dưới đây là các mẹo bảo mật quan trọng:\n\n🔐 **Mật khẩu**:\n- Sử dụng mật khẩu mạnh, duy nhất cho mỗi tài khoản\n- Tối thiểu 12 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt\n- Sử dụng password manager để quản lý mật khẩu\n\n🛡️ **Xác thực**:\n- Bật xác thực 2 yếu tố (2FA) cho tất cả tài khoản quan trọng\n- Sử dụng authenticator app thay vì SMS khi có thể\n- Thường xuyên kiểm tra activity log của tài khoản\n\n📧 **Email & Phishing**:\n- Không click vào link không rõ nguồn gốc\n- Kiểm tra kỹ URL trước khi nhập thông tin nhạy cảm\n- Cảnh giác với email yêu cầu thông tin cá nhân hoặc tài chính\n\n🌐 **Browsing**:\n- Tránh sử dụng WiFi công cộng cho giao dịch quan trọng\n- Luôn kiểm tra URL và HTTPS certificate\n- Cập nhật thường xuyên trình duyệt và hệ điều hành\n\n📱 **Mobile**:\n- Chỉ tải app từ official stores\n- Cập nhật OS và apps thường xuyên\n- Cảnh giác với permissions không cần thiết\n\n💾 **Data Protection**:\n- Backup dữ liệu quan trọng thường xuyên\n- Sử dụng encryption cho dữ liệu nhạy cảm\n- Xóa dữ liệu cũ không cần thiết\n\n🔍 **Monitoring**:\n- Thường xuyên kiểm tra tài khoản ngân hàng và credit\n- Sử dụng credit monitoring service\n- Cảnh giác với suspicious activity"
+
+  utter_check_password:
+  - text: "Để kiểm tra độ mạnh của mật khẩu, tôi đánh giá dựa trên các tiêu chí:\n\n✅ **Mật khẩu mạnh** thỏa mãn:\n- Độ dài tối thiểu 12 ký tự\n- Có cả chữ hoa và chữ thường\n- Có số\n- Có ký tự đặc biệt (!@#$%^&*)\n- Không chứa thông tin cá nhân\n- Không là từ điển thông thường\n\n⚠️ **Mật khẩu yếu** thường có:\n- Độ dài dưới 8 ký tự\n- Chỉ chứa chữ cái hoặc chỉ số\n- Là từ thông dụng, tên, ngày sinh\n- Không có ký tự đặc biệt\n- Là các pattern dễ đoán (123456, password, qwerty)\n\n🎯 **Khuyến nghị**:\n- Sử dụng password manager như Bitwarden, 1Password\n- Tạo mật khẩu ngẫu nhiên dài 16+ ký tự\n- Không bao giờ reuse mật khẩu\n- Bật 2FA cho tất cả tài khoản quan trọng\n\nBạn muốn tôi đánh giá mật khẩu cụ thể nào không?"
+
+  utter_assess_vulnerability:
+  - text: "Để đánh giá lỗ hổng bảo mật, tôi phân tích các khía cạnh sau:\n\n🔍 **Các loại lỗ hổng phổ biến**:\n\n1. **Injection (SQLi, Command Injection)**\n   - Input validation không đủ\n   - Concatenation trực tiếp database queries\n\n2. **Cross-Site Scripting (XSS)**\n   - Output encoding thiếu\n   - DOM manipulation không an toàn\n\n3. **Authentication & Authorization**\n   - Weak password policies\n   - Session management kém\n   - Missing access controls\n\n4. **Sensitive Data Exposure**\n   - Lack of encryption\n   - Insecure data storage\n   - Information leakage\n\n5. **Security Misconfiguration**\n   - Default credentials\n   - Unnecessary services\n   - Outdated components\n\n📊 **Phương pháp đánh giá**:\n- Code review static analysis\n- Dynamic application security testing\n- Penetration testing\n- Dependency vulnerability scanning\n\n🛠️ **Công cụ hỗ trợ**:\n- OWASP ZAP, Burp Suite (web security)\n- Nessus, OpenVAS (vulnerability scanning)\n- SonarQube, Snyk (code analysis)\n- NVD, CVE database (vulnerability lookup)\n\nBạn cần đánh giá cụ thể cho hệ thống hay ứng dụng nào?"
+
+  utter_incident_response:
+  - text: "Khi phát hiện sự cố bảo mật, hãy thực hiện theo quy trình sau:\n\n🚨 **BƯỚC 1: NGAY LẬP TỨC (0-15 phút)**\n1. **Ngăn chặn tiếp tục**\n   - Ngắt kết nối mạng nếu nghi ngờ malware\n   - Đổi mật khẩu tất cả tài khoản quan trọng\n   - Bật 2FA cho tất cả tài khoản\n   - Liên hệ bank/credit card companies nếu liên quan tài chính\n\n2. **Đánh giá sơ bộ**\n   - Xác định phạm vi ảnh hưởng\n   - Kiểm tra logs và activity\n   - Document timeline và evidence\n\n🔧 **BƯỚC 2: KHÔI PHỤC (15-60 phút)**\n1. **Isolate systems**\n   - Tách các hệ thống bị ảnh hưởng\n   - Scan với antivirus updated\n   - Change all credentials\n\n2. **Backup & Restore**\n   - Restore từ backup sạch (nếu có)\n   - Verify backup integrity\n   - Test systems trước khi đưa vào production\n\n📋 **BƯỚC 3: PHÂN TÍCH (1-4 giờ)**\n1. **Investigation**\n   - Root cause analysis\n   - Impact assessment\n   - Data breach notification (nếu cần)\n\n2. **Documentation**\n   - Incident report\n   - Timeline và actions taken\n   - Lessons learned\n\n🛡️ **BƯỚC 4: PHÒNG NGỪA (Tương lai)**\n- Patch và harden systems\n- Update security policies\n- Conduct security awareness training\n- Implement monitoring and alerting\n\n📞 **Cần hỗ trợ ngay**:\n- Contact security team/IT department\n- Report to relevant authorities (nếu cần)\n- Notify affected parties (nếu data breach)\n\nBạn đang gặp tình huống cụ thể nào?"
+
+  utter_auth_help:
+  - text: "Hướng dẫn thiết lập và quản lý xác thực:\n\n🔐 **Xác thực 2 yếu tố (2FA/MFA)**\n\n**Cách bật 2FA**:\n1. **Google Account**:\n   - Settings > Security > 2-Step Verification\n   - Sử dụng Google Authenticator thay vì SMS\n\n2. **Facebook**:\n   - Settings > Security and Login > Two-Factor Authentication\n   - Ưu tiên Authenticator app\n\n3. **Banking Apps**:\n   - Settings > Security > Enable 2FA\n   - Sử dụng hardware token khi có thể\n\n**Best Practices**:\n- ✅ Sử dụng authenticator apps (Google Auth, Authy)\n- ✅ Backup codes được lưu an toàn\n- ✅ Regular audit của connected devices\n- ❌ Tránh SMS 2FA (vulnerable to SIM swapping)\n- ❌ Không share 2FA codes với bất kỳ ai\n\n🛡️ **Password Manager**:\n\n**Khuyến nghị**:\n- Bitwarden (free, open source)\n- 1Password (paid, user-friendly)\n- KeePassXC (free, offline)\n\n**Features quan trọng**:\n- Cross-platform sync\n- Secure sharing (nếu cần)\n- Emergency access\n- Security audit\n\n🔑 **Additional Security**:\n- Biometric authentication (fingerprint, face ID)\n- Hardware keys (YubiKey)\n- Security questions (nếu không thể tránh)\n- Account recovery options verified\n\nBạn cần hướng dẫn cụ thể cho dịch vụ nào?"
+
+  utter_no_url:
+  - text: "Bạn chưa cung cấp URL cần kiểm tra. Hãy cho tôi biết URL bạn muốn quét tính an toàn."
+
+  utter_no_password:
+  - text: "Bạn chưa cung cấp mật khẩu cần kiểm tra. Hãy nhập mật khẩu bạn muốn tôi đánh giá độ mạnh."
+
+  utter_no_cve_id:
+  - text: "Bạn chưa cung cấp CVE ID. Hãy nhập CVE ID bạn muốn tra cứu (ví dụ: CVE-2024-1234)."
+
+  utter_no_user_id:
+  - text: "Vui lòng đăng nhập để xem lịch sử trò chuyện và sử dụng các tính năng cá nhân hóa."
+
+  # Phase 1.4: Form slot asking utterances
+  utter_ask_url:
+  - text: "🔍 **Vui lòng cung cấp URL cần kiểm tra:**\n\nNhập URL bạn muốn quét tính an toàn (ví dụ: https://example.com)"
+
+  utter_ask_password:
+  - text: "🔐 **Vui lòng nhập mật khẩu cần đánh giá:**\n\n⚠️ Lưu ý: Mật khẩu của bạn chỉ được sử dụng để tính toán độ mạnh và KHÔNG được lưu trữ."
+
+  utter_ask_cve_id:
+  - text: "📋 **Vui lòng nhập CVE ID cần tra cứu:**\n\nĐịnh dạng: CVE-YYYY-NNNN (ví dụ: CVE-2024-1234)"
+
+actions:
+  - action_set_user_id
+  - action_check_phishing
+  - action_lookup_cve
+  - action_get_chat_history
+  - action_get_security_news
+  - action_check_password_strength
+  - action_assess_vulnerability
+  - action_provide_incident_response
+  - action_provide_auth_help
+  - action_default_fallback
+  - action_ask_url
+  - action_ask_password
+  - action_ask_cve_id
+  # Phase 3.2: Knowledge Base action
+  - action_knowledge_base_query
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CyberSec Assistant - Admin Panel</title>
+
+    <!-- Shared Styles & Tailwind Configuration -->
+    <link rel="stylesheet" href="../../assets/css/style.css?v=1.0.2"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="../../assets/js/utils/tailwind-config.js?v=1.0.2"></script>
+
+    <!-- Chart.js for Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <!-- Authentication Guard -->
+    <script src="../../assets/js/utils/crypto-utils.js?v=1.0.3"></script>
+    <script src="../../assets/js/services/auth-service.js?v=1.0.6"></script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-container">
+
+<!-- Admin Layout Container -->
+<div class="flex min-h-screen">
+
+    <!-- Admin Sidebar -->
+    <nav class="w-72 bg-[#0a0a0c] border-r border-white/[0.04] flex flex-col py-6 z-50 fixed left-0 top-0 bottom-0">
+        <!-- Logo Section -->
+        <div class="px-6 mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-xl">admin_panel_settings</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-[#fbf8fc] tracking-tight font-headline">Admin Panel</h1>
+                    <p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Quản trị hệ thống</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Navigation -->
+        <div class="flex-1 space-y-1 px-3">
+            <!-- User Management -->
+            <button onclick="showSection('users')" class="nav-btn active w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] border-l-2 border-transparent transition-all duration-200" data-section="users">
+                <span class="material-symbols-outlined" data-icon="people">people</span>
+                <span class="font-headline tracking-tight">Quản lý người dùng</span>
+            </button>
+
+            <!-- Crawler Management -->
+            <button onclick="showSection('crawler')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] border-l-2 border-transparent transition-all duration-200" data-section="crawler">
+                <span class="material-symbols-outlined" data-icon="rss_feed">rss_feed</span>
+                <span class="font-headline tracking-tight">Quản lý crawler</span>
+            </button>
+
+            <!-- News Moderation -->
+            <button onclick="showSection('news')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] border-l-2 border-transparent transition-all duration-200" data-section="news">
+                <span class="material-symbols-outlined" data-icon="article">article</span>
+                <span class="font-headline tracking-tight">Kiểm duyệt tin tức</span>
+            </button>
+
+            <!-- System Monitoring -->
+            <button onclick="showSection('system')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] border-l-2 border-transparent transition-all duration-200" data-section="system">
+                <span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+                <span class="font-headline tracking-tight">Giám sát hệ thống</span>
+            </button>
+
+            <!-- RAG Operations -->
+            <button onclick="showSection('rag')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] border-l-2 border-transparent transition-all duration-200" data-section="rag">
+                <span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+                <span class="font-headline tracking-tight">Quản lý RAG</span>
+            </button>
+        </div>
+
+        <!-- Admin User Info -->
+        <div class="px-6 pt-6 border-t border-outline-variant/10">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+                    <img alt="Admin" src="/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuDBShGIiYfsmyeY7AbutPry9QdyNIb671EPriJpvgQO-qwpx4HnsvYrH_9d8wLb491z_ljwMhUXwafZkajhrZnr0CpG814lc-Wq677Q5qrvmrb3i5aoqaIVxYlRaD3QYUd0pWsYimH6VV5feypfDuOaFI_0lmAWDGK44QZOpjNBvLJIAgxV8MmCCcdcqgiKSoGRxF0WIxH2s1WcpV1xwMssXXVrjoRo-4LYcclHwQyM10l28R6P60WvI5V5A68BEXgj9Xb3-HxXeqw"/>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-on-surface" id="admin-username">Admin User</span>
+                    <span class="text-[10px] text-primary flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(132,253,173,0.5)]"></span>
+                        Administrator
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="px-6 pt-4">
+            <a href="../../dashboard.html" class="flex items-center gap-2 text-xs text-on-surface-variant hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                <span>Quay lại Dashboard</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-72 p-8">
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-[#0a0a0c] p-6 rounded-2xl border border-white/[0.06]">
+                <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="hidden bg-red-500/10 border border-red-500/30 text-red-500 p-4 rounded-xl mb-6">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined">error</span>
+                <span id="error-text">Error message here</span>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <section id="section-users" class="admin-section">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-on-surface mb-2">Quản lý người dùng</h2>
+                <p class="text-on-surface-variant text-sm">Xem, tìm kiếm và quản lý tất cả người dùng trong hệ thống</p>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="flex gap-4 mb-6">
+                <input type="text" id="user-search" placeholder="Tìm kiếm theo username, email..." class="flex-1 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 text-on-surface">
+                <select id="user-role-filter" class="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 text-on-surface">
+                    <option value="">Tất cả vai trò</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="security_analyst">Security Analyst</option>
+                </select>
+                <button onclick="searchUsers()" class="bg-primary/10 border border-primary/30 text-primary px-6 py-3 rounded-xl hover:bg-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-sm">search</span>
+                </button>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-white/[0.04]">
+                        <tr>
+                            <th class="text-left p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">User</th>
+                            <th class="text-left p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Vai trò</th>
+                            <th class="text-left p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Trạng thái</th>
+                            <th class="text-left p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Ngày tạo</th>
+                            <th class="text-left p-4 text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body" class="divide-y divide-white/[0.04]">
+                        <!-- User rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex items-center justify-between mt-6">
+                <span class="text-sm text-on-surface-variant" id="users-pagination-info">Showing 1-20 of 100 users</span>
+                <div class="flex gap-2">
+                    <button onclick="loadUsersPage('prev')" class="px-4 py-2 bg-white/[0.02] border border-white/[0.06] rounded-lg hover:bg-white/[0.04] transition-colors">Previous</button>
+                    <button onclick="loadUsersPage('next')" class="px-4 py-2 bg-white/[0.02] border border-white/[0.06] rounded-lg hover:bg-white/[0.04] transition-colors">Next</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Crawler Management Section -->
+        <section id="section-crawler" class="admin-section hidden">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-on-surface mb-2">Quản lý Crawler</h2>
+                <p class="text-on-surface-variant text-sm">Theo dõi và điều khiển hệ thống thu thập tin tức bảo mật</p>
+            </div>
+
+            <!-- Crawler Stats Cards -->
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Total Runs</span>
+                        <span class="material-symbols-outlined text-primary/20">sync</span>
+                    </div>
+                    <span class="text-2xl font-bold text-on-surface" id="crawler-total-runs">-</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Success Rate</span>
+                        <span class="material-symbols-outlined text-green-500/20">check_circle</span>
+                    </div>
+                    <span class="text-2xl font-bold text-green-400" id="crawler-success-rate">-%</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Articles Added</span>
+                        <span class="material-symbols-outlined text-blue-500/20">article</span>
+                    </div>
+                    <span class="text-2xl font-bold text-blue-400" id="crawler-articles-added">-</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Duplicates Removed</span>
+                        <span class="material-symbols-outlined text-yellow-500/20">content_copy</span>
+                    </div>
+                    <span class="text-2xl font-bold text-yellow-400" id="crawler-duplicates">-</span>
+                </div>
+            </div>
+
+            <!-- Manual Trigger -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Trigger Crawler Manual</h3>
+                <div class="flex gap-4 items-end">
+                    <div class="flex-1">
+                        <label class="block text-xs text-on-surface-variant mb-2">Max Articles per Source</label>
+                        <input type="number" id="crawler-max-articles" value="10" class="w-full bg-white/[0.02] border border-white/[0.06] rounded-lg px-4 py-2 text-sm">
+                    </div>
+                    <button onclick="triggerCrawler()" class="bg-primary/10 border border-primary/30 text-primary px-6 py-2 rounded-lg hover:bg-primary/20 transition-colors">
+                        <span class="material-symbols-outlined text-sm align-middle">play_arrow</span>
+                        <span class="align-middle">Trigger Now</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Crawler Runs -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Recent Runs</h3>
+                <div id="crawler-runs-list" class="space-y-3">
+                    <!-- Crawler runs will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- News Moderation Section -->
+        <section id="section-news" class="admin-section hidden">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-on-surface mb-2">Kiểm duyệt tin tức</h2>
+                <p class="text-on-surface-variant text-sm">Quản lý và kiểm duyệt các bài viết bảo mật</p>
+            </div>
+
+            <!-- Search -->
+            <div class="flex gap-4 mb-6">
+                <input type="text" id="news-search" placeholder="Tìm kiếm tin tức..." class="flex-1 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 text-on-surface">
+                <button onclick="searchNews()" class="bg-primary/10 border border-primary/30 text-primary px-6 py-3 rounded-xl hover:bg-primary/20 transition-colors">
+                    <span class="material-symbols-outlined text-sm">search</span>
+                </button>
+            </div>
+
+            <!-- News List -->
+            <div id="news-list" class="space-y-4">
+                <!-- News items will be populated here -->
+            </div>
+        </section>
+
+        <!-- System Monitoring Section -->
+        <section id="section-system" class="admin-section hidden">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-on-surface mb-2">Giám sát hệ thống</h2>
+                <p class="text-on-surface-variant text-sm">Theo dõi hiệu suất và sử dụng tài nguyên hệ thống</p>
+            </div>
+
+            <!-- System Stats -->
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Total Users</span>
+                        <span class="material-symbols-outlined text-primary/20">people</span>
+                    </div>
+                    <span class="text-2xl font-bold text-on-surface" id="system-total-users">-</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Active Users</span>
+                        <span class="material-symbols-outlined text-green-500/20">check_circle</span>
+                    </div>
+                    <span class="text-2xl font-bold text-green-400" id="system-active-users">-</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">Total Scans</span>
+                        <span class="material-symbols-outlined text-blue-500/20">verified_user</span>
+                    </div>
+                    <span class="text-2xl font-bold text-blue-400" id="system-total-scans">-</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-on-surface-variant text-sm">News Articles</span>
+                        <span class="material-symbols-outlined text-yellow-500/20">article</span>
+                    </div>
+                    <span class="text-2xl font-bold text-yellow-400" id="system-total-news">-</span>
+                </div>
+            </div>
+
+            <!-- API Usage Chart -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">API Usage (Last 30 Days)</h3>
+                <canvas id="api-usage-chart" height="100"></canvas>
+            </div>
+
+            <!-- Severity Distribution -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Severity Distribution</h3>
+                <canvas id="severity-chart" height="100"></canvas>
+            </div>
+        </section>
+
+        <!-- RAG Operations Section -->
+        <section id="section-rag" class="admin-section hidden">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-on-surface mb-2">Quản lý RAG</h2>
+                <p class="text-on-surface-variant text-sm">Quản lý tài liệu và analytics cho hệ thống RAG</p>
+            </div>
+
+            <!-- Document Upload -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Upload Document</h3>
+                <div class="border-2 border-dashed border-white/[0.06] rounded-xl p-8 text-center">
+                    <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2">cloud_upload</span>
+                    <p class="text-on-surface-variant text-sm mb-4">Drag and drop your file here, or click to select</p>
+                    <input type="file" id="rag-file-upload" accept=".txt,.md" class="hidden">
+                    <button onclick="document.getElementById('rag-file-upload').click()" class="bg-primary/10 border border-primary/30 text-primary px-6 py-2 rounded-lg hover:bg-primary/20 transition-colors">
+                        Select File
+                    </button>
+                    <select id="rag-doc-type" class="ml-4 bg-white/[0.02] border border-white/[0.06] rounded-lg px-4 py-2 text-sm">
+                        <option value="tip">Security Tip</option>
+                        <option value="procedure">Procedure</option>
+                        <option value="news">News Article</option>
+                        <option value="cve">CVE Record</option>
+                    </select>
+                    <button onclick="uploadRAGDocument()" class="ml-4 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                        Upload
+                    </button>
+                </div>
+            </div>
+
+            <!-- Intent Analytics -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold mb-4">Intent Analytics</h3>
+                <div class="grid grid-cols-4 gap-6 mb-4">
+                    <div>
+                        <span class="text-on-surface-variant text-sm">Total Queries</span>
+                        <span class="text-xl font-bold text-on-surface block" id="rag-total-queries">-</span>
+                    </div>
+                    <div>
+                        <span class="text-on-surface-variant text-sm">Fallback Queries</span>
+                        <span class="text-xl font-bold text-yellow-400 block" id="rag-fallback-queries">-</span>
+                    </div>
+                    <div>
+                        <span class="text-on-surface-variant text-sm">Avg Confidence</span>
+                        <span class="text-xl font-bold text-blue-400 block" id="rag-avg-confidence">-</span>
+                    </div>
+                    <div>
+                        <span class="text-on-surface-variant text-sm">Low Confidence</span>
+                        <span class="text-xl font-bold text-red-400 block" id="rag-low-confidence">-</span>
+                    </div>
+                </div>
+                <div id="low-confidence-queries" class="space-y-2">
+                    <!-- Low confidence queries will be listed here -->
+                </div>
+            </div>
+
+            <!-- RAG Documents List -->
+            <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Knowledge Base Documents</h3>
+                <div id="rag-documents-list" class="space-y-3">
+                    <!-- RAG documents will be listed here -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- User Detail Modal -->
+<div id="user-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-[#0a0a0c] p-6 rounded-2xl border border-white/[0.06] w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold">User Details</h3>
+            <button onclick="closeUserModal()" class="text-on-surface-variant hover:text-on-surface">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div id="user-modal-content">
+            <!-- User details will be populated here -->
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================================
+// Admin Panel JavaScript
+// ============================================================================
+
+// Configuration
+const API_BASE = '/api/admin';
+let authToken = null;
+let currentSection = 'users';
+let currentPage = 1;
+let pollingInterval = null;
+
+// ============================================================================
+// Navigation
+// ============================================================================
+
+function showSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.admin-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+
+    // Remove active class from all nav buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-primary', 'border-primary', 'bg-gradient-to-r', 'from-primary/8');
+        btn.classList.add('text-on-surface-variant', 'border-transparent');
+    });
+
+    // Show selected section
+    const section = document.getElementById(`section-${sectionName}`);
+    if (section) {
+        section.classList.remove('hidden');
+    }
+
+    // Add active class to selected nav button
+    const activeBtn = document.querySelector(`[data-section="${sectionName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'text-primary', 'border-primary', 'bg-gradient-to-r', 'from-primary/8');
+        activeBtn.classList.remove('text-on-surface-variant', 'border-transparent');
+    }
+
+    currentSection = sectionName;
+
+    // Load data for the section
+    loadSectionData(sectionName);
+
+    // Start polling for crawler section
+    if (sectionName === 'crawler' || sectionName === 'system') {
+        startPolling();
+    } else {
+        stopPolling();
+    }
+}
+
+function loadSectionData(sectionName) {
+    switch(sectionName) {
+        case 'users':
+            loadUsers();
+            break;
+        case 'crawler':
+            loadCrawlerStats();
+            break;
+        case 'news':
+            loadNews();
+            break;
+        case 'system':
+            loadSystemStats();
+            break;
+        case 'rag':
+            loadRAGData();
+            break;
+    }
+}
+
+// ============================================================================
+// API Helpers
+// ============================================================================
+
+async function apiCall(endpoint, options = {}, retryCount = 0) {
+    const url = `${API_BASE}${endpoint}`;
+    const headers = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    try {
+        const response = await fetch(url, { ...options, headers });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ detail: 'API call failed' }));
+
+            // Retry on 500 errors with exponential backoff
+            if (response.status >= 500 && retryCount < 3) {
+                const waitTime = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+                console.warn(`API error ${response.status}, retrying in ${waitTime}ms...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                return apiCall(endpoint, options, retryCount + 1);
+            }
+
+            throw new Error(error.detail || 'API call failed');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+
+        // Show user-friendly error messages
+        if (error.message.includes('database')) {
+            showError('Database temporarily unavailable. Some features may be limited.');
+        } else if (error.message.includes('timeout')) {
+            showError('Request timeout. Please try again.');
+        } else {
+            showError(error.message || 'An error occurred. Please try again.');
+        }
+
+        throw error;
+    }
+}
+
+function showLoading() {
+    document.getElementById('loading-spinner').classList.remove('hidden');
+}
+
+function hideLoading() {
+    document.getElementById('loading-spinner').classList.add('hidden');
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    document.getElementById('error-text').textContent = message;
+    errorDiv.classList.remove('hidden');
+    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+}
+
+// ============================================================================
+// User Management
+// ============================================================================
+
+async function loadUsers() {
+    showLoading();
+    try {
+        const searchTerm = document.getElementById('user-search').value;
+        const roleFilter = document.getElementById('user-role-filter').value;
+
+        let url = `/users?page=${currentPage}&page_size=20`;
+        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+        if (roleFilter) url += `&role=${roleFilter}`;
+
+        const data = await apiCall(url);
+        renderUsersTable(data.users);
+        updatePagination(data);
+
+        // Cache the data for offline functionality
+        localStorage.setItem('cachedUsersData', JSON.stringify(data));
+        localStorage.setItem('lastUsersUpdate', Date.now());
+
+    } catch (error) {
+        console.error('Error loading users:', error);
+
+        // Graceful degradation: show cached data if available
+        const cachedData = localStorage.getItem('cachedUsersData');
+        if (cachedData) {
+            console.log('Using cached user data due to API error');
+            const data = JSON.parse(cachedData);
+            renderUsersTable(data.users);
+            updatePagination(data);
+            showError('Showing cached data - unable to fetch latest updates');
+        } else {
+            showError('Unable to load users. Please refresh the page.');
+        }
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('users-table-body');
+    tbody.innerHTML = users.map(user => `
+        <tr class="hover:bg-white/[0.02]">
+            <td class="p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+                        <img src="${user.avatar_url || 'https://via.placeholder.com/32'}" alt="${user.username}">
+                    </div>
+                    <div>
+                        <div class="font-semibold text-sm">${user.username}</div>
+                        <div class="text-xs text-on-surface-variant">${user.email || 'N/A'}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="p-4">
+                <span class="px-2 py-1 rounded-lg text-xs font-semibold ${getRoleBadgeClass(user.role)}">${formatRole(user.role)}</span>
+            </td>
+            <td class="p-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-red-500'}"></span>
+                    <span class="text-xs">${user.is_active ? 'Active' : 'Banned'}</span>
+                </div>
+            </td>
+            <td class="p-4 text-xs text-on-surface-variant">${formatDate(user.created_at)}</td>
+            <td class="p-4">
+                <div class="flex gap-2">
+                    <button onclick="viewUserDetails('${user.id}')" class="p-2 hover:bg-white/[0.04] rounded-lg" title="View Details">
+                        <span class="material-symbols-outlined text-sm">visibility</span>
+                    </button>
+                    <button onclick="changeUserRole('${user.id}', '${user.role}')" class="p-2 hover:bg-white/[0.04] rounded-lg" title="Change Role">
+                        <span class="material-symbols-outlined text-sm">admin_panel_settings</span>
+                    </button>
+                    <button onclick="toggleUserStatus('${user.id}', ${!user.is_active})" class="p-2 hover:bg-white/[0.04] rounded-lg" title="${user.is_active ? 'Ban' : 'Activate'}">
+                        <span class="material-symbols-outlined text-sm">${user.is_active ? 'block' : 'check_circle'}</span>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getRoleBadgeClass(role) {
+    switch(role) {
+        case 'admin': return 'bg-red-500/10 text-red-400 border border-red-500/30';
+        case 'security_analyst': return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
+        default: return 'bg-gray-500/10 text-gray-400 border border-gray-500/30';
+    }
+}
+
+function formatRole(role) {
+    switch(role) {
+        case 'admin': return 'Admin';
+        case 'security_analyst': return 'Analyst';
+        default: return 'User';
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+}
+
+function updatePagination(data) {
+    document.getElementById('users-pagination-info').textContent =
+        `Showing ${data.page * data.page_size - data.page_size + 1}-${Math.min(data.page * data.page_size, data.total)} of ${data.total} users`;
+}
+
+function loadUsersPage(direction) {
+    if (direction === 'prev' && currentPage > 1) {
+        currentPage--;
+    } else if (direction === 'next') {
+        currentPage++;
+    }
+    loadUsers();
+}
+
+function searchUsers() {
+    currentPage = 1;
+    loadUsers();
+}
+
+async function viewUserDetails(userId) {
+    showLoading();
+    try {
+        const data = await apiCall(`/users/${userId}`);
+
+        // Add error handling for activity API call
+        let activity = { chat_history_count: 0, security_scans_count: 0, recent_activity: [] };
+        try {
+            activity = await apiCall(`/users/${userId}/activity`);
+        } catch (activityError) {
+            console.warn('Activity data unavailable:', activityError);
+            // Use default values if activity API fails
+        }
+
+        document.getElementById('user-modal-content').innerHTML = `
+            <div class="space-y-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-surface-container-highest overflow-hidden">
+                        <img src="${data.avatar_url || 'https://via.placeholder.com/64'}" alt="${data.username}">
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold">${data.username}</h4>
+                        <p class="text-sm text-on-surface-variant">${data.email || 'N/A'}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-on-surface-variant">Role</span>
+                        <div class="font-semibold">${formatRole(data.role)}</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-on-surface-variant">Status</span>
+                        <div class="font-semibold">${data.is_active ? 'Active' : 'Banned'}</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-on-surface-variant">Member Since</span>
+                        <div class="font-semibold">${formatDate(data.created_at)}</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-on-surface-variant">Last Security Scan</span>
+                        <div class="font-semibold">${formatDate(data.last_security_scan)}</div>
+                    </div>
+                </div>
+                <div class="border-t border-white/[0.06] pt-4">
+                    <h5 class="font-semibold mb-2">Activity Statistics</h5>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-sm text-on-surface-variant">Chat Messages</span>
+                            <div class="font-semibold">${activity.chat_history_count}</div>
+                        </div>
+                        <div>
+                            <span class="text-sm text-on-surface-variant">Security Scans</span>
+                            <div class="font-semibold">${activity.security_scans_count}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-white/[0.06] pt-4">
+                    <h5 class="font-semibold mb-2">Recent Activity</h5>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        ${activity.recent_activity.map(activity => `
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="material-symbols-outlined text-xs">${activity.type === 'chat' ? 'chat' : 'verified_user'}</span>
+                                <span class="text-on-surface-variant">${formatDate(activity.timestamp)}</span>
+                                <span>${activity.type === 'chat' ? activity.details.intent : activity.details.scan_type}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('user-modal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error loading user details:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+function closeUserModal() {
+    document.getElementById('user-modal').classList.add('hidden');
+}
+
+async function changeUserRole(userId, currentRole) {
+    const newRole = prompt(`Current role: ${currentRole}\nEnter new role (user, admin, security_analyst):`);
+    if (!newRole) return;
+
+    showLoading();
+    try {
+        await apiCall(`/users/${userId}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({ role: newRole })
+        });
+
+        // Clear cache to force refresh
+        localStorage.removeItem('cachedUsersData');
+        loadUsers();
+    } catch (error) {
+        console.error('Error changing user role:', error);
+        showError('Failed to change role. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    const action = newStatus ? 'activate' : 'ban';
+    if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+    showLoading();
+    try {
+        await apiCall(`/users/${userId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active: newStatus })
+        });
+
+        // Clear cache to force refresh
+        localStorage.removeItem('cachedUsersData');
+        loadUsers();
+    } catch (error) {
+        console.error('Error toggling user status:', error);
+        showError('Failed to change user status. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+
+// ============================================================================
+// Crawler Management
+// ============================================================================
+
+async function loadCrawlerStats() {
+    try {
+        const stats = await apiCall('/crawler/stats');
+        document.getElementById('crawler-total-runs').textContent = stats.total_runs;
+        document.getElementById('crawler-success-rate').textContent = `${stats.success_rate}%`;
+        document.getElementById('crawler-articles-added').textContent = stats.total_articles_added;
+        document.getElementById('crawler-duplicates').textContent = stats.total_duplicates_removed;
+
+        // Render recent runs
+        const runsList = document.getElementById('crawler-runs-list');
+        runsList.innerHTML = stats.recent_runs.map(run => `
+            <div class="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg border border-white/[0.04]">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined ${run.status === 'completed' ? 'text-green-400' : run.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}">
+                        ${run.status === 'completed' ? 'check_circle' : run.status === 'failed' ? 'error' : 'sync'}
+                    </span>
+                    <div>
+                        <div class="font-semibold text-sm">${formatDate(run.started_at)}</div>
+                        <div class="text-xs text-on-surface-variant">${run.articles_added} articles added</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs ${run.status === 'completed' ? 'text-green-400' : run.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}">${run.status}</div>
+                    <div class="text-xs text-on-surface-variant">${run.error_count || 0} errors</div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading crawler stats:', error);
+    }
+}
+
+async function triggerCrawler() {
+    const maxArticles = document.getElementById('crawler-max-articles').value;
+    if (!confirm(`Start crawler with max ${maxArticles} articles per source?`)) return;
+
+    showLoading();
+    try {
+        await apiCall('/crawler/trigger', {
+            method: 'POST',
+            body: JSON.stringify({
+                max_articles: parseInt(maxArticles),
+                headless: true
+            })
+        });
+        loadCrawlerStats();
+    } catch (error) {
+        console.error('Error triggering crawler:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+// ============================================================================
+// News Moderation
+// ============================================================================
+
+async function loadNews() {
+    showLoading();
+    try {
+        const searchTerm = document.getElementById('news-search').value;
+        let url = `/news?page=1&page_size=50`;
+        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+
+        const data = await apiCall(url);
+        renderNewsList(data.news);
+    } catch (error) {
+        console.error('Error loading news:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderNewsList(news) {
+    const newsList = document.getElementById('news-list');
+    newsList.innerHTML = news.map(article => `
+        <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <h4 class="font-semibold mb-1">${article.title}</h4>
+                    <p class="text-sm text-on-surface-variant mb-2">${article.summary?.substring(0, 200)}...</p>
+                    <div class="flex items-center gap-2 text-xs text-on-surface-variant">
+                        <span>${article.source}</span>
+                        <span>•</span>
+                        <span>${formatDate(article.published_at)}</span>
+                        ${article.is_deleted ? '<span class="text-red-400">• Deleted</span>' : ''}
+                    </div>
+                </div>
+                <div class="flex gap-2 ml-4">
+                    <button onclick="editNews('${article.id}')" class="p-2 hover:bg-white/[0.04] rounded-lg" title="Edit">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                    <button onclick="toggleNewsDelete('${article.id}', ${!article.is_deleted})" class="p-2 hover:bg-white/[0.04] rounded-lg" title="${article.is_deleted ? 'Restore' : 'Delete'}">
+                        <span class="material-symbols-outlined text-sm ${article.is_deleted ? 'text-green-400' : 'text-red-400'}">
+                            ${article.is_deleted ? 'restore' : 'delete'}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function searchNews() {
+    loadNews();
+}
+
+async function editNews(newsId) {
+    const newTitle = prompt('Enter new title:');
+    if (!newTitle) return;
+
+    const newSummary = prompt('Enter new summary:');
+    if (!newSummary) return;
+
+    showLoading();
+    try {
+        await apiCall(`/news/${newsId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                title: newTitle,
+                summary: newSummary
+            })
+        });
+        loadNews();
+    } catch (error) {
+        console.error('Error editing news:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+async function toggleNewsDelete(newsId, isDeleted) {
+    if (!confirm(`Are you sure you want to ${isDeleted ? 'delete' : 'restore'} this article?`)) return;
+
+    showLoading();
+    try {
+        await apiCall(`/news/${newsId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_deleted: isDeleted })
+        });
+        loadNews();
+    } catch (error) {
+        console.error('Error toggling news delete:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+// ============================================================================
+// System Monitoring
+// ============================================================================
+
+async function loadSystemStats() {
+    try {
+        const analytics = await apiCall('/system/analytics');
+        document.getElementById('system-total-users').textContent = analytics.total_users;
+        document.getElementById('system-active-users').textContent = analytics.active_users;
+        document.getElementById('system-total-scans').textContent = analytics.total_scans;
+        document.getElementById('system-total-news').textContent = analytics.total_news;
+
+        renderSeverityChart(analytics.severity_distribution);
+    } catch (error) {
+        console.error('Error loading system stats:', error);
+    }
+
+    try {
+        const apiUsage = await apiCall('/system/api-usage?days=30');
+        renderAPIUsageChart(apiUsage);
+    } catch (error) {
+        console.error('Error loading API usage:', error);
+    }
+}
+
+let severityChart = null;
+let apiUsageChart = null;
+
+function renderSeverityChart(distribution) {
+    const ctx = document.getElementById('severity-chart').getContext('2d');
+
+    if (severityChart) {
+        severityChart.destroy();
+    }
+
+    severityChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical', 'High', 'Medium', 'Low', 'Info'],
+            datasets: [{
+                data: [
+                    distribution.critical || 0,
+                    distribution.high || 0,
+                    distribution.medium || 0,
+                    distribution.low || 0,
+                    distribution.info || 0
+                ],
+                backgroundColor: [
+                    '#ef4444',
+                    '#f97316',
+                    '#eab308',
+                    '#22c55e',
+                    '#6b7280'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#a1a1aa' }
+                }
+            }
+        }
+    });
+}
+
+function renderAPIUsageChart(apiUsage) {
+    const ctx = document.getElementById('api-usage-chart').getContext('2d');
+
+    if (apiUsageChart) {
+        apiUsageChart.destroy();
+    }
+
+    const datasets = [];
+    const colors = {
+        'virustotal': '#ef4444',
+        'nist_nvd': '#22c55e',
+        'gemini': '#3b82f6',
+        'openai': '#f97316'
+    };
+
+    Object.keys(apiUsage).forEach(apiName => {
+        const apiData = apiUsage[apiName];
+        const data = apiData.daily_records.map(record => record.requests);
+        const label = apiName.charAt(0).toUpperCase() + apiName.slice(1);
+
+        datasets.push({
+            label: label,
+            data: data,
+            borderColor: colors[apiName] || '#6b7280',
+            backgroundColor: colors[apiName] + '20',
+            tension: 0.1
+        });
+    });
+
+    apiUsageChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 30}, (_, i) => `Day ${i + 1}`),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#a1a1aa' }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: '#ffffff10' }
+                },
+                x: {
+                    ticks: { color: '#a1a1aa' },
+                    grid: { color: '#ffffff10' }
+                }
+            }
+        }
+    });
+}
+
+// ============================================================================
+// RAG Operations
+// ============================================================================
+
+async function loadRAGData() {
+    try {
+        const intents = await apiCall('/rag/intents?days=7');
+        document.getElementById('rag-total-queries').textContent = intents.total_queries;
+        document.getElementById('rag-fallback-queries').textContent = intents.fallback_queries;
+        document.getElementById('rag-avg-confidence').textContent = intents.avg_confidence;
+        document.getElementById('rag-low-confidence').textContent = intents.low_confidence_count;
+
+        const queriesList = document.getElementById('low-confidence-queries');
+        queriesList.innerHTML = intents.recent_queries.map(query => `
+            <div class="flex items-center justify-between p-2 bg-white/[0.02] rounded-lg">
+                <div class="flex-1">
+                    <div class="text-sm">${query.query.substring(0, 100)}...</div>
+                    <div class="text-xs text-on-surface-variant">
+                        Intent: ${query.predicted_intent || 'None'} • Confidence: ${(query.confidence * 100).toFixed(1)}%
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-xs ${query.fallback_used ? 'text-yellow-400' : 'text-green-400'}">
+                    ${query.fallback_used ? 'warning' : 'check'}
+                </span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading intent analytics:', error);
+    }
+
+    try {
+        const documents = await apiCall('/rag/documents');
+        const docsList = document.getElementById('rag-documents-list');
+        docsList.innerHTML = documents.documents.map(doc => `
+            <div class="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg">
+                <div class="flex-1">
+                    <div class="text-sm font-semibold">${doc.metadata.filename || 'Unnamed'}</div>
+                    <div class="text-xs text-on-surface-variant">
+                        Type: ${doc.metadata.type} • Added: ${formatDate(doc.metadata.uploaded_at)}
+                    </div>
+                    <div class="text-xs text-on-surface-variant mt-1">${doc.content}</div>
+                </div>
+                <button onclick="deleteRAGDocument('${doc.id}')" class="p-2 hover:bg-white/[0.04] rounded-lg text-red-400">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading RAG documents:', error);
+    }
+}
+
+async function uploadRAGDocument() {
+    const fileInput = document.getElementById('rag-file-upload');
+    const docType = document.getElementById('rag-doc-type').value;
+
+    if (!fileInput.files.length) {
+        alert('Please select a file first');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('doc_type', docType);
+
+    showLoading();
+    try {
+        const response = await fetch(`${API_BASE}/rag/ingest?doc_type=${docType}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+
+        const result = await response.json();
+        alert(`Document uploaded successfully: ${result.document_id}`);
+        loadRAGData();
+    } catch (error) {
+        console.error('Error uploading document:', error);
+        showError('Failed to upload document');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function deleteRAGDocument(docId) {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+
+    showLoading();
+    try {
+        await apiCall(`/rag/documents/${docId}`, {
+            method: 'DELETE'
+        });
+        loadRAGData();
+    } catch (error) {
+        console.error('Error deleting document:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+// ============================================================================
+// Polling
+// ============================================================================
+
+function startPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+
+    pollingInterval = setInterval(() => {
+        if (currentSection === 'crawler') {
+            loadCrawlerStats();
+        } else if (currentSection === 'system') {
+            loadSystemStats();
+        }
+    }, 30000); // Poll every 30 seconds
+}
+
+function stopPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+}
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    authToken = await window.auth.getToken();
+
+    // Check authentication
+    if (!authToken) {
+        window.location.href = '../../login.html';
+        return;
+    }
+
+    // Check if user is admin
+    fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Not authenticated');
+        return response.json();
+    })
+    .then(user => {
+        // Check if user has admin role
+        if (user.role !== 'admin' && user.role !== 'security_analyst') {
+            alert('Access denied. Admin or Security Analyst role required.');
+            window.location.href = '../../dashboard.html';
+            return;
+        }
+
+        // Update UI with user info
+        document.getElementById('admin-username').textContent = user.username;
+
+        // Show initial section
+        showSection('users');
+    })
+    .catch(error => {
+        console.error('Auth check failed:', error);
+        window.location.href = '../../login.html';
+    });
+
+    // Setup auto-refresh for search inputs
+    let searchTimeout;
+    document.getElementById('user-search').addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadUsers();
+        }, 500);
+    });
+
+    document.getElementById('news-search').addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(loadNews, 500);
+    });
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    stopPolling();
+});
+</script>
+</body>
+</html>

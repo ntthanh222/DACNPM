@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CyberSec Assistant - Công cụ phân tích</title>
+    <!-- Shared Styles & Tailwind Configuration -->
+    <link rel="stylesheet" href="../../assets/css/style.css?v=1.0.2"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="../../assets/js/utils/tailwind-config.js?v=1.0.2"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Authentication Guard -->
+    <script src="../../assets/js/utils/crypto-utils.js?v=1.0.3"></script>
+    <script src="../../assets/js/services/auth-service.js?v=1.0.6"></script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-container overflow-hidden">
+<!-- SideNavBar Component -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-[#08080a] border-r border-white/[0.04] flex flex-col py-8 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-bold text-[#fbf8fc] tracking-tighter font-headline">CyberSec Assistant</h1>
+<p class="text-xs text-on-surface-variant mt-1 font-headline uppercase tracking-widest">Lưu trữ Sentinel</p>
+</div>
+<div class="px-4 mb-6">
+<a href="../assistant/chat.html" class="w-full flex items-center justify-center gap-2 bg-white/[0.02] border border-white/[0.08] hover:border-primary/40 hover:bg-primary/5 py-3 rounded-xl transition-all duration-300 group cursor-pointer">
+<span class="material-symbols-outlined text-primary text-sm transition-transform group-hover:rotate-90" aria-hidden="true">add</span>
+<span class="font-headline text-sm font-medium text-on-surface">Cuộc điều tra mới</span>
+</a>
+</div>
+<div class="flex-1 space-y-1 px-3">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] hover:border-l-2 hover:border-white/20 border-l-2 border-transparent transition-all duration-200" href="../../dashboard.html">
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="dashboard">dashboard</span>
+<span class="font-headline tracking-tight">Tổng quan</span>
+</a>
+<!-- AI Assistant -->
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] hover:border-l-2 hover:border-white/20 border-l-2 border-transparent transition-all duration-200" href="../assistant/chat.html">
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="smart_toy">smart_toy</span>
+<span class="font-headline tracking-tight">Trợ lý AI</span>
+</a>
+<!-- Forensic Tools (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#0F9D58] font-bold border-r-2 border-[#0F9D58] bg-gradient-to-r from-primary/8 to-transparent transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[#0F9D58]" aria-hidden="true" data-icon="link">link</span>
+<span class="font-headline tracking-tight">Công cụ phân tích</span>
+</a>
+        <!-- Security Insights -->
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] hover:border-l-2 hover:border-white/20 border-l-2 border-transparent transition-all duration-200" href="../news/index.html">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="newspaper">newspaper</span>
+            <span class="font-headline tracking-tight">Tin tức bảo mật</span>
+        </a>
+        <!-- Admin Panel (only visible to admin users) -->
+        <a id="admin-link" class="hidden flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-white/[0.02] hover:border-l-2 hover:border-red-500/30 border-l-2 border-transparent transition-all duration-200" href="../admin.html">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="admin_panel_settings">admin_panel_settings</span>
+            <span class="font-headline tracking-tight">Admin Panel</span>
+        </a>
+</div>
+<div class="px-6 pt-6 border-t border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User" data-alt="minimalist avatar profile picture with a high-tech cybersecurity aesthetic on a dark background" src="/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuDBShGIiYfsmyeY7AbutPry9QdyNIb671EPriJpvgQO-qwpx4HnsvYrH_9d8wLb491z_ljwMhUXwafZkajhrZnr0CpG814lc-Wq677Q5qrvmrb3i5aoqaIVxYlRaD3QYUd0pWsYimH6VV5feypfDuOaFI_0lmAWDGK44QZOpjNBvLJIAgxV8MmCCcdcqgiKSoGRxF0WIxH2s1WcpV1xwMssXXVrjoRo-4LYcclHwQyM10l28R6P60WvI5V5A68BEXgj9Xb3-HxXeqw"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Agent_701</span>
+<span class="text-[10px] text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(132,253,173,0.5)]"></span>
+                        Đã mã hóa
+                    </span>
+</div>
+</div>
+</div>
+</nav>
+<!-- TopNavBar Component -->
+<header class="flex justify-between items-center ml-64 px-8 h-16 w-[calc(100%-16rem)] sticky top-0 z-40 bg-[#070709]/70 border-b border-white/[0.04] backdrop-blur-xl">
+<div class="flex items-center gap-4">
+<span class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant font-mono">Phiên an toàn: 128-bit</span>
+</div>
+<div class="flex-1 max-w-md mx-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" aria-hidden="true">search</span>
+<input id="topBarSearchInput" class="w-full bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-2 pl-10 pr-4 text-[10px] font-headline tracking-widest text-on-surface placeholder:text-outline focus:outline-none focus:ring-1" placeholder="TÌM KIẾM TÀI LIỆU..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button id="topBarNotificationsBtn" class="text-on-surface hover:text-primary transition-colors active:scale-95 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/5" aria-label="Notifications">
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="notifications">notifications</span>
+</button>
+<button id="topBarAccountBtn" class="text-on-surface hover:text-primary transition-colors active:scale-95 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/5" aria-label="Account settings">
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-12 h-[calc(100vh-4rem)] overflow-y-auto">
+<div class="max-w-7xl mx-auto space-y-12">
+<!-- Hero Header -->
+<header class="flex flex-col gap-2">
+<div class="flex items-center gap-2 mb-4">
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_#84fdad]"></span>
+<span class="text-xs font-headline tracking-[0.2em] text-primary uppercase">Hệ thống An toàn / Đang Giám sát</span>
+</div>
+<h2 class="text-5xl font-bold font-headline tracking-tight text-on-surface">Công cụ phân tích</h2>
+<p class="text-on-surface-variant text-lg max-w-2xl">Triển khai các phân hệ phân tích thời gian thực để xác minh tính toàn vẹn của các liên kết bên ngoài và độ mạnh của thông tin xác thực.</p>
+</header>
+<!-- Tools Bento Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- URL Analysis Section -->
+<section class="col-span-12 lg:col-span-7 bg-[#19191d] border border-white/[0.05] rounded-2xl p-8 relative overflow-hidden group">
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" aria-hidden="true">link</span>
+</div>
+<div>
+<h3 class="text-xl font-headline font-semibold">Phân tích URL</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest">Bản đồ Tình báo Mối đe dọa Toàn cầu</p>
+</div>
+</div>
+<span class="text-[10px] px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full font-headline">PHÂN HỆ 01</span>
+</div>
+<div class="space-y-6">
+<div class="relative">
+<label class="text-[10px] font-headline tracking-widest text-on-surface-variant absolute -top-2 left-4 bg-[#19191d] px-2">TÊN MIỀN MỤC TIÊU</label>
+                            <input id="urlInput" class="w-full bg-surface-container-lowest border-none p-5 rounded-xl font-mono text-sm text-primary-dim placeholder:text-outline focus:ring-2 focus:ring-primary/20 transition-all" placeholder="https://suspicious-origin.net/path/to/payload" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-[10px] text-on-surface-variant font-headline mb-1 uppercase tracking-tighter">Độ sâu Heuristic</p>
+<p class="text-lg font-headline font-bold">QUÉT SÂU</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-[10px] text-on-surface-variant font-headline mb-1 uppercase tracking-tighter">Nguồn Proxy</p>
+<p class="text-lg font-headline font-bold">LUXEMBOURG-01</p>
+</div>
+</div>
+<button id="executeButton" class="w-full bg-[#0F9D58] text-on-primary-container py-5 rounded-xl font-headline font-bold uppercase tracking-widest text-sm hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" aria-hidden="true">security_update_good</span>
+                                Thực hiện phân tích
+                            </button>
+</div>
+</div>
+<!-- Decorative background element -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+</section>
+<!-- Status Panel (Small Bento) -->
+<div class="col-span-12 lg:col-span-5 grid grid-rows-2 gap-8">
+<div class="bg-[#19191d] border border-white/[0.05] rounded-2xl p-6 border-l-2 border-primary flex items-center justify-between">
+<div>
+<p class="text-xs font-headline text-on-surface-variant uppercase tracking-widest mb-1">Cơ sở dữ liệu Trực tiếp</p>
+<h4 class="text-3xl font-headline font-bold">4.2M+</h4>
+<p class="text-xs text-on-surface-variant">Các nút độc hại đã biết</p>
+</div>
+<div class="w-16 h-16 rounded-full border-4 border-surface-container-high border-t-primary animate-spin-slow"></div>
+</div>
+<div class="bg-primary rounded-2xl p-6 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-on-primary-container text-4xl" aria-hidden="true">shield_with_heart</span>
+<span class="text-[10px] font-headline bg-on-primary-container/20 px-2 py-1 rounded text-on-primary-container">TRUY CẬP CAO CẤP</span>
+</div>
+<div>
+<h4 class="text-2xl font-headline font-bold text-on-primary-container leading-none">Hệ thống Giám sát Tự động</h4>
+<p class="text-on-primary-container/70 text-sm mt-2">Đã bật bảo vệ tích cực cho tất cả các điểm cuối kết nối.</p>
+</div>
+</div>
+</div>
+<!-- Password Checker Section -->
+<section class="col-span-12 bg-[#19191d] border border-white/[0.05] rounded-2xl p-8 relative overflow-hidden">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div class="space-y-8">
+<div class="space-y-4">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-3xl" aria-hidden="true">password</span>
+</div>
+<div>
+<h3 class="text-2xl font-headline font-semibold">Đánh giá Độ mạnh Mật khẩu</h3>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest">Kiểm tra Độ mạnh Mật khẩu</p>
+</div>
+</div>
+<p class="text-on-surface-variant leading-relaxed">Thuật toán đa luồng của chúng tôi kiểm tra các mẫu phổ biến, so khớp từ điển và thời gian bẻ khóa ước tính dựa trên tính toán lượng tử.</p>
+</div>
+<div class="space-y-4">
+<div class="relative group">
+<input id="passwordInput" class="w-full bg-surface-container-lowest border-none p-5 pr-14 rounded-xl font-mono text-lg text-on-surface placeholder:text-outline focus:ring-2 focus:ring-tertiary/20 transition-all" placeholder="Nhập mật khẩu cần kiểm tra..." type="password"/>
+<button id="visibilityButton" class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+</button>
+</div>
+<div class="flex gap-2">
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+</div>
+<div class="flex justify-between text-[10px] font-headline tracking-widest uppercase">
+<span id="passwordStrength" class="text-primary">Độ mạnh: Chưa kiểm tra</span>
+<span id="passwordCrackTime" class="text-on-surface-variant">Thời gian phá: Chưa xác định</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10">
+<h5 class="text-sm font-headline font-bold mb-6 text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm" aria-hidden="true">analytics</span>
+                                THÔNG SỐ KIỂM TRA
+                            </h5>
+<ul class="space-y-4">
+<li class="flex items-center justify-between text-sm">
+<span class="text-on-surface-variant">Độ dài</span>
+<span class="text-on-surface-variant font-mono">Chưa kiểm tra</span>
+</li>
+<li class="flex items-center justify-between text-sm">
+<span class="text-on-surface-variant">Chữ hoa</span>
+<span class="text-on-surface-variant font-mono">Chưa kiểm tra</span>
+</li>
+<li class="flex items-center justify-between text-sm">
+<span class="text-on-surface-variant">Chữ thường</span>
+<span class="text-on-surface-variant font-mono">Chưa kiểm tra</span>
+</li>
+<li class="flex items-center justify-between text-sm">
+<span class="text-on-surface-variant">Chữ số</span>
+<span class="text-on-surface-variant font-mono">Chưa kiểm tra</span>
+</li>
+<li class="flex items-center justify-between text-sm">
+<span class="text-on-surface-variant">Ký tự đặc biệt</span>
+<span class="text-on-surface-variant font-mono">Chưa kiểm tra</span>
+</li>
+</ul>
+<div class="mt-8 pt-8 border-t border-outline-variant/10">
+<img class="w-full h-24 object-cover rounded-lg opacity-40 grayscale hover:grayscale-0 transition-all duration-500" data-alt="Abstract digital security visualization with flowing data lines, cyan and neon green highlights, and glowing circuit patterns on deep black background" src="/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuCs_RqsLtRaCioNzUfXbkxyiklHR8ECqZZwSr9ZfmeOY4yD2ZIJxTd6T79V35MDHbaKHVsJO_Ji77HuGzV5RuUFuX-p8ljaM9jZEdtN2jpBiuJDBUjpatNWvdpgabYHUx7_JSp4-DAv2vpAOPvlkH5GzKOHrUiP2TooiX9uKIiiiKDBnyuGQUzktIy222mkFzyGfMCy0s57tjsvJQBekTXh5GoFa_3f-3FY86abDuuXGFE7I0ekMgcl5P40v5u26EHP2YYxbZwmd5M"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Activity Section -->
+<div class="col-span-12">
+<h3 class="text-xl font-headline font-bold mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" aria-hidden="true">history</span>
+                        Lịch sử phân tích
+                    </h3>
+<div class="space-y-4" id="scan-history">
+    <div class="text-center py-8 text-on-surface-variant text-sm">
+        <span class="material-symbols-outlined text-2xl block mb-2">history</span>
+        Chưa có lịch sử phân tích. Hãy thực hiện quét URL hoặc kiểm tra mật khẩu.
+    </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+<!-- Configuration Manager -->
+<script src="../../assets/js/utils/config.js?v=1.0.4"></script>
+
+<!-- Shared Utilities -->
+<script src="../../assets/js/utils/utils.js?v=1.0.4"></script>
+
+<!-- URL Checker Controller Script -->
+<script src="../../assets/js/controllers/url-checker.js?v=1.0.4"></script>
+
+
+<!-- Password Checker Controller Script -->
+<script src="../../assets/js/controllers/password-checker.js?v=1.0.4"></script>
+
+</body></html>

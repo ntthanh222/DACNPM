@@ -1,0 +1,161 @@
+version: "3.1"
+
+rules:
+
+# ============================================================================
+# GREETING RULES
+# ============================================================================
+- rule: Always respond to greeting
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- rule: Say goodbye when user says goodbye
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Respond to thanks
+  steps:
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# SECURITY CHECK RULES (Phase 1.4: Form-based multi-turn data collection)
+# ============================================================================
+- rule: Activate phishing form
+  steps:
+  - intent: check_phishing
+  - action: phishing_form
+  - active_loop: phishing_form
+
+- rule: Submit phishing form and check
+  condition:
+  - active_loop: phishing_form
+  - slot_was_set:
+    - requested_slot: null
+  steps:
+  - action: action_check_phishing
+  - action: action_deactivate_loop
+  - active_loop: null
+
+- rule: Activate password form
+  steps:
+  - intent: check_password
+  - action: password_form
+  - active_loop: password_form
+
+- rule: Submit password form and check
+  condition:
+  - active_loop: password_form
+  - slot_was_set:
+    - requested_slot: null
+  steps:
+  - action: action_check_password_strength
+  - action: action_deactivate_loop
+  - active_loop: null
+
+- rule: Activate CVE lookup form
+  steps:
+  - intent: lookup_cve
+  - action: cve_lookup_form
+  - active_loop: cve_lookup_form
+
+- rule: Submit CVE form and lookup
+  condition:
+  - active_loop: cve_lookup_form
+  - slot_was_set:
+    - requested_slot: null
+  steps:
+  - action: action_lookup_cve
+  - action: action_deactivate_loop
+  - active_loop: null
+
+- rule: Provide security news when requested
+  steps:
+  - intent: get_security_news
+  - action: action_get_security_news
+
+- rule: Provide vulnerability assessment information
+  steps:
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+
+- rule: Provide incident response guidance
+  steps:
+  - intent: incident_response
+  - action: action_provide_incident_response
+
+- rule: Provide authentication help when requested
+  steps:
+  - intent: auth_help
+  - action: action_provide_auth_help
+
+# ============================================================================
+# SECURITY TIPS RULES
+# ============================================================================
+- rule: Always provide security tips when requested
+  steps:
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+
+# ============================================================================
+# CHAT HISTORY RULES
+# ============================================================================
+- rule: Provide chat history when requested
+  steps:
+  - intent: get_chat_history
+  - action: action_get_chat_history
+
+# ============================================================================
+# FALLBACK RULES (Phase 1.1: Native Rasa Fallback)
+# ============================================================================
+- rule: Trigger fallback when confidence is low
+  steps:
+  - intent: nlu_fallback
+  - action: action_default_fallback
+
+# ============================================================================
+# SLOT ASKING RULES (Phase 1.4: Forms preparation)
+# ============================================================================
+- rule: Ask for URL when not provided
+  condition:
+  - active_loop: phishing_form
+  - slot_was_set:
+    - requested_slot: url
+  steps:
+  - action: action_ask_url
+
+- rule: Ask for password when not provided
+  condition:
+  - active_loop: password_form
+  - slot_was_set:
+    - requested_slot: password
+  steps:
+  - action: action_ask_password
+
+- rule: Ask for CVE ID when not provided
+  condition:
+  - active_loop: cve_lookup_form
+  - slot_was_set:
+    - requested_slot: cve_id
+  steps:
+  - action: action_ask_cve_id
+
+# ============================================================================
+# KNOWLEDGE BASE RULES (Phase 3.2: Semantic Graph Search)
+# ============================================================================
+- rule: Query device vulnerabilities
+  steps:
+  - intent: ask_device_vulnerability
+  - action: action_knowledge_base_query
+
+- rule: Query CVE device impact
+  steps:
+  - intent: ask_cve_device_impact
+  - action: action_knowledge_base_query
+
+- rule: Query patch availability
+  steps:
+  - intent: ask_patch_availability
+  - action: action_knowledge_base_query

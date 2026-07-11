@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CyberSec Assistant - AI Assistant</title>
+    <!-- Redirect to actual dashboard -->
+    <meta http-equiv="refresh" content="0;url=dashboard.html">
+    <!-- Material Symbols Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Shared Styles & Tailwind Configuration -->
+    <link rel="stylesheet" href="assets/css/style.css"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="assets/js/utils/tailwind-config.js"></script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar Component -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-[#131316] flex flex-col py-8 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-bold text-[#fbf8fc] tracking-tighter font-headline">CyberSec Assistant</h1>
+<p class="text-xs text-on-surface-variant mt-1 font-headline uppercase tracking-widest">The Sentinel Archive</p>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full flex items-center justify-center gap-2 bg-surface-container-high py-3 rounded-xl border border-primary/10 hover:bg-surface-bright transition-colors duration-200 group" aria-label="Create new investigation">
+
+<span class="material-symbols-outlined text-primary text-sm" aria-hidden="true">add</span>
+
+<span class="font-headline text-sm font-medium">New Investigation</span>
+
+</button>
+</div>
+<div class="flex-1 space-y-1 px-3">
+<!-- AI Assistant (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#0F9D58] font-bold border-r-2 border-[#0F9D58] bg-[#19191d]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="smart_toy">smart_toy</span>
+<span class="font-headline tracking-tight">AI Assistant</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#acaaae] hover:text-[#fbf8fc] hover:bg-[#1f1f23] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="link">link</span>
+<span class="font-headline tracking-tight">URL Check</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#acaaae] hover:text-[#fbf8fc] hover:bg-[#1f1f23] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="search_check">search_check</span>
+<span class="font-headline tracking-tight">CVE Lookup</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#acaaae] hover:text-[#fbf8fc] hover:bg-[#1f1f23] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="newspaper">newspaper</span>
+<span class="font-headline tracking-tight">Security News</span>
+</a>
+</div>
+<div class="px-6 pt-6 border-t border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User" data-alt="minimalist avatar profile picture with a high-tech cybersecurity aesthetic on a dark background" src="/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuDBShGIiYfsmyeY7AbutPry9QdyNIb671EPriJpvgQO-qwpx4HnsvYrH_9d8wLb491z_ljwMhUXwafZkajhrZnr0CpG814lc-Wq677Q5qrvmrb3i5aoqaIVxYlRaD3QYUd0pWsYimH6VV5feypfDuOaFI_0lmAWDGK44QZOpjNBvLJIAgxV8MmCCcdcqgiKSoGRxF0WIxH2s1WcpV1xwMssXXVrjoRo-4LYcclHwQyM10l28R6P60WvI5V5A68BEXgj9Xb3-HxXeqw"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Agent_701</span>
+<span class="text-[10px] text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(132,253,173,0.5)]"></span>
+                        Encrypted
+                    </span>
+</div>
+</div>
+</div>
+</nav>
+<!-- TopNavBar Component -->
+<header class="flex justify-between items-center ml-64 px-8 h-16 w-[calc(100%-16rem)] sticky top-0 z-40 bg-[#0e0e11]/80 backdrop-blur-xl">
+<div class="flex items-center gap-4">
+<span class="font-headline uppercase tracking-widest text-xs text-on-surface-variant">Secure Session: 128-bit</span>
+</div>
+<div class="flex-1 max-w-md mx-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg py-2 pl-10 pr-4 text-[10px] font-headline tracking-widest text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 transition-all" placeholder="SEARCH ARCHIVE..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+
+<button class="text-on-surface hover:opacity-70 transition-opacity active:scale-95 cursor-pointer" aria-label="Notifications">
+
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="notifications">notifications</span>
+
+</button>
+
+<button class="text-on-surface hover:opacity-70 transition-opacity active:scale-95 cursor-pointer" aria-label="Account settings">
+
+<span class="material-symbols-outlined" aria-hidden="true" data-icon="account_circle">account_circle</span>
+
+</button>
+
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-[calc(100vh-4rem)] p-8 flex flex-col">
+<!-- AI Assistant Editorial Header -->
+<div class="mb-12">
+<div class="flex items-center gap-3 mb-2">
+<span class="h-[1px] w-8 bg-primary"></span>
+<span class="font-headline text-xs font-bold text-primary tracking-[0.2em] uppercase">Intelligence Terminal</span>
+</div>
+<h2 class="text-5xl font-headline font-bold tracking-tighter text-on-surface mb-4">Neural Forensic Analyst</h2>
+<p class="max-w-xl text-on-surface-variant text-sm leading-relaxed">
+                Interact with our Large Language Model trained on global CVE databases, real-time threat intelligence feeds, and historical breach post-mortems.
+            </p>
+</div>
+<!-- Chat Container -->
+<div class="flex-1 flex flex-col gap-10 max-w-4xl mx-auto w-full pb-32">
+<!-- Assistant Message -->
+<div class="flex gap-6 group">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0 border border-primary/20">
+<span class="material-symbols-outlined text-primary" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="flex-1 space-y-4">
+<div class="flex items-baseline gap-3">
+<span class="font-headline font-bold text-xs uppercase tracking-widest text-primary">Sentinel_AI</span>
+<span class="text-[10px] text-outline">09:42:12 UTC</span>
+</div>
+<div class="bg-surface-container p-6 rounded-2xl border-l-2 border-primary relative">
+<p class="text-sm leading-relaxed text-on-surface">System diagnostics complete. I am currently monitoring 14,209 known vulnerability vectors across your connected subnets. How can I assist your forensic investigation today?</p>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-6 flex-row-reverse">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="person">person</span>
+</div>
+<div class="flex-1 space-y-4 text-right">
+<div class="flex items-baseline gap-3 justify-end">
+<span class="text-[10px] text-outline">09:44:05 UTC</span>
+<span class="font-headline font-bold text-xs uppercase tracking-widest text-on-surface">Agent_701</span>
+</div>
+<div class="bg-secondary-container p-6 rounded-2xl inline-block text-left max-w-lg">
+<p class="text-sm leading-relaxed text-on-surface">Analyze the recent Log4j variations. Are there any specific indicators of compromise for the latest CVE-2021-44228 mutations that I should be scanning for in the DMZ?</p>
+</div>
+</div>
+</div>
+<!-- Assistant Message with Data Visualization -->
+<div class="flex gap-6">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0 border border-primary/20">
+<span class="material-symbols-outlined text-primary" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="flex-1 space-y-4">
+<div class="flex items-baseline gap-3">
+<span class="font-headline font-bold text-xs uppercase tracking-widest text-primary">Sentinel_AI</span>
+<span class="text-[10px] text-outline">09:44:18 UTC</span>
+</div>
+<div class="bg-surface-container p-6 rounded-2xl border-l-2 border-primary space-y-4">
+<p class="text-sm leading-relaxed text-on-surface">The Log4j landscape has evolved significantly. For your DMZ, you should specifically monitor for obfuscated JNDI lookups using unconventional protocols. Here is the risk distribution for the latest variations:</p>
+<!-- Mini Data Grid (Bento Style) -->
+<div class="grid grid-cols-2 gap-4 mt-4">
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10">
+<span class="text-[10px] font-headline uppercase tracking-widest text-on-surface-variant block mb-1">Critical IOCs</span>
+<span class="text-2xl font-headline font-bold text-primary tracking-tighter">42</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10">
+<span class="text-[10px] font-headline uppercase tracking-widest text-on-surface-variant block mb-1">Active Exploits</span>
+<span class="text-2xl font-headline font-bold text-tertiary tracking-tighter">1.2k</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl font-mono text-[11px] text-primary-dim/80 leading-relaxed overflow-x-auto border border-primary/5">
+<code>
+                                // INDICATOR_HASH_QUERY <br/>
+                                SELECT * FROM threat_db WHERE cve_id = 'CVE-2021-44228' <br/>
+                                AND variation_type = 'obfuscated_jndi' <br/>
+                                AND severity &gt; 8.5;
+                            </code>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Chat Input Section -->
+<div class="fixed bottom-8 left-[calc(16rem+2rem)] right-8 z-30">
+<div class="max-w-4xl mx-auto relative">
+<!-- Suggestion Chips -->
+<div class="absolute bottom-full mb-4 flex gap-2 overflow-x-auto no-scrollbar pb-2 w-full">
+<button class="bg-surface-container/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-headline font-medium text-on-surface-variant border border-outline-variant/20 whitespace-nowrap hover:border-primary/40 hover:text-on-surface transition-all">Scan Network</button>
+<button class="bg-surface-container/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-headline font-medium text-on-surface-variant border border-outline-variant/20 whitespace-nowrap hover:border-primary/40 hover:text-on-surface transition-all">Check CVE-2024-0012</button>
+<button class="bg-surface-container/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-headline font-medium text-on-surface-variant border border-outline-variant/20 whitespace-nowrap hover:border-primary/40 hover:text-on-surface transition-all">Export Logs</button>
+</div>
+<!-- Main Input -->
+<div class="bg-surface-container-high/80 backdrop-blur-2xl rounded-2xl p-2 border border-outline-variant/20 flex items-end gap-2 shadow-2xl">
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-3 text-on-surface placeholder:text-outline font-headline tracking-wide resize-none" placeholder="INPUT SECURE COMMAND OR QUERY..." rows="1"></textarea>
+<button class="bg-gradient-to-br from-primary to-primary-container p-3 rounded-xl text-on-primary-container shadow-[0_0_15px_rgba(132,253,173,0.3)] active:scale-95 transition-all">
+<span class="material-symbols-outlined font-bold">send</span>
+</button>
+</div>
+<div class="mt-3 flex items-center justify-between px-2">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[9px] uppercase tracking-[0.2em] text-primary/70 font-bold">LLM Online</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[10px] text-on-surface-variant">lock</span>
+<span class="text-[9px] uppercase tracking-[0.2em] text-on-surface-variant">E2EE Active</span>
+</div>
+</div>
+<span class="text-[9px] text-outline font-headline tracking-widest uppercase">4.2k Tokens Remaining</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Texture Layers -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-[0.03]" style="background-image: url('/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuAvw7bSucUmpYwwpuheRu85EsQ5hNzq-6dzdh0KYhvnvFH2GSPqu_ccEDGBmMnBK6OXFVgnp1kJS-TqvEF_Dh6v9Z1YPQTkXlGVxmzwjgNCPBmp-s97V4M7JPjYLXhKAnJkcGsUVffryiK6PLGQGbcAOLpRwr-MbFwgun6il7wUFi3XRTLCVVNVV_v55LxtN5gMgl9Kh_KODiR15dd5_0xn0HRKHG_xvA1SA6mibbaecv0ktn6s1ZM6TKazXWz7prR1veHwG9Iudv8');">
+</div>
+<!-- Ambient Glows -->
+<div class="fixed top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] pointer-events-none z-[-2]"></div>
+<div class="fixed bottom-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-tertiary/5 blur-[120px] pointer-events-none z-[-2]"></div>
+</body></html>

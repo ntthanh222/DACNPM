@@ -1,0 +1,47 @@
+recipe: default.v1
+language: vi
+assistant_id: 20250414-0000-0000-0000-000000000000
+
+pipeline:
+  # Phase 1.2: Enhanced Tokenizer for Vietnamese
+  - name: WhitespaceTokenizer
+  # Alternative: SpacyTokenizer with Vietnamese model
+  # - name: SpacyTokenizer
+  #   model: "vi_core_news_lg"
+
+  - name: RegexFeaturizer
+  - name: LexicalSyntacticFeaturizer
+
+  # Phase 1.2: Enhanced CountVectors with better n-gram coverage
+  - name: CountVectorsFeaturizer
+  - name: CountVectorsFeaturizer
+    analyzer: char_wb
+    min_ngram: 1
+    max_ngram: 6  # Increased from 4 for better Vietnamese recognition
+
+  # Phase 1.2: Regex Entity Extractor (works with Phase 1.3)
+  - name: RegexEntityExtractor
+    case_sensitive: False
+    look_up_table: true
+
+  # Main classifier
+  - name: DIETClassifier
+    epochs: 50
+    constrain_similarities: true
+    use_masked_language_model: True  # Better for semantic understanding
+
+  - name: EntitySynonymMapper
+  - name: ResponseSelector
+    epochs: 50
+
+  # Phase 1.1: Enhanced Fallback
+  - name: FallbackClassifier
+    threshold: 0.7
+    ambiguity_threshold: 0.3
+
+policies:
+  - name: MemoizationPolicy
+  - name: RulePolicy
+  - name: TEDPolicy
+    max_history: 5
+    epochs: 50

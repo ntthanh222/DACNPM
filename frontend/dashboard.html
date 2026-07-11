@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CyberSec Assistant - Security Dashboard</title>
+
+    <!-- DOMPurify for XSS Protection -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+    <!-- Shared Styles & Tailwind Configuration -->
+    <link rel="stylesheet" href="assets/css/style.css?v=1.0.2"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="assets/js/utils/tailwind-config.js?v=1.0.2"></script>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <!-- Crypto Utilities for JWT Encryption -->
+    <script src="assets/js/utils/crypto-utils.js?v=1.0.3"></script>
+
+    <!-- Authentication Guard -->
+    <script src="assets/js/services/auth-service.js?v=1.0.6"></script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-container">
+
+<!-- SideNavBar Component -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-[#08080a] border-r border-white/[0.04] flex flex-col py-8 z-50">
+    <div class="px-6 mb-10">
+        <h1 class="text-xl font-bold text-[#fbf8fc] tracking-tighter font-headline">CyberSec Assistant</h1>
+        <p class="text-xs text-on-surface-variant mt-1 font-headline uppercase tracking-widest">Lưu trữ Sentinel</p>
+    </div>
+
+    <div class="px-4 mb-6">
+        <a href="pages/assistant/chat.html" class="w-full flex items-center justify-center gap-2 bg-white/[0.02] border border-white/[0.08] hover:border-primary/40 hover:bg-primary/5 py-3 rounded-xl transition-all duration-300 group cursor-pointer" aria-label="Create new investigation">
+            <span class="material-symbols-outlined text-primary text-sm transition-transform group-hover:rotate-90" aria-hidden="true">add</span>
+            <span class="font-headline text-sm font-medium text-on-surface">Cuộc điều tra mới</span>
+        </a>
+    </div>
+
+    <div class="flex-1 space-y-1 px-3">
+        <!-- Dashboard (Active) -->
+        <a class="flex items-center gap-3 px-4 py-3 text-primary font-bold border-l-2 border-primary bg-gradient-to-r from-primary/8 to-transparent transition-all duration-200" href="dashboard.html">
+            <span class="material-symbols-outlined text-primary" aria-hidden="true" data-icon="dashboard">dashboard</span>
+            <span class="font-headline tracking-tight">Tổng quan</span>
+        </a>
+
+        <!-- AI Assistant -->
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] hover:border-l-2 hover:border-white/20 border-l-2 border-transparent transition-all duration-200" href="pages/assistant/chat.html">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="smart_toy">smart_toy</span>
+            <span class="font-headline tracking-tight">Trợ lý AI</span>
+        </a>
+
+        <!-- Forensic Tools -->
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] hover:border-l-2 hover:border-white/20 border-l-2 border-transparent transition-all duration-200" href="pages/url-check/index.html">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="link">link</span>
+            <span class="font-headline tracking-tight">Công cụ phân tích</span>
+        </a>
+
+        <!-- Security Insights -->
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/[0.02] hover:border-l-2 hover:border-white/20 border-l-2 border-transparent transition-all duration-200" href="pages/news/index.html">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="newspaper">newspaper</span>
+            <span class="font-headline tracking-tight">Tin tức bảo mật</span>
+        </a>
+
+        <!-- Admin Panel (only visible to admin users) -->
+        <a id="admin-link" class="hidden flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-white/[0.02] hover:border-l-2 hover:border-red-500/30 border-l-2 border-transparent transition-all duration-200" href="pages/admin.html">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="admin_panel_settings">admin_panel_settings</span>
+            <span class="font-headline tracking-tight">Admin Panel</span>
+        </a>
+    </div>
+
+    <div class="px-6 pt-6 border-t border-outline-variant/10">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+                <img alt="User" data-alt="minimalist avatar profile picture with a high-tech cybersecurity aesthetic on a dark background" src="/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuDBShGIiYfsmyeY7AbutPry9QdyNIb671EPriJpvgQO-qwpx4HnsvYrH_9d8wLb491z_ljwMhUXwafZkajhrZnr0CpG814lc-Wq677Q5qrvmrb3i5aoqaIVxYlRaD3QYUd0pWsYimH6VV5feypfDuOaFI_0lmAWDGK44QZOpjNBvLJIAgxV8MmCCcdcqgiKSoGRxF0WIxH2s1WcpV1xwMssXXVrjoRo-4LYcclHwQyM10l28R6P60WvI5V5A68BEXgj9Xb3-HxXeqw"/>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xs font-bold text-on-surface">Agent_701</span>
+                <span class="text-[10px] text-primary flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(132,253,173,0.5)]"></span>
+                    Đã mã hóa
+                </span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- TopNavBar Component -->
+<header class="flex justify-between items-center ml-64 px-8 h-16 w-[calc(100%-16rem)] sticky top-0 z-40 bg-[#070709]/70 border-b border-white/[0.04] backdrop-blur-xl">
+    <div class="flex items-center gap-4">
+        <span class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant font-mono">Phiên an toàn: 128-bit</span>
+    </div>
+
+    <div class="flex-1 max-w-md mx-8">
+        <div class="relative group">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" aria-hidden="true">search</span>
+            <input id="topBarSearchInput" class="w-full bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-2 pl-10 pr-4 text-[10px] font-headline tracking-widest text-on-surface placeholder:text-outline focus:outline-none focus:ring-1" placeholder="TÌM KIẾM TÀI LIỆU..." type="text"/>
+        </div>
+    </div>
+
+    <div class="flex-1 max-w-md mx-8"></div>
+
+    <div class="flex items-center gap-6">
+        <button id="topBarNotificationsBtn" class="text-on-surface hover:text-primary transition-colors active:scale-95 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/5" aria-label="Notifications">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="notifications">notifications</span>
+        </button>
+        <button id="topBarAccountBtn" class="text-on-surface hover:text-primary transition-colors active:scale-95 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/5" aria-label="Account settings">
+            <span class="material-symbols-outlined" aria-hidden="true" data-icon="account_circle">account_circle</span>
+        </button>
+    </div>
+</header>
+
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-[calc(100vh-4rem)] p-8 flex flex-col">
+    <!-- Dashboard Header -->
+    <section class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <span class="h-[1px] w-8 bg-primary"></span>
+            <span class="font-headline text-xs font-bold text-primary tracking-[0.2em] uppercase">Trung tâm Chỉ huy</span>
+        </div>
+        <h2 class="text-5xl font-headline font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-[#e4e2e4] to-primary-dim mb-4">Bảng giám sát Hoạt động An ninh</h2>
+        <p class="max-w-xl text-on-surface-variant text-sm leading-relaxed">
+            Hệ thống phân tích lỗ hổng bảo mật, giám sát mối đe dọa thời gian thực và trợ lý an ninh AI.
+        </p>
+    </section>
+
+    <!-- Top Row: Metrics Bento -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Card 1: Threat Level -->
+        <a href="pages/news/index.html" class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-tertiary/40 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden h-36 flex flex-col justify-between cursor-pointer">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] text-on-surface-variant font-headline uppercase tracking-widest">Mức đe dọa Toàn cầu</span>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-tertiary/10 text-tertiary">
+                    <span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse shadow-[0_0_10px_#00d9fe]"></span>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-3xl font-bold font-headline text-tertiary tracking-tight bg-clip-text">MỨC NÂNG CAO</h4>
+                <p class="text-[9px] text-on-surface-variant mt-1 uppercase tracking-widest font-mono">Giám sát Sentinel</p>
+            </div>
+            <!-- Spotlight glow -->
+            <div class="absolute -right-8 -bottom-8 w-20 h-20 bg-tertiary/5 rounded-full blur-xl pointer-events-none group-hover:bg-tertiary/10 transition-all"></div>
+        </a>
+
+        <!-- Card 2: Vulnerabilities -->
+        <a href="pages/news/index.html" class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-primary/40 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden h-36 flex flex-col justify-between cursor-pointer">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] text-on-surface-variant font-headline uppercase tracking-widest">CSDL Mối đe dọa</span>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary border border-primary/20">
+                    <span class="material-symbols-outlined text-base" aria-hidden="true">security</span>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-3xl font-bold font-headline text-on-surface tracking-tight" id="totalVulns">0</h4>
+                <p class="text-[9px] text-on-surface-variant mt-1 uppercase tracking-widest font-mono">Lỗ hổng đang hoạt động</p>
+            </div>
+            <!-- Spotlight glow -->
+            <div class="absolute -right-8 -bottom-8 w-20 h-20 bg-primary/5 rounded-full blur-xl pointer-events-none group-hover:bg-primary/10 transition-all"></div>
+        </a>
+
+        <!-- Card 3: Secure Firewall -->
+        <a href="pages/assistant/chat.html" class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-primary/40 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden h-36 flex flex-col justify-between cursor-pointer">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] text-on-surface-variant font-headline uppercase tracking-widest">Hệ thống bảo vệ Sentinel</span>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary border border-primary/20">
+                    <span class="material-symbols-outlined text-base" aria-hidden="true">gpp_good</span>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-3xl font-bold font-headline text-primary tracking-tight">ĐÃ BẬT E2EE</h4>
+                <p class="text-[9px] text-on-surface-variant mt-1 uppercase tracking-widest font-mono">Đường truyền bảo mật TLS 1.3</p>
+            </div>
+            <!-- Spotlight glow -->
+            <div class="absolute -right-8 -bottom-8 w-20 h-20 bg-primary/5 rounded-full blur-xl pointer-events-none group-hover:bg-primary/10 transition-all"></div>
+        </a>
+
+        <!-- Card 4: Session Status -->
+        <a href="pages/url-check/index.html" class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-primary/40 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden h-36 flex flex-col justify-between cursor-pointer">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] text-on-surface-variant font-headline uppercase tracking-widest">Cổng giao tiếp hệ thống</span>
+                <p class="text-xs flex items-center gap-1.5" id="connectionStatus">
+                    <span class="w-2 h-2 rounded-full bg-gray-500 shadow-[0_0_8px_rgba(255,255,255,0.2)]" id="connectionDot"></span>
+                    <span id="connectionText" class="text-[10px] font-bold font-mono uppercase text-outline">ĐANG KẾT NỐI</span>
+                </p>
+            </div>
+            <div>
+                <h4 class="text-2xl font-bold font-headline text-on-surface tracking-tight">PHIÊN KẾT NỐI AN TOÀN</h4>
+                <p class="text-[9px] text-on-surface-variant mt-1 uppercase tracking-widest font-mono">Xác thực bắt tay thành công</p>
+            </div>
+            <!-- Spotlight glow -->
+            <div class="absolute -right-8 -bottom-8 w-20 h-20 bg-white/5 rounded-full blur-xl pointer-events-none group-hover:bg-white/10 transition-all"></div>
+        </a>
+    </div>
+
+    <!-- Middle Row: Analytics & Alerts Feed -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+        <!-- Vulnerability Statistics (7 cols) -->
+        <div class="col-span-1 lg:col-span-7 flex flex-col">
+            <div class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-primary/20 rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300 flex-1 flex flex-col justify-between group relative overflow-hidden">
+                <div class="flex items-center justify-between mb-6 relative z-10">
+                    <div>
+                        <h3 class="font-headline font-bold text-lg text-on-surface bg-clip-text">Phân bổ lỗ hổng bảo mật</h3>
+                        <p class="text-xs text-on-surface-variant mt-1">Phân loại các vector đe dọa đang hoạt động</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="text-on-surface-variant hover:text-primary transition-colors px-3 py-2 rounded-lg flex items-center gap-1 hover:bg-white/5 text-xs font-headline font-medium border border-white/5 hover:border-primary/20" id="exportReportBtn" aria-label="Export report">
+                            <span class="material-symbols-outlined text-sm">download</span>
+                            <span>Xuất báo cáo</span>
+                        </button>
+                        <button class="text-on-surface-variant hover:text-primary transition-colors w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/5" id="refreshStatsBtn" aria-label="Refresh statistics">
+                            <span class="material-symbols-outlined text-xl">refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10">
+                    <!-- Chart Container (7 cols) -->
+                    <div class="md:col-span-7 relative h-[280px]">
+                        <canvas id="vulnerabilityChart"></canvas>
+                    </div>
+
+                    <!-- Stats Summary (5 cols) -->
+                    <div class="md:col-span-5 flex flex-col justify-center border-t md:border-t-0 md:border-l border-white/5 md:pl-8 pt-6 md:pt-0">
+                        <h5 class="text-xs font-headline uppercase tracking-widest text-on-surface-variant mb-6 font-semibold">Các vector lỗ hổng</h5>
+                        <div id="statsSummary" class="space-y-4">
+                            <!-- Stats will be dynamically inserted -->
+                            <div class="text-sm text-on-surface-variant flex items-center gap-2">
+                                <span class="material-symbols-outlined animate-spin text-sm">refresh</span>
+                                Đang tải thống kê...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Spotlight glow -->
+                <div class="absolute -left-16 -bottom-16 w-40 h-40 bg-primary/2 rounded-full blur-2xl pointer-events-none group-hover:bg-primary/5 transition-all"></div>
+            </div>
+        </div>
+
+        <!-- Security News Stream (5 cols) -->
+        <div class="col-span-1 lg:col-span-5 flex flex-col">
+            <div class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-tertiary/20 rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-300 h-[420px] overflow-hidden flex flex-col justify-between group relative">
+                <div class="flex items-center justify-between mb-6 relative z-10">
+                    <div>
+                        <h3 class="font-headline font-bold text-lg text-on-surface">Thông tin An ninh</h3>
+                        <p class="text-xs text-on-surface-variant mt-1">Tin tức CVE & tình báo thời gian thực</p>
+                    </div>
+                    <a href="pages/news/index.html" class="text-xs font-bold text-primary hover:text-primary-dim hover:underline flex items-center gap-1 transition-all">
+                        Xem tất cả <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                    </a>
+                </div>
+
+                <!-- News Cards Container -->
+                <div id="newsContainer" class="flex-1 overflow-y-auto space-y-4 pr-1 relative z-10">
+                    <!-- Loading State -->
+                    <div class="flex items-center justify-center h-full text-on-surface-variant">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined animate-spin">refresh</span>
+                            <span>Đang tải tin tức bảo mật...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Spotlight glow -->
+                <div class="absolute -right-16 -bottom-16 w-40 h-40 bg-tertiary/2 rounded-full blur-2xl pointer-events-none group-hover:bg-tertiary/5 transition-all"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row: Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Quick Malware Check -->
+        <div class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-primary/20 rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
+            <div class="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary border border-primary/20">
+                            <span class="material-symbols-outlined text-xl" aria-hidden="true">link</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-headline font-semibold">Kiểm tra nhanh tính toàn vẹn URL</h3>
+                            <p class="text-[9px] text-on-surface-variant uppercase tracking-widest font-mono">Bản đồ mối đe dọa toàn cầu</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">
+                        Kiểm tra ngay danh tiếng của một liên kết ngoài đáng ngờ bằng công nghệ quét heuristic.
+                    </p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <input id="quickUrlInput" class="flex-1 bg-white/[0.02] border border-white/[0.08] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-3 px-4 text-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-1 font-mono" placeholder="Dán URL cần quét (ví dụ: https://...)" type="text"/>
+                    <button id="quickUrlBtn" class="bg-[#0F9D58] hover:brightness-115 active:scale-95 px-6 rounded-xl text-on-primary-container font-bold text-sm transition-all flex items-center gap-1 shadow-[0_0_15px_rgba(15,157,88,0.25)]">
+                        <span class="material-symbols-outlined text-sm">security_update_good</span>
+                        Quét
+                    </button>
+                </div>
+            </div>
+            <!-- Decorative spotlight -->
+            <div class="absolute -right-16 -top-16 w-36 h-36 bg-primary/5 rounded-full blur-2xl pointer-events-none group-hover:bg-primary/10 transition-colors"></div>
+        </div>
+
+        <!-- Quick AI Prompt -->
+        <div class="bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.05] hover:border-tertiary/20 rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
+            <div class="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-tertiary/10 text-tertiary border border-tertiary/20">
+                            <span class="material-symbols-outlined text-xl" aria-hidden="true">smart_toy</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-headline font-semibold">Tham vấn Trợ lý AI Sentinel</h3>
+                            <p class="text-[9px] text-on-surface-variant uppercase tracking-widest font-mono">Phân tích điều tra mạng nơ-ron</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">
+                        Đặt câu hỏi về các lỗ hổng, cơ chế giảm thiểu thiệt hại hoặc nguyên tắc an toàn thông tin.
+                    </p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <input id="quickAiInput" class="flex-1 bg-white/[0.02] border border-white/[0.08] focus:border-tertiary/40 focus:ring-tertiary/10 transition-all rounded-xl py-3 px-4 text-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-1" placeholder="Hỏi Sentinel AI về các lỗ hổng, CVE..." type="text"/>
+                    <button id="quickAiBtn" class="bg-gradient-to-r from-tertiary-dim to-tertiary hover:brightness-110 active:scale-95 px-6 rounded-xl text-on-tertiary-container font-bold text-sm transition-all flex items-center gap-1 shadow-[0_0_15px_rgba(0,202,237,0.25)]">
+                        <span class="material-symbols-outlined text-sm">send</span>
+                        Hỏi
+                    </button>
+                </div>
+            </div>
+            <!-- Decorative spotlight -->
+            <div class="absolute -right-16 -top-16 w-36 h-36 bg-tertiary/5 rounded-full blur-2xl pointer-events-none group-hover:bg-tertiary/10 transition-colors"></div>
+        </div>
+    </div>
+</main>
+
+<!-- Visual Texture Layers -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-[0.02]" style="background-image: url('/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuAvw7bSucUmpYwwpuheRu85EsQ5hNzq-6dzdh0KYhvnvFH2GSPqu_ccEDGBmMnBK6OXFVgnp1kJS-TqvEF_Dh6v9Z1YPQTkXlGVxmzwjgNCPBmp-s97V4M7JPjYLXhKAnJkcGsUVffryiK6PLGQGbcAOLpRwr-MbFwgun6il7wUFi3XRTLCVVNVV_v55LxtN5gMgl9Kh_KODiR15dd5_0xn0HRKHG_xvA1SA6mibbaecv0ktn6s1ZM6TKazXWz7pr1veHwG9Iudv8');">
+</div>
+
+<!-- Ambient Glows -->
+<div class="fixed top-[-10%] right-[-15%] w-[60%] h-[60%] rounded-full bg-primary/8 blur-[160px] pointer-events-none z-[-2] animate-pulse" style="animation-duration: 12s;"></div>
+<div class="fixed bottom-[-15%] left-[10%] w-[50%] h-[50%] rounded-full bg-tertiary/8 blur-[160px] pointer-events-none z-[-2] animate-pulse" style="animation-duration: 8s;"></div>
+<div class="fixed top-[30%] left-[30%] w-[30%] h-[30%] rounded-full bg-error/4 blur-[130px] pointer-events-none z-[-2]"></div>
+
+<!-- Configuration Manager -->
+<script src="assets/js/utils/config.js?v=1.0.3"></script>
+
+<!-- Shared Utilities -->
+<script src="assets/js/utils/utils.js?v=1.0.3"></script>
+
+<!-- XSS Protection Sanitizer -->
+<script src="assets/js/utils/sanitizer.js?v=1.0.3"></script>
+
+<!-- Services -->
+<script src="assets/js/services/chat-service.js?v=1.0.3"></script>
+<script src="assets/js/services/news-service.js?v=1.0.3"></script>
+<script src="assets/js/services/stats-service.js?v=1.0.3"></script>
+<script src="assets/js/services/user-service.js?v=1.0.3"></script>
+
+<!-- Utils -->
+<script src="assets/js/utils/storage-utils.js?v=1.0.3"></script>
+<script src="assets/js/utils/validation-utils.js?v=1.0.3"></script>
+<script src="assets/js/utils/format-utils.js?v=1.0.3"></script>
+<script src="assets/js/utils/dom-utils.js?v=1.0.3"></script>
+
+<!-- Controllers -->
+<script src="assets/js/controllers/chat-controller.js?v=1.0.3"></script>
+<script src="assets/js/controllers/news-controller.js?v=1.0.3"></script>
+<script src="assets/js/controllers/stats-controller.js?v=1.0.3"></script>
+
+<!-- Dashboard Main Controller -->
+<script src="assets/js/controllers/dashboard-controller.js?v=1.0.3"></script>
+
+</body>
+</html>

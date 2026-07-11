@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CyberSec Assistant - Secure Terminal Login</title>
+
+    <!-- Shared Styles & Tailwind Configuration -->
+    <link rel="stylesheet" href="assets/css/style.css?v=1.0.2"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="assets/js/utils/tailwind-config.js?v=1.0.2"></script>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <!-- Crypto Utilities for JWT Encryption -->
+    <script src="assets/js/utils/crypto-utils.js?v=1.0.3"></script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-container min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+
+    <!-- Ambient Glows -->
+    <div class="fixed top-[-10%] right-[-15%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] pointer-events-none z-[-2] animate-pulse" style="animation-duration: 12s;"></div>
+    <div class="fixed bottom-[-15%] left-[10%] w-[45%] h-[45%] rounded-full bg-tertiary/5 blur-[120px] pointer-events-none z-[-2] animate-pulse" style="animation-duration: 8s;"></div>
+    
+    <!-- Matrix/Tech Texture Layer -->
+    <div class="fixed inset-0 pointer-events-none z-[-1] opacity-[0.02]" style="background-image: url('/api/proxy/image?url=https://lh3.googleusercontent.com/aida-public/AB6AXuAvw7bSucUmpYwwpuheRu85EsQ5hNzq-6dzdh0KYhvnvFH2GSPqu_ccEDGBmMnBK6OXFVgnp1kJS-TqvEF_Dh6v9Z1YPQTkXlGVxmzwjgNCPBmp-s97V4M7JPjYLXhKAnJkcGsUVffryiK6PLGQGbcAOLpRwr-MbFwgun6il7wUFi3XRTLCVVNVV_v55LxtN5gMgl9Kh_KODiR15dd5_0xn0HRKHG_xvA1SA6mibbaecv0ktn6s1ZM6TKazXWz7pr1veHwG9Iudv8');"></div>
+
+    <!-- Login Card Container -->
+    <div class="w-full max-w-md bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.06] rounded-3xl p-8 shadow-[0_12px_40px_0_rgba(0,0,0,0.5)] backdrop-blur-md relative z-10 transition-all duration-300 group">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-4 shadow-[0_0_15px_rgba(132,253,173,0.15)]">
+                <span class="material-symbols-outlined text-2xl">shield_lock</span>
+            </div>
+            <h1 class="text-2xl font-bold font-headline tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-primary-dim">CyberSec Assistant</h1>
+            <p class="text-xs text-on-surface-variant uppercase tracking-widest mt-1 font-mono">Bảng Đăng Nhập Sentinel</p>
+        </div>
+
+        <!-- Tab Toggle buttons -->
+        <div class="flex bg-white/[0.02] border border-white/[0.06] rounded-xl p-1 mb-8">
+            <button id="tab-login" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white/10 text-on-surface transition-all duration-200" onclick="switchTab('login')">
+                Đăng nhập
+            </button>
+            <button id="tab-register" class="flex-1 py-2 text-sm font-semibold rounded-lg text-on-surface-variant hover:text-on-surface transition-all duration-200" onclick="switchTab('register')">
+                Đăng ký
+            </button>
+        </div>
+
+        <!-- Alert messages -->
+        <div id="alert-container" class="hidden mb-6 p-4 rounded-xl border flex items-start gap-3 animate-fade-in">
+            <span id="alert-icon" class="material-symbols-outlined text-base mt-0.5"></span>
+            <div class="flex-1">
+                <p id="alert-message" class="text-xs leading-normal font-medium"></p>
+            </div>
+        </div>
+
+        <!-- Forms -->
+        <form id="auth-form" onsubmit="handleSubmit(event)">
+            
+            <!-- Full Name (Register only) -->
+            <div id="field-fullname" class="hidden mb-4">
+                <label class="block text-[10px] font-headline uppercase tracking-widest text-on-surface-variant mb-2">Họ & Tên</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">badge</span>
+                    <input id="input-fullname" class="w-full bg-white/[0.02] border border-white/[0.08] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-3 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-1" placeholder="Nguyễn Văn A" type="text"/>
+                </div>
+            </div>
+
+            <!-- Email (Register only) -->
+            <div id="field-email" class="hidden mb-4">
+                <label class="block text-[10px] font-headline uppercase tracking-widest text-on-surface-variant mb-2">Email</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">mail</span>
+                    <input id="input-email" class="w-full bg-white/[0.02] border border-white/[0.08] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-3 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-1" placeholder="name@example.com" type="email"/>
+                </div>
+            </div>
+
+            <!-- Username -->
+            <div class="mb-4">
+                <label id="username-label" class="block text-[10px] font-headline uppercase tracking-widest text-on-surface-variant mb-2">Tên đăng nhập hoặc email</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">person</span>
+                    <input id="input-username" required class="w-full bg-white/[0.02] border border-white/[0.08] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-3 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-1" placeholder="username/gmail" type="text" minlength="3"/>
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-[10px] font-headline uppercase tracking-widest text-on-surface-variant">Mật khẩu</label>
+                </div>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">lock</span>
+                    <input id="input-password" required class="w-full bg-white/[0.02] border border-white/[0.08] focus:border-primary/40 focus:ring-primary/10 transition-all rounded-xl py-3 pl-10 pr-10 text-sm text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-1" placeholder="••••••••" type="password"/>
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors" onclick="togglePasswordVisibility()">
+                        <span id="password-toggle-icon" class="material-symbols-outlined text-sm">visibility</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button id="btn-submit" type="submit" class="w-full bg-gradient-to-r from-primary-dim to-primary hover:brightness-110 active:scale-95 py-3.5 rounded-xl text-on-primary-container font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(132,253,173,0.2)]">
+                <span id="btn-icon" class="material-symbols-outlined text-base">login</span>
+                <span id="btn-text">Xác thực quyền truy cập</span>
+            </button>
+        </form>
+        
+        <!-- Spotlight glow -->
+        <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-primary/2 rounded-full blur-2xl pointer-events-none group-hover:bg-primary/5 transition-all"></div>
+    </div>
+
+    <!-- Script imports -->
+    <script src="assets/js/services/auth-service.js?v=1.0.7"></script>
+    <script>
+        let currentTab = 'login';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
+            const fieldFullname = document.getElementById('field-fullname');
+            const fieldEmail = document.getElementById('field-email');
+            const usernameLabel = document.getElementById('username-label');
+            const usernameInput = document.getElementById('input-username');
+            const btnIcon = document.getElementById('btn-icon');
+            const btnText = document.getElementById('btn-text');
+            const alertContainer = document.getElementById('alert-container');
+
+            // Hide alert when switching tabs
+            alertContainer.classList.add('hidden');
+
+            if (tab === 'login') {
+                tabLogin.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white/10 text-on-surface transition-all duration-200";
+                tabRegister.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-on-surface-variant hover:text-on-surface transition-all duration-200";
+                fieldFullname.classList.add('hidden');
+                fieldEmail.classList.add('hidden');
+                usernameLabel.textContent = 'Tên đăng nhập hoặc email';
+                usernameInput.placeholder = 'username hoặc email';
+                btnIcon.textContent = 'login';
+                btnText.textContent = 'Xác thực quyền truy cập';
+            } else {
+                tabRegister.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white/10 text-on-surface transition-all duration-200";
+                tabLogin.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-on-surface-variant hover:text-on-surface transition-all duration-200";
+                fieldFullname.classList.remove('hidden');
+                fieldEmail.classList.remove('hidden');
+                usernameLabel.textContent = 'Tên đăng nhập';
+                usernameInput.placeholder = 'username';
+                btnIcon.textContent = 'how_to_reg';
+                btnText.textContent = 'Tạo hồ sơ mật vụ';
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('input-password');
+            const toggleIcon = document.getElementById('password-toggle-icon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                toggleIcon.textContent = 'visibility_off';
+            } else {
+                pwdInput.type = 'password';
+                toggleIcon.textContent = 'visibility';
+            }
+        }
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alert-container');
+            const icon = document.getElementById('alert-icon');
+            const msgEl = document.getElementById('alert-message');
+
+            container.classList.remove('hidden');
+            msgEl.innerHTML = message;
+
+            if (type === 'success') {
+                container.className = "mb-6 p-4 rounded-xl border border-[#0F9D58]/20 bg-[#0F9D58]/5 flex items-start gap-3 text-[#0F9D58] animate-fade-in";
+                icon.textContent = 'check_circle';
+            } else {
+                container.className = "mb-6 p-4 rounded-xl border border-error/20 bg-error/5 flex items-start gap-3 text-error animate-fade-in";
+                icon.textContent = 'report';
+            }
+        }
+
+        /**
+         * Validate login form inputs
+         * @returns {Array<string>} Array of error messages (empty if valid)
+         */
+        function isValidLoginIdentifier(identifier) {
+            // Match the backend username policy so established usernames with
+            // Vietnamese characters or . @ + - can still sign in.
+            const usernameRegex = /^[\w\u00C0-\u017F\u1EA0-\u1EF9.@+-]+$/u;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return usernameRegex.test(identifier) || emailRegex.test(identifier);
+        }
+
+        function validateLoginForm() {
+            const username = document.getElementById('input-username').value;
+            const password = document.getElementById('input-password').value;
+            const fullName = document.getElementById('input-fullname')?.value || '';
+            const email = document.getElementById('input-email')?.value || '';
+            const errors = [];
+
+            // Username validation
+            if (!username || username.trim().length < 3) {
+                errors.push('Tên đăng nhập phải có ít nhất 3 ký tự');
+            }
+            if (username.length > 50) {
+                errors.push('Tên đăng nhập không được vượt quá 50 ký tự');
+            }
+            if (currentTab === 'login' && !isValidLoginIdentifier(username)) {
+                errors.push('Nhập tên đăng nhập hoặc email hợp lệ');
+            }
+            if (currentTab === 'register' && !/^[a-zA-Z0-9_]+$/.test(username)) {
+                errors.push('Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới');
+            }
+
+            // Password validation
+            if (!password || password.length < 8) {
+                errors.push('Mật khẩu phải có ít nhất 8 ký tự');
+            }
+            if (password.length > 128) {
+                errors.push('Mật khẩu không được vượt quá 128 ký tự');
+            }
+            if (!/[A-Z]/.test(password)) {
+                errors.push('Mật khẩu phải chứa ít nhất một chữ hoa');
+            }
+            if (!/[a-z]/.test(password)) {
+                errors.push('Mật khẩu phải chứa ít nhất một chữ thường');
+            }
+            if (!/[0-9]/.test(password)) {
+                errors.push('Mật khẩu phải chứa ít nhất một số');
+            }
+
+            // Registration-specific validations
+            if (currentTab === 'register') {
+                // Full name validation
+                if (!fullName || fullName.trim().length < 2) {
+                    errors.push('Họ và tên phải có ít nhất 2 ký tự');
+                }
+                if (fullName.length > 100) {
+                    errors.push('Họ và tên không được vượt quá 100 ký tự');
+                }
+
+                // Email validation (required for registration to match DB schema)
+                if (!email || email.trim().length === 0) {
+                    errors.push('Email là bắt buộc khi đăng ký');
+                } else {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        errors.push('Email không hợp lệ');
+                    }
+                }
+            }
+
+            return errors;
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+
+            // VALIDATE: Check form inputs before submission
+            const validationErrors = validateLoginForm();
+            if (validationErrors.length > 0) {
+                showAlert('error', validationErrors.join('<br>'));
+                return;
+            }
+
+            const btnSubmit = document.getElementById('btn-submit');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+
+            // Set loading state
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add('opacity-70');
+            const oldText = btnText.textContent;
+            btnText.textContent = 'Đang giải mã...';
+            btnIcon.textContent = 'sync';
+            btnIcon.classList.add('animate-spin');
+
+            const username = document.getElementById('input-username').value.trim();
+            const password = document.getElementById('input-password').value;
+
+            let result;
+            if (currentTab === 'login') {
+                result = await window.auth.login(username, password);
+            } else {
+                const fullName = document.getElementById('input-fullname').value.trim();
+                const email = document.getElementById('input-email').value.trim();
+                result = await window.auth.register(username, email, fullName, password);
+            }
+
+            // Reset loading state
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('opacity-70');
+            btnText.textContent = oldText;
+            btnIcon.textContent = currentTab === 'login' ? 'login' : 'how_to_reg';
+            btnIcon.classList.remove('animate-spin');
+
+            if (result.success) {
+                showAlert('success', 'Xác thực thành công. Đang tải bảng điều khiển...');
+                setTimeout(() => {
+                    window.location.href = currentTab === 'login'
+                        ? window.auth.getPostLoginRedirectUrl(result.role)
+                        : window.auth.getDashboardRedirectUrl();
+                }, 1000);
+            } else {
+                showAlert('error', result.error || 'Có lỗi xảy ra trong quá trình xác thực.');
+            }
+        }
+    </script>
+</body>
+</html>

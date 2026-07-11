@@ -1,0 +1,248 @@
+version: "3.1"
+
+stories:
+
+# ============================================================================
+# PHISHING DETECTION STORIES (Post-form interactions)
+# ============================================================================
+- story: User asks for security tips after phishing check
+  steps:
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# PASSWORD STRENGTH CHECKING (Handled by rules - no stories needed)
+# ============================================================================
+
+# ============================================================================
+# CVE LOOKUP (Handled by rules - no stories needed)
+# ============================================================================
+
+# ============================================================================
+# SECURITY NEWS STORIES
+# ============================================================================
+- story: User asks for security news
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: thanks
+  - action: utter_thanks
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: User checks security news and asks for tips
+  steps:
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+
+# ============================================================================
+# VULNERABILITY ASSESSMENT STORIES
+# ============================================================================
+- story: User asks for vulnerability assessment
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: thanks
+  - action: utter_thanks
+
+- story: User assesses vulnerability and thanks
+  steps:
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# INCIDENT RESPONSE STORIES
+# ============================================================================
+- story: User asks for incident response help
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: incident_response
+  - action: action_provide_incident_response
+  - intent: thanks
+  - action: utter_thanks
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: User reports incident and asks for follow-up
+  steps:
+  - intent: incident_response
+  - action: action_provide_incident_response
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# AUTHENTICATION HELP STORIES
+# ============================================================================
+- story: User asks for authentication help
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: auth_help
+  - action: action_provide_auth_help
+  - intent: thanks
+  - action: utter_thanks
+
+- story: User asks for authentication help
+  steps:
+  - intent: auth_help
+  - action: action_provide_auth_help
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# COMPLEX MULTI-INTENT STORIES
+# ============================================================================
+- story: Complete security consultation workflow
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: incident_response
+  - action: action_provide_incident_response
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: thanks
+  - action: utter_thanks
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: User asks multiple security questions
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: thanks
+  - action: utter_thanks
+
+- story: Security assessment workflow
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: incident_response
+  - action: action_provide_incident_response
+  - intent: thanks
+  - action: utter_thanks
+
+- story: User checks security news and assesses threats
+  steps:
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# CONVERSATION FLOW STORIES
+# ============================================================================
+- story: User starts conversation and ends naturally
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: thanks
+  - action: utter_thanks
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: User has multiple security concerns
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: thanks
+  - action: utter_thanks
+
+- story: User investigates specific security threat
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: assess_vulnerability
+  - action: action_assess_vulnerability
+  - intent: thanks
+  - action: utter_thanks
+  - intent: goodbye
+  - action: utter_goodbye
+
+# ============================================================================
+# FALLBACK AND ERROR HANDLING STORIES
+# ============================================================================
+- story: User recovers from unclear input
+  steps:
+  - intent: nlu_fallback
+  - action: action_default_fallback
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# CHAT HISTORY STORIES
+# ============================================================================
+- story: User asks for chat history
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: get_chat_history
+  - action: action_get_chat_history
+  - intent: thanks
+  - action: utter_thanks
+
+- story: User reviews chat history and continues
+  steps:
+  - intent: get_chat_history
+  - action: action_get_chat_history
+  - intent: get_security_news
+  - action: action_get_security_news
+  - intent: thanks
+  - action: utter_thanks
+
+# ============================================================================
+# UNHAPPY PATH STORIES - Error Handling
+# ============================================================================
+- story: User recovers from unclear input
+  steps:
+  - intent: nlu_fallback
+  - action: action_default_fallback
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips
+
+- story: User gets confused and asks for help
+  steps:
+  - intent: nlu_fallback
+  - action: action_default_fallback
+  - intent: greet
+  - action: utter_greet
+  - intent: ask_security_tips
+  - action: utter_ask_security_tips

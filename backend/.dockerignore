@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ChromaDB local data
+chroma_db/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Environment files (passed via docker-compose environment)
+.env
+.env.local
+.env.production
+
+# Knowledge base large files (if any large binaries)
+knowledge_base/
+
+# Model caches / weights
+*.bin
+*.gguf
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# Temporary files
+tmp/
+*.tmp
+
+# Tests (only needed in development stage, already copied separately)
+# Keep tests/ included since dev stage needs it
+
+# Git
+.git/
+.gitignore
