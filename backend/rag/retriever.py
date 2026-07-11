@@ -24,6 +24,18 @@ class DocumentRetriever:
         self.max_results = max_results
         self.min_score = min_score
 
+    def _format_context_header(self, index: int, metadata: Dict) -> str:
+        doc_type = metadata.get('type', 'unknown')
+        if doc_type == 'news':
+            return f"[Tin tức {index} - {metadata.get('source', 'Unknown')}]\n{metadata.get('title', 'N/A')}"
+        if doc_type == 'security_tip':
+            return f"[Mẹo bảo mật {index} - {metadata.get('title', 'N/A')}]"
+        if doc_type == 'cve':
+            return f"[CVE {index} - {metadata.get('cve_id', 'N/A')} ({metadata.get('severity', 'N/A')})]"
+        if doc_type == 'procedure':
+            return f"[Quy trình {index} - {metadata.get('title', 'N/A')}]"
+        return f"[Thông tin {index}]"
+
     def retrieve(
         self,
         query: str,
@@ -100,31 +112,7 @@ class DocumentRetriever:
 
         for i, result in enumerate(results, 1):
             metadata = result.get('metadata', {})
-            doc_type = metadata.get('type', 'unknown')
-
-            # Format based on document type
-            if doc_type == 'news':
-                source = metadata.get('source', 'Unknown')
-                title = metadata.get('title', 'N/A')
-                context_text = f"[Tin tức {i} - {source}]\n{title}\n{result['text']}"
-
-            elif doc_type == 'security_tip':
-                category = metadata.get('category', 'N/A')
-                title = metadata.get('title', 'N/A')
-                context_text = f"[Mẹo bảo mật {i} - {title}]\n{result['text']}"
-
-            elif doc_type == 'cve':
-                cve_id = metadata.get('cve_id', 'N/A')
-                severity = metadata.get('severity', 'N/A')
-                context_text = f"[CVE {i} - {cve_id} ({severity})]\n{result['text']}"
-
-            elif doc_type == 'procedure':
-                category = metadata.get('category', 'N/A')
-                title = metadata.get('title', 'N/A')
-                context_text = f"[Quy trình {i} - {title}]\n{result['text']}"
-
-            else:
-                context_text = f"[Thông tin {i}]\n{result['text']}"
+            context_text = f"{self._format_context_header(i, metadata)}\n{result['text']}"
 
             # Add metadata if requested
             if include_metadata and metadata:

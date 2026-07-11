@@ -135,23 +135,25 @@ class CircuitBreaker:
         async with self._lock:
             self.total_successes += 1
 
-            if self.state == CircuitState.HALF_OPEN:
-                self.success_count += 1
-                self.half_open_calls += 1
-                logger.info(f"✅ Circuit {self.service_name} HALF_OPEN success: {self.success_count}/{self.success_threshold}")
-
-                # Close circuit if success threshold reached
-                if self.success_count >= self.success_threshold:
-                    logger.info(f"🔒 Circuit {self.service_name} CLOSED after recovery verification")
-                    self.state = CircuitState.CLOSED
-                    self.failure_count = 0
-                    self.success_count = 0
-                    self.half_open_calls = 0
-
-            elif self.state == CircuitState.CLOSED:
-                # Reset failure count on success in closed state
+            if self.state == CircuitState.CLOSED:
                 if self.failure_count > 0:
                     self.failure_count = max(0, self.failure_count - 1)
+                return
+
+            if self.state != CircuitState.HALF_OPEN:
+                return
+
+            self.success_count += 1
+            self.half_open_calls += 1
+            logger.info(f"✅ Circuit {self.service_name} HALF_OPEN success: {self.success_count}/{self.success_threshold}")
+            if self.success_count < self.success_threshold:
+                return
+
+            logger.info(f"🔒 Circuit {self.service_name} CLOSED after recovery verification")
+            self.state = CircuitState.CLOSED
+            self.failure_count = 0
+            self.success_count = 0
+            self.half_open_calls = 0
 
     async def _on_failure(self):
         """Handle execution failure."""

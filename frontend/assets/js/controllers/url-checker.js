@@ -164,13 +164,6 @@ class URLCheckerController {
             section.remove();
             console.log('🗑️ Removed previous results section');
         });
-
-        // Also clear any error sections
-        const errorSections = document.querySelectorAll('.col-span-12.bg-\\[\\#19191d\\].rounded-2xl.p-6.border-l-2.border-error');
-        errorSections.forEach(section => {
-            section.remove();
-            console.log('🗑️ Removed previous error section');
-        });
     }
 
     displayResults(result) {

@@ -536,6 +536,20 @@ def basic_phishing_check(url: str, warning_message: str = "") -> Dict[str, Any]:
     }
 
 
+def _process_phishing_scan_result(result: Dict[str, Any], url: str) -> Dict[str, Any]:
+    if 'error' not in result:
+        return parse_virustotal_results(result, url)
+
+    error = result.get('error', '')
+    if "Invalid URL format" in error:
+        logger.warning(f"URL validation failed, not scanning: {error}")
+        return result
+
+    message = result.get('message', 'API unavailable')
+    logger.warning(f"VirusTotal API failed, using fallback: {message}")
+    return basic_phishing_check(url, message)
+
+
 async def check_phishing_url_async(url: str, timeout: int = 10) -> Dict[str, Any]:
     """
     Main entry point for phishing URL checking (async version)
@@ -551,19 +565,7 @@ async def check_phishing_url_async(url: str, timeout: int = 10) -> Dict[str, Any
         # Call VirusTotal API (async)
         result = await scan_url_virustotal_async(url, timeout)
 
-        # Check if API call was successful
-        if 'error' in result:
-            # Check if error is due to URL validation failure - don't fallback for security issues
-            if "Invalid URL format" in result.get('error', ''):
-                logger.warning(f"URL validation failed, not scanning: {result.get('error')}")
-                return result
-
-            # For API availability issues, fall back to basic pattern matching
-            logger.warning(f"VirusTotal API failed, using fallback: {result.get('message')}")
-            return basic_phishing_check(url, result.get('message', 'API unavailable'))
-
-        # Parse VirusTotal results
-        return parse_virustotal_results(result, url)
+        return _process_phishing_scan_result(result, url)
 
     except Exception as e:
         logger.error(f"Phishing check error: {e}")
@@ -585,19 +587,7 @@ def check_phishing_url(url: str) -> Dict[str, Any]:
         # Call VirusTotal API (sync)
         result = scan_url_virustotal(url)
 
-        # Check if API call was successful
-        if 'error' in result:
-            # Check if error is due to URL validation failure - don't fallback for security issues
-            if "Invalid URL format" in result.get('error', ''):
-                logger.warning(f"URL validation failed, not scanning: {result.get('error')}")
-                return result
-
-            # For API availability issues, fall back to basic pattern matching
-            logger.warning(f"VirusTotal API failed, using fallback: {result.get('message')}")
-            return basic_phishing_check(url, result.get('message', 'API unavailable'))
-
-        # Parse VirusTotal results
-        return parse_virustotal_results(result, url)
+        return _process_phishing_scan_result(result, url)
 
     except Exception as e:
         logger.error(f"Phishing check error: {e}")

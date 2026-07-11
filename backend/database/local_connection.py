@@ -131,106 +131,85 @@ class QueryBuilder:
         self.order_by_clause = f"ORDER BY {column} {direction}"
         return self
 
+    def _execute_select(self, cursor):
+        query = f"SELECT {self.columns} FROM {self.table_name}"
+        params = []
+
+        if self.filters:
+            query += " WHERE " + " AND ".join(self.filters)
+            params = getattr(self, 'filter_values', [])
+        if self.order_by_clause:
+            query += f" {self.order_by_clause}"
+        if self.limit_value:
+            query += f" LIMIT {self.limit_value}"
+        if self.offset_value:
+            query += f" OFFSET {self.offset_value}"
+
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        cursor.close()
+        return ExecuteResult(data=results, error=None)
+
+    def _execute_insert(self, cursor):
+        columns = ', '.join(self.data.keys())
+        placeholders = ', '.join(['%s'] * len(self.data))
+        query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
+
+        if self.returning:
+            query += f" RETURNING {self.returning}"
+
+        cursor.execute(query, list(self.data.values()))
+        result = [cursor.fetchone()] if self.returning else []
+        cursor.close()
+        self.conn.commit()
+        return ExecuteResult(data=result, error=None)
+
+    def _execute_update(self, cursor):
+        set_clause = ', '.join([f"{key} = %s" for key in self.data])
+        query = f"UPDATE {self.table_name} SET {set_clause}"
+        params = list(self.data.values())
+
+        if self.filters:
+            query += " WHERE " + " AND ".join(self.filters)
+            params += getattr(self, 'filter_values', [])
+        if self.returning:
+            query += f" RETURNING {self.returning}"
+
+        cursor.execute(query, params)
+        result = cursor.fetchall() if self.returning else []
+        cursor.close()
+        self.conn.commit()
+        return ExecuteResult(data=result, error=None)
+
+    def _execute_delete(self, cursor):
+        query = f"DELETE FROM {self.table_name}"
+        params = []
+
+        if self.filters:
+            query += " WHERE " + " AND ".join(self.filters)
+            params = getattr(self, 'filter_values', [])
+        if self.returning:
+            query += f" RETURNING {self.returning}"
+
+        cursor.execute(query, params)
+        result = cursor.fetchall() if self.returning else []
+        cursor.close()
+        self.conn.commit()
+        return ExecuteResult(data=result, error=None)
+
     def execute(self):
         """Execute the built query"""
         try:
             cursor = self.conn.cursor(cursor_factory=RealDictCursor)
 
             if self.operation == 'SELECT':
-                query = f"SELECT {self.columns} FROM {self.table_name}"
-                params = []
-
-                # Add filters
-                if hasattr(self, 'filters') and self.filters:
-                    query += " WHERE " + " AND ".join(self.filters)
-                    params = getattr(self, 'filter_values', [])
-
-                # Add ordering
-                if self.order_by_clause:
-                    query += f" {self.order_by_clause}"
-
-                # Add limit
-                if self.limit_value:
-                    query += f" LIMIT {self.limit_value}"
-
-                # Add offset
-                if self.offset_value:
-                    query += f" OFFSET {self.offset_value}"
-
-                cursor.execute(query, params)
-                results = cursor.fetchall()
-                cursor.close()
-
-                return ExecuteResult(data=results, error=None)
-
-            elif self.operation == 'INSERT':
-                columns = ', '.join(self.data.keys())
-                placeholders = ', '.join(['%s'] * len(self.data))
-                query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
-
-                if self.returning:
-                    query += f" RETURNING {self.returning}"
-
-                cursor.execute(query, list(self.data.values()))
-
-                if self.returning:
-                    result = cursor.fetchone()
-                    cursor.close()
-                    self.conn.commit()
-                    return ExecuteResult(data=[result], error=None)
-                else:
-                    cursor.close()
-                    self.conn.commit()
-                    return ExecuteResult(data=[], error=None)
-
-            elif self.operation == 'UPDATE':
-                # Simplified UPDATE - would need WHERE clause implementation
-                set_clause = ', '.join([f"{k} = %s" for k in self.data.keys()])
-                query = f"UPDATE {self.table_name} SET {set_clause}"
-
-                if hasattr(self, 'filters') and self.filters:
-                    query += " WHERE " + " AND ".join(self.filters)
-                    params = list(self.data.values()) + getattr(self, 'filter_values', [])
-                else:
-                    params = list(self.data.values())
-
-                if self.returning:
-                    query += f" RETURNING {self.returning}"
-
-                cursor.execute(query, params)
-
-                if self.returning:
-                    result = cursor.fetchall()
-                    cursor.close()
-                    self.conn.commit()
-                    return ExecuteResult(data=result, error=None)
-                else:
-                    cursor.close()
-                    self.conn.commit()
-                    return ExecuteResult(data=[], error=None)
-
-            elif self.operation == 'DELETE':
-                query = f"DELETE FROM {self.table_name}"
-                params = []
-
-                if hasattr(self, 'filters') and self.filters:
-                    query += " WHERE " + " AND ".join(self.filters)
-                    params = getattr(self, 'filter_values', [])
-
-                if self.returning:
-                    query += f" RETURNING {self.returning}"
-
-                cursor.execute(query, params)
-
-                if self.returning:
-                    result = cursor.fetchall()
-                    cursor.close()
-                    self.conn.commit()
-                    return ExecuteResult(data=result, error=None)
-                else:
-                    cursor.close()
-                    self.conn.commit()
-                    return ExecuteResult(data=[], error=None)
+                return self._execute_select(cursor)
+            if self.operation == 'INSERT':
+                return self._execute_insert(cursor)
+            if self.operation == 'UPDATE':
+                return self._execute_update(cursor)
+            if self.operation == 'DELETE':
+                return self._execute_delete(cursor)
 
         except Exception as e:
             logger.error(f"❌ Query execution failed: {e}")

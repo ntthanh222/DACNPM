@@ -86,30 +86,25 @@ class PerformanceDashboard:
     def get_endpoint_performance(self) -> Dict[str, Any]:
         """Get endpoint-specific performance data."""
         endpoints = {}
+        if 'comparison' not in self.metrics_cache:
+            return endpoints
 
-        # Get from comparison data if available
-        if 'comparison' in self.metrics_cache:
-            comparison_data = self.metrics_cache['comparison']
+        comparison_data = self.metrics_cache['comparison']
+        status_by_category = {
+            'regressions': 'regression',
+            'improvements': 'improvement',
+            'stable': 'stable',
+        }
 
-            # Combine all performance data
-            for category in ['regressions', 'improvements', 'stable']:
-                for item in comparison_data.get(category, []):
-                    test_name = item['test']
-                    if test_name not in endpoints:
-                        endpoints[test_name] = {
-                            'current': item.get('current', 0),
-                            'baseline': item.get('baseline', 0),
-                            'change_percentage': item.get('change_percentage', 0),
-                            'status': 'unknown'
-                        }
-
-                    # Determine status
-                    if category == 'regressions':
-                        endpoints[test_name]['status'] = 'regression'
-                    elif category == 'improvements':
-                        endpoints[test_name]['status'] = 'improvement'
-                    else:
-                        endpoints[test_name]['status'] = 'stable'
+        for category, status in status_by_category.items():
+            for item in comparison_data.get(category, []):
+                test_name = item['test']
+                endpoints.setdefault(test_name, {
+                    'current': item.get('current', 0),
+                    'baseline': item.get('baseline', 0),
+                    'change_percentage': item.get('change_percentage', 0),
+                    'status': 'unknown'
+                })['status'] = status
 
         return endpoints
 

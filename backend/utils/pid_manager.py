@@ -142,11 +142,13 @@ class PIDManager:
             PID if available, None otherwise
         """
         try:
-            if os.path.exists(self.pid_file):
-                with open(self.pid_file, 'r') as f:
-                    pid_str = f.read().strip()
-                    if pid_str:
-                        return int(pid_str)
+            if not os.path.exists(self.pid_file):
+                return None
+
+            with open(self.pid_file, 'r') as f:
+                pid_str = f.read().strip()
+            if pid_str:
+                return int(pid_str)
         except Exception as e:
             self.logger.error(f"Error reading lock PID: {e}")
 

@@ -116,7 +116,7 @@ def lookup_cve(cve_id: str) -> Dict[str, Any]:
 
     if response.status_code == 200:
         return response.json()
-    elif response.status_code == 403:
+    if response.status_code == 403:
         logger.warning("NIST NVD API rate limit exceeded")
         return {
             "error": "API rate limit exceeded",
@@ -126,7 +126,7 @@ def lookup_cve(cve_id: str) -> Dict[str, Any]:
             "cve_id": cve_id,
             "rate_limited": True
         }
-    elif response.status_code == 404:
+    if response.status_code == 404:
         logger.warning(f"CVE not found: {cve_id}")
         return {
             "error": "CVE not found",
@@ -135,15 +135,14 @@ def lookup_cve(cve_id: str) -> Dict[str, Any]:
             "lookup_date": datetime.now().isoformat(),
             "cve_id": cve_id
         }
-    else:
-        logger.error(f"NIST NVD API error: {response.status_code}")
-        return {
-            "error": f"API error: {response.status_code}",
-            "message": "Failed to lookup CVE. Please try again later.",
-            "fallback": True,
-            "lookup_date": datetime.now().isoformat(),
-            "cve_id": cve_id
-        }
+    logger.error(f"NIST NVD API error: {response.status_code}")
+    return {
+        "error": f"API error: {response.status_code}",
+        "message": "Failed to lookup CVE. Please try again later.",
+        "fallback": True,
+        "lookup_date": datetime.now().isoformat(),
+        "cve_id": cve_id
+    }
 
 
 def parse_cve_response(result: Dict[str, Any], cve_id: str) -> Dict[str, Any]:
@@ -316,10 +315,10 @@ async def async_lookup_cve(cve_id: str) -> Dict[str, Any]:
                 request=response.request,
                 response=response
             )
-        elif response.status_code == 404:
+        if response.status_code == 404:
             # 404 is a valid response (CVE not found), not a failure
-            pass
-        elif response.status_code != 200:
+            return response
+        if response.status_code != 200:
             raise httpx.HTTPStatusError(
                 f"API returned status code {response.status_code}",
                 request=response.request,
@@ -335,7 +334,7 @@ async def async_lookup_cve(cve_id: str) -> Dict[str, Any]:
         # Handle different response types
         if response.status_code == 200:
             return response.json()
-        elif response.status_code == 404:
+        if response.status_code == 404:
             logger.warning(f"CVE not found: {cve_id}")
             return {
                 "error": "CVE not found",
@@ -344,15 +343,14 @@ async def async_lookup_cve(cve_id: str) -> Dict[str, Any]:
                 "lookup_date": datetime.now().isoformat(),
                 "cve_id": cve_id
             }
-        else:
-            # This shouldn't happen, but handle it anyway
-            return {
-                "error": f"API error: {response.status_code}",
-                "message": "Failed to lookup CVE. Please try again later.",
-                "fallback": True,
-                "lookup_date": datetime.now().isoformat(),
-                "cve_id": cve_id
-            }
+        # This shouldn't happen, but handle it anyway
+        return {
+            "error": f"API error: {response.status_code}",
+            "message": "Failed to lookup CVE. Please try again later.",
+            "fallback": True,
+            "lookup_date": datetime.now().isoformat(),
+            "cve_id": cve_id
+        }
 
     except CircuitBreakerOpenError as e:
         logger.warning(f"NIST NVD circuit breaker is open: {e}")

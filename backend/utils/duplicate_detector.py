@@ -118,19 +118,7 @@ class DuplicateDetector:
         try:
             # ✅ FIX: Use cache if available
             if self._existing_titles is not None:
-                # Check similarity against cached titles
-                for existing_title in self._existing_titles:
-                    similarity = self._calculate_similarity(title, existing_title)
-
-                    if similarity >= self.fuzzy_threshold:
-                        self.logger.debug(
-                            f"Found similar title (cached): {similarity:.2f} "
-                            f"'{title[:50]}...' vs '{existing_title[:50]}...'"
-                        )
-                        return existing_title
-
-                # No match found in cache
-                return None
+                return self._find_similar_title(title, self._existing_titles, "cached")
 
             # Fallback: Query database if cache not available
             if supabase is None:
@@ -149,23 +137,25 @@ class DuplicateDetector:
             if not result.data:
                 return None
 
-            # Check similarity with each title
-            for article in result.data:
-                existing_title = article.get('title', '')
-                similarity = self._calculate_similarity(title, existing_title)
-
-                if similarity >= self.fuzzy_threshold:
-                    self.logger.debug(
-                        f"Found similar title (db query): {similarity:.2f} "
-                        f"'{title[:50]}...' vs '{existing_title[:50]}...'"
-                    )
-                    return existing_title
-
-            return None
+            titles = (article.get('title', '') for article in result.data)
+            return self._find_similar_title(title, titles, "db query")
 
         except Exception as e:
             self.logger.error(f"Error checking title duplicate: {e}")
             return None
+
+    def _find_similar_title(self, title: str, titles, source_label: str) -> Optional[str]:
+        for existing_title in titles:
+            similarity = self._calculate_similarity(title, existing_title)
+            if similarity < self.fuzzy_threshold:
+                continue
+
+            self.logger.debug(
+                f"Found similar title ({source_label}): {similarity:.2f} "
+                f"'{title[:50]}...' vs '{existing_title[:50]}...'"
+            )
+            return existing_title
+        return None
 
     @staticmethod
     def _calculate_similarity(text1: str, text2: str) -> float:

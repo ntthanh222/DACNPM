@@ -241,25 +241,23 @@ class StatisticsTracker:
         """Load existing statistics from file."""
         if not self.enabled:
             return
+        if not os.path.exists(self.stats_file):
+            return
 
         try:
-            if os.path.exists(self.stats_file):
-                with open(self.stats_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+            with open(self.stats_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
 
-                    # Load source statistics
-                    for source, stats in data.get('sources', {}).items():
-                        self.source_stats[source] = stats
+            for source, stats in data.get('sources', {}).items():
+                self.source_stats[source] = stats
 
-                    # Load total statistics
-                    totals = data.get('total', {})
-                    self.total_found = totals.get('found', 0)
-                    self.total_parsed = totals.get('parsed', 0)
-                    self.total_inserted = totals.get('inserted', 0)
-                    self.total_skipped = totals.get('skipped', 0)
-                    self.total_errors = totals.get('errors', 0)
-
-                self.logger.info(f"Loaded existing statistics from {self.stats_file}")
+            totals = data.get('total', {})
+            self.total_found = totals.get('found', 0)
+            self.total_parsed = totals.get('parsed', 0)
+            self.total_inserted = totals.get('inserted', 0)
+            self.total_skipped = totals.get('skipped', 0)
+            self.total_errors = totals.get('errors', 0)
+            self.logger.info(f"Loaded existing statistics from {self.stats_file}")
 
         except Exception as e:
             self.logger.warning(f"Could not load statistics file: {e}")

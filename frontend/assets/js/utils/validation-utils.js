@@ -57,51 +57,33 @@ class ValidationUtils {
             return result;
         }
 
-        // Length check
-        if (password.length < 8) {
-            result.issues.push('Password must be at least 8 characters long');
-        } else {
-            result.score += 1;
-        }
+        const requirements = [
+            [password.length >= 8, 'Password must be at least 8 characters long'],
+            [/[A-Z]/.test(password), 'Password must contain at least one uppercase letter'],
+            [/[a-z]/.test(password), 'Password must contain at least one lowercase letter'],
+            [/[0-9]/.test(password), 'Password must contain at least one number'],
+            [/[^A-Za-z0-9]/.test(password), 'Password must contain at least one special character']
+        ];
 
-        // Uppercase check
-        if (/[A-Z]/.test(password)) {
+        requirements.forEach(([passes, issue]) => {
+            if (!passes) {
+                result.issues.push(issue);
+                return;
+            }
             result.score += 1;
-        } else {
-            result.issues.push('Password must contain at least one uppercase letter');
-        }
+        });
 
-        // Lowercase check
-        if (/[a-z]/.test(password)) {
-            result.score += 1;
-        } else {
-            result.issues.push('Password must contain at least one lowercase letter');
-        }
-
-        // Number check
-        if (/[0-9]/.test(password)) {
-            result.score += 1;
-        } else {
-            result.issues.push('Password must contain at least one number');
-        }
-
-        // Special character check
-        if (/[^A-Za-z0-9]/.test(password)) {
-            result.score += 1;
-        } else {
-            result.issues.push('Password must contain at least one special character');
-        }
-
-        // Determine strength
         if (result.score >= 4) {
             result.strength = 'strong';
-        } else if (result.score >= 2) {
+            return result;
+        }
+        if (result.score >= 2) {
             result.strength = 'medium';
-        } else {
-            result.strength = 'weak';
-            result.isValid = false;
+            return result;
         }
 
+        result.strength = 'weak';
+        result.isValid = false;
         return result;
     }
 
