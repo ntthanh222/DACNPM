@@ -115,6 +115,12 @@ class DashboardController {
      */
     async checkAdminRole() {
         try {
+            const adminLink = document.getElementById('admin-link');
+            if (adminLink) {
+                // The markup also contains the flex utility class; explicitly
+                // control display so non-admin users never see the link.
+                adminLink.style.display = 'none';
+            }
             const token = localStorage.getItem('cybersec_access_token');
             if (!token) return;
 
@@ -126,9 +132,10 @@ class DashboardController {
                 const user = await response.json();
                 localStorage.setItem('cybersec_user_role', user.role || 'user');
                 if (user.role === 'admin' || user.role === 'security_analyst') {
-                    const adminLink = document.getElementById('admin-link');
                     if (adminLink) {
                         adminLink.classList.remove('hidden');
+                        adminLink.classList.add('flex');
+                        adminLink.style.display = 'flex';
                         console.log(`Admin access granted for user: ${user.username} (${user.role})`);
                     }
                 }

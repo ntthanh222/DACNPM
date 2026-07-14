@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from uuid import UUID
-from backend.database.crud.chat_history import (
+from backend.repositories.chat_history import (
     get_chat_message,
     get_user_chat_history,
     create_chat_message,

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from uuid import UUID
-from backend.database.crud.security_news import (
+from backend.repositories.security_news import (
     get_news_item,
     get_all_news,
     get_latest_news,

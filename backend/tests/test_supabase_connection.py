@@ -12,7 +12,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 def test_new_supabase_api_keys_do_not_use_bearer_authorization():
     """Modern sb_* keys must be sent through the apikey header only."""
-    from database.connection import _create_supabase_client
+    from backend.database.connection import _create_supabase_client
 
     client = _create_supabase_client(
         "https://example.supabase.co", "sb_publishable_test"
@@ -24,7 +24,7 @@ def test_new_supabase_api_keys_do_not_use_bearer_authorization():
 
 def test_legacy_supabase_api_keys_keep_bearer_authorization():
     """Legacy JWT keys retain the library's existing authorization behavior."""
-    from database.connection import _create_supabase_client
+    from backend.database.connection import _create_supabase_client
 
     client = _create_supabase_client("https://example.supabase.co", "legacy-key")
 
@@ -33,8 +33,8 @@ def test_legacy_supabase_api_keys_keep_bearer_authorization():
 
 def test_authentication_accepts_the_account_email(monkeypatch):
     """Users may sign in with their email when the username is not known."""
-    from api import auth
-    from backend.database.crud import users
+    from backend.api import auth
+    from backend.repositories import users
 
     account = SimpleNamespace(
         id="user-1",
@@ -63,8 +63,8 @@ def test_authentication_accepts_the_account_email(monkeypatch):
 
 def test_authentication_rejects_inactive_accounts(monkeypatch):
     """Disabled accounts must never receive a valid login response."""
-    from api import auth
-    from backend.database.crud import users
+    from backend.api import auth
+    from backend.repositories import users
 
     account = SimpleNamespace(
         id="user-2",
@@ -85,8 +85,8 @@ def test_authentication_rejects_inactive_accounts(monkeypatch):
 
 def test_registration_explicitly_persists_standard_user_role(monkeypatch):
     """The database must not choose an elevated role for a public registration."""
-    from api import auth
-    from backend.database.crud import users
+    from backend.api import auth
+    from backend.repositories import users
 
     persisted_payload = {}
 

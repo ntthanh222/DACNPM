@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 from uuid import UUID
 from typing import Optional
-from backend.database.crud.stats import (
+from backend.repositories.stats import (
     get_vulnerability_distribution,
     get_chat_statistics,
     get_system_health_stats

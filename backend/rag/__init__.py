@@ -15,10 +15,10 @@ __all__ = [
 
 def _import_modules():
     """Import modules when needed"""
-    from rag.embedding_service import EmbeddingService
-    from rag.vector_store import VectorStore
-    from rag.document_loader import DocumentLoader
-    from rag.retriever import DocumentRetriever
+    from backend.rag.embedding_service import EmbeddingService
+    from backend.rag.vector_store import VectorStore
+    from backend.rag.document_loader import DocumentLoader
+    from backend.rag.retriever import DocumentRetriever
     return EmbeddingService, VectorStore, DocumentLoader, DocumentRetriever
 
 # Make modules available

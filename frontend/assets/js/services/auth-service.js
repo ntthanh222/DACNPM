@@ -190,7 +190,11 @@ class AuthHelper {
         // Check admin role and show admin link on sub-pages
         if (this.isAdmin()) {
             const adminLinks = document.querySelectorAll('#admin-link');
-            adminLinks.forEach(link => link.classList.remove('hidden'));
+            adminLinks.forEach(link => {
+                link.classList.remove('hidden');
+                link.classList.add('flex');
+                link.style.display = 'flex';
+            });
         }
 
         // Inject logout button in the sidebar footer

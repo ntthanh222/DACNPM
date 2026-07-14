@@ -9,7 +9,7 @@ def test_translator_handles_empty_cache_and_success(monkeypatch):
     assert cve_translator.translate_cve_description("", "CVE-1") == "Không có mô tả"
     service = types.SimpleNamespace(generate_response=lambda **_kwargs: "Bản dịch")
     module = types.SimpleNamespace(get_gemini_service_singleton=lambda: service)
-    monkeypatch.setitem(sys.modules, "llm.gemini_service", module)
+    monkeypatch.setitem(sys.modules, "backend.llm.gemini_service", module)
     assert cve_translator.translate_cve_description("English", "CVE-2024-1", "9.8", "critical") == "Bản dịch"
     assert cve_translator.translate_cve_description("English", "CVE-2024-1") == "Bản dịch"
 

@@ -13,6 +13,13 @@ from backend.repositories.generic_repository import (
     QueryOptimizer
 )
 from backend.repositories.user_repository import UserRepository
+from backend.repositories.users import *
+from backend.repositories.profiles import *
+from backend.repositories.chat_history import *
+from backend.repositories.cve_lookups import *
+from backend.repositories.security_news import *
+from backend.repositories.security_scans import *
+from backend.repositories.stats import *
 
 __all__ = [
     'BaseRepository',

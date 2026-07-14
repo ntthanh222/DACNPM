@@ -20,7 +20,7 @@ from datetime import datetime
 from backend.services.rasa_client import get_rasa_client
 from backend.services.rag_service import get_rag_service
 from backend.database.models import ChatHistoryCreate
-from backend.database.crud.chat_history import create_chat_message
+from backend.repositories.chat_history import create_chat_message
 
 logger = logging.getLogger(__name__)
 
@@ -258,14 +258,14 @@ class ChatbotService:
         """Get conversation history for a user"""
         if hasattr(self, 'user_repository') and self.user_repository is not None:
             return await self.user_repository.get_conversation_history(user_id, limit)
-        from backend.database.crud.chat_history import get_user_chat_history
+        from backend.repositories.chat_history import get_user_chat_history
         return get_user_chat_history(user_id, limit)
 
     async def clear_conversation_history(self, user_id: UUID) -> bool:
         """Clear conversation history for a user"""
         if self.user_repository is not None and hasattr(self.user_repository, 'clear_conversation_history'):
             return await self.user_repository.clear_conversation_history(user_id)
-        from backend.database.crud.chat_history import delete_user_chat_history
+        from backend.repositories.chat_history import delete_user_chat_history
         delete_user_chat_history(user_id)
         return True
 

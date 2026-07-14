@@ -36,7 +36,7 @@ class RAGService:
         self._initialization_attempted = True
 
         try:
-            from rag.retriever import get_retriever
+            from backend.rag.retriever import get_retriever
             self._retriever = get_retriever()
             self._rag_enabled = True
             logger.info("✅ RAG modules initialized successfully")
@@ -182,7 +182,7 @@ class RAGService:
             self.chroma_client.add(document_id, content, metadata)
             return document_id
 
-        from rag.vector_store import get_vector_store
+        from backend.rag.vector_store import get_vector_store
         vector_store = get_vector_store()
         document = {
             'id': document_id,
@@ -198,7 +198,7 @@ class RAGService:
             self.chroma_client.delete(document_id)
             return True
 
-        from rag.vector_store import get_vector_store
+        from backend.rag.vector_store import get_vector_store
         vector_store = get_vector_store()
         vector_store.delete_documents([document_id])
         return True

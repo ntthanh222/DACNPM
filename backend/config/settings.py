@@ -1,8 +1,9 @@
 import os
 import logging
+from functools import lru_cache
 from pathlib import Path
 from pydantic_settings import BaseSettings
-from pydantic import field_validator, Field, model_validator
+from pydantic import field_validator, Field, model_validator, AliasChoices
 from typing import Optional
 
 # Configure logging
@@ -68,8 +69,12 @@ class Settings(BaseSettings):
 
     # LLM Configuration
     llm_provider: str = Field(default="gemini", description="LLM provider: gemini, openai, claude")
-    llm_model: str = Field(default="gemini-1.5-flash", description="Model name")
-    llm_api_key: str = Field(default="", description="LLM API key")
+    llm_model: str = Field(default="gemini-2.5-flash", description="Model name")
+    llm_api_key: str = Field(
+        default="",
+        description="LLM API key",
+        validation_alias=AliasChoices("LLM_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"),
+    )
     llm_max_tokens: int = Field(default=2048, description="Maximum tokens in response")
     llm_temperature: float = Field(default=0.7, description="Response creativity (0-1)")
     llm_memory_window: int = Field(default=5, description="Number of recent messages to include")
@@ -136,24 +141,17 @@ class Settings(BaseSettings):
         "extra": "allow"
     }
 
-# Try to load settings, but handle errors gracefully
-try:
-    settings = Settings()
-except Exception as e:
-    print(f"Warning: Could not load settings: {e}")
-    print("Make sure .env file exists in backend directory")
-    # Provide fallback settings for development
-    settings = Settings(
-        supabase_url="",
-        supabase_key="",
-        supabase_service_role_key="",
-        api_host="0.0.0.0",
-        api_port=8000,
-        api_debug=False,
-        cors_origins="http://localhost:3000,http://localhost:8000",
-        environment="development",
-        rasa_server_host="localhost",
-        rasa_server_port=5005,
-        rasa_action_server_port=5055,
-        rasa_websocket_url="ws://localhost:5005/websocket"
-    )
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Load settings once and fall back to safe development defaults."""
+    try:
+        return Settings()
+    except Exception as exc:
+        logger.warning("Could not load environment settings; using development defaults: %s", exc)
+        from .fallback import build_fallback_settings
+
+        return build_fallback_settings()
+
+
+# Compatibility export for existing modules; new code should call get_settings().
+settings = get_settings()

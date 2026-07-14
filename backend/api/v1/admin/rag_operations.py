@@ -15,7 +15,12 @@ from datetime import datetime, date, timedelta
 import logging
 import os
 
-from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client
+from backend.api.deps import (
+    require_admin,
+    require_admin_or_analyst,
+    get_admin_client,
+    get_privileged_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +130,8 @@ async def ingest_rag_document(
 
         # Import RAG components
         try:
-            from rag.document_loader import DocumentLoader
-            from rag.vector_store import get_vector_store
+            from backend.rag.document_loader import DocumentLoader
+            from backend.rag.vector_store import get_vector_store
             import uuid
 
             # Create document
@@ -183,7 +188,8 @@ async def ingest_rag_document(
 
 @router.get("/rag/documents")
 async def get_rag_documents(
-    admin_id: UUID = Depends(require_admin_or_analyst)
+    admin_id: UUID = Depends(require_admin_or_analyst),
+    admin_client = Depends(get_privileged_client)
 ):
     """
     Get list of documents in RAG knowledge base.
@@ -193,7 +199,7 @@ async def get_rag_documents(
     try:
         # Try to get documents from ChromaDB
         try:
-            from rag.vector_store import get_vector_store
+            from backend.rag.vector_store import get_vector_store
 
             vector_store = get_vector_store()
 
@@ -245,7 +251,7 @@ async def delete_rag_document(
     Requires admin role.
     """
     try:
-        from rag.vector_store import get_vector_store
+        from backend.rag.vector_store import get_vector_store
 
         vector_store = get_vector_store()
 
@@ -275,7 +281,7 @@ async def delete_rag_document(
 async def get_intent_analytics(
     days: int = Query(7, ge=1, le=30),
     admin_id: UUID = Depends(require_admin_or_analyst),
-    admin_client = Depends(get_admin_client)  # SECURE: Admin client with role verification
+    admin_client = Depends(get_privileged_client)  # SECURE: verified admin/analyst client
 ):
     """
     Get intent confidence analytics for chat queries.

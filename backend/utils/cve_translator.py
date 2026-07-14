@@ -40,7 +40,7 @@ def translate_cve_description(
         return _translation_cache[cache_key]
 
     try:
-        from llm.gemini_service import get_gemini_service_singleton
+        from backend.llm.gemini_service import get_gemini_service_singleton
 
         gemini_service = get_gemini_service_singleton()
 

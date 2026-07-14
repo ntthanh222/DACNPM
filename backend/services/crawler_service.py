@@ -1,7 +1,7 @@
 """
 Standalone Crawler Service for CyberSec Assistant
 
-Runs as independent FastAPI service on port 8001.
+Runs as independent FastAPI service on port 8002.
 Provides scheduled and manual crawling of security news.
 """
 import logging
@@ -20,6 +20,7 @@ import uvicorn
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+CRAWLER_PORT = int(os.getenv("CRAWLER_PORT", "8002"))
 
 # Initialize FastAPI app
 crawler_app = FastAPI(
@@ -232,7 +233,7 @@ async def get_status():
         'job_scheduled': job is not None,
         'next_run_time': job.next_run_time.isoformat() if job else None,
         'timezone': 'Asia/Ho_Chi_Minh',
-        'service_port': 8001,
+        'service_port': CRAWLER_PORT,
         'timestamp': datetime.now().isoformat()
     }
 
@@ -285,7 +286,7 @@ async def startup_event():
         # Start scheduler
         if not scheduler.running:
             scheduler.start()
-            logger.info("✅ Crawler service started on port 8001")
+            logger.info("✅ Crawler service started on port %s", CRAWLER_PORT)
 
     except Exception as e:
         logger.error(f"❌ Failed to start crawler service: {e}")
@@ -309,10 +310,10 @@ async def shutdown_event():
 # ============================================================================
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting Crawler Service on port 8001...")
+    logger.info("🚀 Starting Crawler Service on port %s...", CRAWLER_PORT)
     uvicorn.run(
         "crawler_service:crawler_app",
         host="0.0.0.0",
-        port=8001,
+        port=CRAWLER_PORT,
         reload=False  # Don't reload in production
     )

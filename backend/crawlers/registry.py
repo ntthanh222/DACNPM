@@ -1,10 +1,5 @@
 """Crawler registry for managing different news source crawlers."""
 
-import sys
-import os
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from typing import Dict, Type, Optional, List
 from .base import BaseCrawler
 from .thehackernews import TheHackerNewsCrawler
@@ -16,7 +11,7 @@ from .darkreading import DarkReadingCrawler
 from .helpnetsecurity import HelpNetSecurityCrawler
 from .theregister import TheRegisterCrawler
 
-from utils.logging_setup import get_logger
+from backend.utils.logging_setup import get_logger
 
 
 class CrawlerRegistry:

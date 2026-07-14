@@ -9,20 +9,10 @@ Supported sources:
 """
 
 import os
-import sys
 import argparse
 import re
 from datetime import datetime
 from typing import List, Dict, Optional
-
-# Add parent directory to path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-project_root = os.path.dirname(parent_dir)
-
-for path in [parent_dir, project_root]:
-    if path not in sys.path:
-        sys.path.insert(0, path)
 
 from backend.crawlers.registry import registry
 from backend.config.crawler_script_config import load_config
@@ -252,7 +242,7 @@ class SecurityNewsCrawlerApp:
         if not test_mode:
             from backend.database.connection import supabase, supabase_admin
             if supabase is None and supabase_admin is None:
-                logger.warning("⚠️ Database unavailable - automatically enabling test mode")
+                self.logger.warning("⚠️ Database unavailable - automatically enabling test mode")
                 test_mode = True
 
         self.test_mode = test_mode

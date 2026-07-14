@@ -1,2 +1,15 @@
 action_endpoint:
-  url: "http://localhost:5055/webhook"
+  url: "http://rasa-actions:5055/webhook"
+
+tracker_store:
+  type: redis
+  url: redis
+  port: 6379
+  db: 0
+  key_prefix: "rasa_tracker_"
+
+lock_store:
+  type: redis
+  url: redis
+  port: 6379
+  db: 1

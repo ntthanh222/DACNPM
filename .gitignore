@@ -1,47 +1,58 @@
-# ===== Secrets & credentials — NEVER commit =====
+# Secrets and local credentials
 .env
 .env.*
 !.env.example
 *.secret
+*credentials*.txt
 backend/ADMIN_CREDENTIALS.txt
-ADMIN_CREDENTIALS.txt
 
-# ===== Python =====
+# Python environments, caches and build output
+**/venv/
+**/.venv/
+**/env/
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*.pyd
+*.dll
 *.egg-info/
 .eggs/
 build/
 dist/
-venv/
-.venv/
-env/
-backend/venv/
-rasa/venv/
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
 
-# ===== Node =====
+# Node dependencies and reports
 node_modules/
 npm-debug.log*
+frontend/test-results/
+frontend/playwright-report/
 
-# ===== ZCode / Claude / agents / AI =====
-.zcode/
-.claude/
-.agents/
-.codex/
-.benchmarks/
-skills-lock.json
-claude.md
-
-# ===== Logs & runtime =====
+# Runtime data and generated artifacts
 logs/
+**/logs/
 *.log
-backend/logs/
+*.pid
+*.coverage
+coverage/
+coverage.xml
+coverage.json
+backend/chroma_db/
+rasa/models/
 
-# ===== OS / IDE =====
+# IDE and OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# ===== Rasa models (large) =====
-rasa/models/*.tar.gz
+# Local agent/tool metadata
+.agents/
+.claude/
+.codex/
+.zcode/
+.benchmarks/
+skills-lock.json

@@ -1,0 +1,13 @@
+{
+  "name": "cybersec-assistant-frontend-tests",
+  "version": "1.0.0",
+  "description": "Tests for CyberSec Assistant Frontend",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test tests/auth-service.test.cjs tests/format-utils.test.cjs tests/sanitizer.test.cjs tests/system-regressions.test.cjs tests/url-checker.test.cjs tests/validation-utils.test.cjs",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}

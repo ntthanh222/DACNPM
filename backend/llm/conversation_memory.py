@@ -8,8 +8,8 @@ to provide context for LLM responses, enabling multi-turn conversations.
 import logging
 from typing import List, Dict, Optional
 from uuid import UUID
-from database.crud.chat_history import get_user_chat_history
-from config import settings
+from backend.repositories.chat_history import get_user_chat_history
+from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
 

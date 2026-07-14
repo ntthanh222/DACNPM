@@ -16,7 +16,7 @@ import logging
 import json
 import os
 
-from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client
+from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client, get_privileged_client
 from backend.config import settings
 
 logger = logging.getLogger(__name__)
@@ -245,7 +245,7 @@ async def get_crawler_stats(
 async def get_crawler_logs(
     limit: int = Query(50, ge=1, le=200),
     admin_id: UUID = Depends(require_admin_or_analyst),
-    admin_client = Depends(get_admin_client)  # SECURE: Admin client with role verification
+    admin_client = Depends(get_privileged_client)  # SECURE: verified admin/analyst client
 ):
     """
     Get recent crawler logs.

@@ -10,6 +10,7 @@ from rasa_sdk.executor import CollectingDispatcher
 from uuid import UUID, uuid4
 from datetime import datetime
 from backend.database.connection import supabase_admin
+from backend.knowledge_base.graph_client import SecurityKnowledgeGraph
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +234,7 @@ class ActionCheckPhishing(Action):
             if not user_id:
                 return {}
 
-            from backend.database.crud.users import get_user
+            from backend.repositories.users import get_user
             user = get_user(user_id)
 
             if user and user.security_context:
@@ -427,7 +428,7 @@ class ActionLookupCVE(Action):
             if not user_id:
                 return {}
 
-            from backend.database.crud.users import get_user
+            from backend.repositories.users import get_user
             user = get_user(user_id)
 
             if user and user.security_context:
@@ -555,7 +556,7 @@ class ActionCheckPasswordStrength(Action):
         # NEW: Enhance response with LLM (Phase 1.5: LLM-in-the-loop)
         try:
             from backend.llm.response_enhancer import get_response_enhancer_singleton
-            from backend.database.crud.users import get_user
+            from backend.repositories.users import get_user
 
             enhancer = get_response_enhancer_singleton()
 
@@ -981,7 +982,7 @@ class ActionDefaultFallback(Action):
             if not user_id:
                 return {}
 
-            from backend.database.crud.users import get_user
+            from backend.repositories.users import get_user
             user = get_user(user_id)
 
             if user and user.security_context:
@@ -1166,7 +1167,7 @@ class ActionKnowledgeBaseQuery(Action):
             if not user_id:
                 return {}
 
-            from backend.database.crud.users import get_user
+            from backend.repositories.users import get_user
             user = get_user(user_id)
 
             if user and user.security_context:

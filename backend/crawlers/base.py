@@ -11,13 +11,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-import sys
-import os
-# Add parent directory to path for utils imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from utils.logging_setup import get_logger
-from utils.retry import RetryConfig, retry_on_failure
+from backend.utils.logging_setup import get_logger
+from backend.utils.retry import RetryConfig, retry_on_failure
 
 
 class BaseCrawler(ABC):

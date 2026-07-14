@@ -14,9 +14,9 @@ from uuid import UUID
 from datetime import datetime, date, timedelta
 import logging
 
-from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client
+from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client, get_privileged_client
 from backend.database.connection import supabase
-from backend.database.crud.stats import get_vulnerability_distribution, get_chat_statistics
+from backend.repositories.stats import get_vulnerability_distribution, get_chat_statistics
 from backend.utils.cache_manager import get_admin_stats, get_cache_stats
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class SystemAnalyticsResponse(BaseModel):
 async def get_api_usage(
     days: int = Query(30, ge=1, le=90),
     admin_id: UUID = Depends(require_admin_or_analyst),
-    admin_client = Depends(get_admin_client)  # SECURE: Admin client with role verification
+    admin_client = Depends(get_privileged_client)  # SECURE: verified admin/analyst client
 ):
     """
     Get API usage statistics for external services.
@@ -91,7 +91,7 @@ async def get_api_usage(
 @router.get("/system/cache")
 async def get_cve_cache_stats(
     admin_id: UUID = Depends(require_admin_or_analyst),
-    admin_client = Depends(get_admin_client)  # SECURE: Admin client with role verification
+    admin_client = Depends(get_privileged_client)  # SECURE: verified admin/analyst client
 ):
     """
     Get CVE lookup cache statistics.
@@ -194,7 +194,7 @@ async def refresh_cve_cache(
 @router.get("/system/analytics", response_model=SystemAnalyticsResponse)
 async def get_system_analytics(
     admin_id: UUID = Depends(require_admin_or_analyst),
-    admin_client = Depends(get_admin_client)  # SECURE: Admin client with role verification
+    admin_client = Depends(get_privileged_client)  # SECURE: verified admin/analyst client
 ):
     """
     Get system-wide analytics and statistics.
@@ -249,7 +249,8 @@ async def get_system_analytics(
 @router.get("/system/dashboard/cached")
 async def get_cached_dashboard_stats(
     force_refresh: bool = False,
-    admin_id: UUID = Depends(require_admin_or_analyst)
+    admin_id: UUID = Depends(require_admin_or_analyst),
+    admin_client = Depends(get_privileged_client)
 ):
     """
     Get cached dashboard statistics for improved performance.
@@ -265,14 +266,14 @@ async def get_cached_dashboard_stats(
             """Compute expensive dashboard statistics from database"""
             try:
                 # Get user statistics
-                total_users_response = supabase.table('users').select('id', count='exact').execute()
-                active_users_response = supabase.table('users').select('id', count='exact').eq('is_active', True).execute()
+                total_users_response = admin_client.table('users').select('id', count='exact').execute()
+                active_users_response = admin_client.table('users').select('id', count='exact').eq('is_active', True).execute()
 
                 # Get scan statistics
-                total_scans_response = supabase.table('security_scans').select('id', count='exact').execute()
+                total_scans_response = admin_client.table('security_scans').select('id', count='exact').execute()
 
                 # Get news statistics
-                total_news_response = supabase.table('news_articles').select('id', count='exact').eq('is_deleted', False).execute()
+                total_news_response = admin_client.table('news_articles').select('id', count='exact').eq('is_deleted', False).execute()
 
                 # Get vulnerability distribution
                 vuln_distribution = get_vulnerability_distribution()
@@ -281,7 +282,7 @@ async def get_cached_dashboard_stats(
                 chat_stats = get_chat_statistics()
 
                 # Get today's API usage
-                today_api_usage = supabase.table('api_usage_tracking').select('*').eq('date', date.today().isoformat()).execute()
+                today_api_usage = admin_client.table('api_usage_tracking').select('*').eq('date', date.today().isoformat()).execute()
 
                 api_usage_summary = {}
                 for record in today_api_usage.data:
@@ -365,7 +366,8 @@ async def clear_dashboard_cache(
 
 @router.get("/system/cache/stats")
 async def get_system_cache_stats(
-    admin_id: UUID = Depends(require_admin_or_analyst)
+    admin_id: UUID = Depends(require_admin_or_analyst),
+    admin_client = Depends(get_privileged_client)
 ):
     """
     Get Redis cache statistics and health.

@@ -270,7 +270,7 @@ async def reset_conversation(current_user_id: UUID = Depends(require_current_use
     """Reset conversation history for authenticated user by deleting their chat history from database"""
     try:
         # Delete user's chat history from database
-        from backend.database.crud.chat_history import delete_user_chat_history
+        from backend.repositories.chat_history import delete_user_chat_history
         deleted_count = delete_user_chat_history(current_user_id)
 
         logger.info(f"Reset conversation history for user {current_user_id}, deleted {deleted_count} messages")
@@ -306,7 +306,7 @@ async def check_phishing_url(
     """
     try:
         from backend.utils.url_scanner import check_phishing_url_async as scan_url
-        from backend.database.crud.security_scans import create_security_scan
+        from backend.repositories.security_scans import create_security_scan
         from backend.database.models import SecurityScanCreate
 
         # Validate URL format and perform phishing check (async)
@@ -354,7 +354,7 @@ async def check_password_strength(
     """
     try:
         from backend.utils.password_checker import check_password_strength_async as check_pwd
-        from backend.database.crud.security_scans import create_security_scan
+        from backend.repositories.security_scans import create_security_scan
         from backend.database.models import SecurityScanCreate
 
         # Use shared password checking utility (async)

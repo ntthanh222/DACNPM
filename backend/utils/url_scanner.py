@@ -21,11 +21,11 @@ logger = logging.getLogger(__name__)
 
 # API Key Configuration
 try:
-    from config import settings
+    from backend.core.config import settings
     VIRUSTOTAL_API_KEY = settings.virustotal_api_key if hasattr(settings, 'virustotal_api_key') else ""
 except ImportError:
     try:
-        from backend.config import settings
+        from backend.core.config import settings
         VIRUSTOTAL_API_KEY = settings.virustotal_api_key if hasattr(settings, 'virustotal_api_key') else ""
     except ImportError:
         import os

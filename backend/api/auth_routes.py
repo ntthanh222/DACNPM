@@ -94,7 +94,7 @@ def register(user_data: UserCreate):
     """
     try:
         # Check if username already exists (WITHOUT password authentication)
-        from backend.database.crud.users import get_user_by_username, get_user_by_email
+        from backend.repositories.users import get_user_by_username, get_user_by_email
 
         existing_user = get_user_by_username(user_data.username)
 
@@ -192,7 +192,7 @@ def get_current_user_info(
     """
     try:
         from uuid import UUID as UUIDType
-        from backend.database.crud.users import get_user
+        from backend.repositories.users import get_user
         from backend.database.connection import is_database_available
 
         # Check database availability

@@ -67,17 +67,17 @@ class ChatHistoryRepository(FallbackRepository[ChatHistory]):
         Returns:
             List of chat message data
         """
-        if 'user_id' not in identifiers:
+        if not hasattr(self, 'identifiers') or 'user_id' not in self.identifiers:
             return []
 
-        user_id = str(identifiers.get('user_id'))
+        user_id = str(self.identifiers.get('user_id'))
         fallback_history = get_chat_history_fallback(user_id, limit)
 
         # Convert fallback format to expected format
         result = []
         for item in fallback_history:
             result.append({
-                'user_id': identifiers.get('user_id'),
+                'user_id': self.identifiers.get('user_id'),
                 'user_message': item.get('user_message', ''),
                 'bot_response': item.get('bot_response', ''),
                 'intent': item.get('intent'),

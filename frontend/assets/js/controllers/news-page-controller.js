@@ -48,7 +48,7 @@ class NewsController {
 
         try {
             // Load latest news items (up to 50 items)
-            this.allNews = await window.newsService.loadLatestNews(50);
+            this.allNews = await window.newsService.getLatestNews(50);
             this.filterAndDisplayNews();
             console.log('✅ News loaded successfully:', this.allNews);
         } catch (e) {

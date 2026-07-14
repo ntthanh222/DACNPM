@@ -15,7 +15,7 @@ from datetime import datetime
 import logging
 
 from backend.api.deps import require_admin, get_admin_client
-from backend.database.crud.users import get_user, _update_cache
+from backend.repositories.users import get_user, _update_cache
 
 logger = logging.getLogger(__name__)
 

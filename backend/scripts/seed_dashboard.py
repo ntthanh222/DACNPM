@@ -1,18 +1,5 @@
-import sys
-import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-
-# Add paths to sys.path dynamically
-# Get script location and project root
-script_dir = Path(__file__).parent
-project_root = script_dir.parent.parent
-backend_dir = project_root / "backend"
-
-# Add to sys.path
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_dir))
 
 from backend.database.connection import supabase_admin, is_database_available
 from backend.database.local_connection import get_local_admin_client

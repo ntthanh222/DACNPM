@@ -11,12 +11,12 @@ from typing import Dict, Optional, List
 from uuid import UUID, uuid4
 import httpx
 
-from llm.gemini_service import get_gemini_service_singleton
-from llm.conversation_memory import get_conversation_memory
-from rag.retriever import get_retriever
-from database.crud.chat_history import create_chat_message
-from database.models import ChatHistoryCreate
-from config import settings
+from backend.llm.gemini_service import get_gemini_service_singleton
+from backend.llm.conversation_memory import get_conversation_memory
+from backend.rag.retriever import get_retriever
+from backend.repositories.chat_history import create_chat_message
+from backend.database.models import ChatHistoryCreate
+from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
 

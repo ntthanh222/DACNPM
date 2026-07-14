@@ -1,24 +1,15 @@
 """Duplicate detection for news articles."""
 
-import sys
-import os
-# Add parent directory to path for database imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from typing import Optional, List
 from difflib import SequenceMatcher
 import re
 
 try:
-    from database.connection import supabase
+    from backend.database.connection import supabase
 except ImportError:
-    try:
-        from backend.database.connection import supabase
-    except ImportError:
-        # For standalone usage, we'll handle this at runtime
-        supabase = None
+    supabase = None
 
-from utils.logging_setup import get_logger
+from backend.utils.logging_setup import get_logger
 
 
 class DuplicateDetector:

@@ -70,7 +70,7 @@ class VectorStore:
             # Compute embeddings if not provided
             if embeddings is None:
                 logger.info(f"Computing embeddings for {len(texts)} documents...")
-                from rag.embedding_service import get_embedding_service
+                from backend.rag.embedding_service import get_embedding_service
                 embedding_service = get_embedding_service()
                 embeddings = embedding_service.embed_documents(documents)
 
@@ -107,7 +107,7 @@ class VectorStore:
         """
         try:
             # Generate query embedding
-            from rag.embedding_service import get_embedding_service
+                from backend.rag.embedding_service import get_embedding_service
             embedding_service = get_embedding_service()
             query_embedding = embedding_service.embed_text(query)
 

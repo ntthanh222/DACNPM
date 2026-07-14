@@ -70,6 +70,90 @@ class NewsService {
         }
     }
 
+    escapeHTML(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    formatPublishedDate(value) {
+        if (!value) return 'Unknown time';
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Unknown time';
+
+        return date.toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    getNewsDescription(item) {
+        return item.description || item.summary || 'No summary available.';
+    }
+
+    generateNewsCards(newsItems, detailed = false) {
+        if (!Array.isArray(newsItems) || newsItems.length === 0) {
+            return `
+                <div class="text-center text-on-surface-variant py-8">
+                    <p>No security news available.</p>
+                </div>
+            `;
+        }
+
+        return newsItems.map((item) => {
+            const title = this.escapeHTML(item.title || 'Untitled security update');
+            const source = this.escapeHTML(item.source || 'Unknown source');
+            const description = this.escapeHTML(this.getNewsDescription(item));
+            const publishedAt = this.escapeHTML(this.formatPublishedDate(item.published_at || item.created_at));
+            const url = this.escapeHTML(item.url || '#');
+            const cardPadding = detailed ? 'p-6' : 'p-4';
+            const descriptionClass = detailed ? 'line-clamp-3' : 'line-clamp-2';
+
+            return `
+                <article class="bg-surface-container border border-outline-variant/20 rounded-xl ${cardPadding} hover:border-primary/30 transition-colors">
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-headline tracking-widest uppercase text-primary mb-2">${source}</p>
+                            <h4 class="font-headline font-bold text-on-surface leading-snug">${title}</h4>
+                        </div>
+                        <span class="shrink-0 text-[10px] font-mono text-on-surface-variant">${publishedAt}</span>
+                    </div>
+                    <p class="text-sm text-on-surface-variant ${descriptionClass} mb-4">${description}</p>
+                    <a class="inline-flex items-center gap-2 text-xs font-headline tracking-widest uppercase text-primary hover:text-on-surface transition-colors" href="${url}" target="_blank" rel="noopener noreferrer">
+                        Read source
+                        <span class="material-symbols-outlined text-sm" aria-hidden="true">open_in_new</span>
+                    </a>
+                </article>
+            `;
+        }).join('');
+    }
+
+    async loadAndDisplayNews(containerId, options = {}) {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            throw new Error(`News container not found: ${containerId}`);
+        }
+
+        const limit = options.limit || 10;
+        const newsItems = options.showLatest
+            ? await this.getLatestNews(limit, options.source || null)
+            : await this.getAllNews(limit, options.source || null);
+        const html = this.generateNewsCards(newsItems, Boolean(options.detailed));
+
+        if (typeof CyberSecSanitizer !== 'undefined' && CyberSecSanitizer.safeSetInnerHTML) {
+            CyberSecSanitizer.safeSetInnerHTML(container, html);
+        } else {
+            container.innerHTML = html;
+        }
+
+        return newsItems;
+    }
+
     /**
      * Get specific news item by ID
      * @param {string} newsId - News item ID

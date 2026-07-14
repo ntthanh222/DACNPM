@@ -1,0 +1,28 @@
+# Generated from backend/venv (Python 3.14.3), 2026-07-14.
+# Runtime pins for reproducible local setup.
+aiofiles==25.1.0
+APScheduler==3.11.3
+asyncpg==0.31.0
+chromadb==1.5.9
+fastapi==0.139.0
+google-genai==2.10.0
+matplotlib==3.11.0
+memory-profiler==0.61.0
+passlib==1.7.4
+psutil==7.2.2
+pydantic==2.13.4
+pydantic-settings==2.14.2
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+python-jose==3.5.0
+python-multipart==0.0.32
+PyYAML==6.0.3
+redis==8.0.1
+requests==2.34.2
+selenium==4.45.0
+sentence-transformers==5.6.0
+slowapi==0.1.10
+supabase==2.31.0
+torch==2.12.1
+transformers==5.13.0
+uvicorn==0.50.2

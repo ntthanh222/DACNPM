@@ -11,9 +11,20 @@ import re
 import time
 import threading
 from functools import wraps
-from supabase import create_client
-from supabase.lib.client_options import SyncClientOptions
-from config import settings
+try:
+    from supabase import create_client
+    from supabase.lib.client_options import SyncClientOptions
+    SUPABASE_SDK_AVAILABLE = True
+except (ImportError, RuntimeError) as exc:
+    # Rasa SDK 3.6.2 is pinned to websockets<11, while newer Supabase
+    # Realtime clients require websockets>=11. Keep action startup healthy
+    # and use the existing in-memory/offline fallback when those runtimes
+    # cannot coexist in the action image.
+    create_client = None
+    SyncClientOptions = None
+    SUPABASE_SDK_AVAILABLE = False
+    logging.getLogger(__name__).warning("Supabase SDK unavailable: %s", exc)
+from backend.core.config import settings
 
 # Configure logging at module level (before try/except block)
 logger = logging.getLogger(__name__)
@@ -64,6 +75,9 @@ def _test_supabase_connection(client, test_tables=None):
 
 def _create_supabase_client(supabase_url, supabase_key):
     """Create a client compatible with both legacy and modern Supabase keys."""
+    if not SUPABASE_SDK_AVAILABLE:
+        raise RuntimeError("Supabase SDK is unavailable in this runtime")
+
     if supabase_key.startswith(("sb_publishable_", "sb_secret_")):
         # Modern keys are valid only in the `apikey` header. supabase-py also
         # sets a Bearer header by default, so suppress it until a user JWT is set.
@@ -79,6 +93,8 @@ def _create_supabase_client(supabase_url, supabase_key):
 def get_supabase_client():
     """Get Supabase client with public key for user operations"""
     try:
+        if not SUPABASE_SDK_AVAILABLE:
+            return None
         if not settings.supabase_url or not settings.supabase_key:
             logger.warning("Supabase credentials not configured")
             return None
@@ -103,6 +119,8 @@ def get_supabase_admin_client():
     The service role key must be set via environment variable only.
     """
     try:
+        if not SUPABASE_SDK_AVAILABLE:
+            return None
         # SECURITY: Service role key must come from environment variable
         service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or getattr(settings, 'supabase_service_role_key', None)
         if not service_role_key:
@@ -223,7 +241,7 @@ def _attempt_connection_recovery():
 
 # Import local PostgreSQL support
 try:
-    from database.local_connection import (
+    from backend.database.local_connection import (
         get_local_client, get_local_admin_client, is_local_available,
         LocalPostgreSQLClient
     )
@@ -334,7 +352,7 @@ def clear_chat_history_fallback(user_id: str):
 
 def _monitor_database_status():
     """Background thread to monitor database availability"""
-    global DATABASE_AVAILABLE, supabase, supabase_admin
+    global DATABASE_AVAILABLE
 
     while True:
         time.sleep(30)  # Check every 30 seconds

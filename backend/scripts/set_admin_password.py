@@ -7,25 +7,11 @@ It generates proper bcrypt hashes and updates existing users in the database.
 import sys
 import getpass
 import logging
-from pathlib import Path
 from datetime import datetime, timezone
 
-# Add backend to path
-script_dir = Path(__file__).parent
-project_root = script_dir.parent.parent
-backend_dir = script_dir.parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(backend_dir))
-
 try:
-    # Try to import from backend directory first
-    try:
-        from backend.database.connection import supabase_admin, is_database_available
-        from backend.api.auth import hash_password
-    except ImportError:
-        # Fall back to direct imports
-        from database.connection import supabase_admin, is_database_available
-        from api.auth import hash_password
+    from backend.database.connection import supabase_admin, is_database_available
+    from backend.api.auth import hash_password
 except ImportError as e:
     print(f"❌ Error importing required modules: {e}")
     print("Make sure you're running this from the backend directory with all dependencies installed.")

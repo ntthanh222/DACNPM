@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from collections import defaultdict
 
-from utils.logging_setup import get_logger
+from backend.utils.logging_setup import get_logger
 
 
 class StatisticsTracker:

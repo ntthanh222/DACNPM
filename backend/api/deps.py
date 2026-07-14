@@ -119,7 +119,7 @@ async def require_current_user_id(
             raise HTTPException(status_code=400, detail="Invalid user ID in X-User-ID header.")
 
     # Check if user exists in database
-    from backend.database.crud.users import get_user
+    from backend.repositories.users import get_user
     from backend.database.connection import is_database_available
 
     if not is_database_available():
@@ -186,7 +186,7 @@ async def require_admin(user_id: UUID = Depends(require_current_user_id)) -> UUI
         HTTPException: 403 if user doesn't have admin role or is not active
     """
     try:
-        from backend.database.crud.users import get_user
+        from backend.repositories.users import get_user
 
         user = get_user(user_id)
 
@@ -238,7 +238,7 @@ async def require_admin_or_analyst(user_id: UUID = Depends(require_current_user_
         HTTPException: 403 if user doesn't have required role or is not active
     """
     try:
-        from backend.database.crud.users import get_user
+        from backend.repositories.users import get_user
 
         user = get_user(user_id)
 
@@ -314,3 +314,30 @@ async def get_admin_client(admin_id: UUID = Depends(require_admin)):
             status_code=500,
             detail="Error initializing admin services."
         )
+
+
+async def get_privileged_client(user_id: UUID = Depends(require_admin_or_analyst)):
+    """Return the service client for read-only admin/analyst operations.
+
+    The service-role client is still created only after the caller's role and
+    active status have been verified.  This dependency is intentionally
+    separate from ``get_admin_client`` so security analysts can use the
+    read-only admin dashboards without gaining access to admin-only writes.
+    """
+    try:
+        from backend.database.connection import get_supabase_admin_client
+
+        client = get_supabase_admin_client()
+        if not client:
+            logger.error("Failed to initialize privileged client")
+            raise HTTPException(
+                status_code=503,
+                detail="Admin service unavailable. Contact system administrator."
+            )
+        logger.debug("Privileged client provided to verified user %s", user_id)
+        return client
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error providing privileged client: %s", e)
+        raise HTTPException(status_code=503, detail="Error initializing admin services.")

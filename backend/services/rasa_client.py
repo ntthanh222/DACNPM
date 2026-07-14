@@ -12,7 +12,7 @@ import httpx
 import logging
 from typing import Dict, Any, Optional
 from uuid import UUID
-from config import settings
+from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
 

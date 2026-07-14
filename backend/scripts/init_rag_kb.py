@@ -5,18 +5,6 @@ Initialize RAG knowledge base with existing data from the database.
 This script loads data from the database and creates embeddings for semantic search.
 """
 
-import sys
-import os
-from pathlib import Path
-
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-# Also add backend to path
-backend_path = Path(__file__).parent.parent
-sys.path.insert(0, str(backend_path))
-
 import logging
 
 # Setup logging

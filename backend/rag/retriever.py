@@ -58,7 +58,7 @@ class DocumentRetriever:
         # Support both n_results and top_k for backwards compatibility
         num_results = n_results or top_k or self.max_results
         try:
-            from rag.vector_store import get_vector_store
+            from backend.rag.vector_store import get_vector_store
             vector_store = get_vector_store()
 
             # Search vector store

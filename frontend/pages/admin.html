@@ -460,6 +460,13 @@ function loadSectionData(sectionName) {
 // API Helpers
 // ============================================================================
 
+// Values returned by Supabase, crawler, and RAG are untrusted.
+function escapeHTML(value) {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+}
+
 async function apiCall(endpoint, options = {}, retryCount = 0) {
     const url = `${API_BASE}${endpoint}`;
     const headers = {
@@ -564,11 +571,11 @@ function renderUsersTable(users) {
             <td class="p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
-                        <img src="${user.avatar_url || 'https://via.placeholder.com/32'}" alt="${user.username}">
+                        <img src="${escapeHTML(user.avatar_url || 'https://via.placeholder.com/32')}" alt="${escapeHTML(user.username)}">
                     </div>
                     <div>
-                        <div class="font-semibold text-sm">${user.username}</div>
-                        <div class="text-xs text-on-surface-variant">${user.email || 'N/A'}</div>
+                        <div class="font-semibold text-sm">${escapeHTML(user.username)}</div>
+                        <div class="text-xs text-on-surface-variant">${escapeHTML(user.email || 'N/A')}</div>
                     </div>
                 </div>
             </td>
@@ -581,7 +588,7 @@ function renderUsersTable(users) {
                     <span class="text-xs">${user.is_active ? 'Active' : 'Banned'}</span>
                 </div>
             </td>
-            <td class="p-4 text-xs text-on-surface-variant">${formatDate(user.created_at)}</td>
+            <td class="p-4 text-xs text-on-surface-variant">${escapeHTML(formatDate(user.created_at))}</td>
             <td class="p-4">
                 <div class="flex gap-2">
                     <button onclick="viewUserDetails('${user.id}')" class="p-2 hover:bg-white/[0.04] rounded-lg" title="View Details">
@@ -657,11 +664,11 @@ async function viewUserDetails(userId) {
             <div class="space-y-6">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 rounded-full bg-surface-container-highest overflow-hidden">
-                        <img src="${data.avatar_url || 'https://via.placeholder.com/64'}" alt="${data.username}">
+                        <img src="${escapeHTML(data.avatar_url || 'https://via.placeholder.com/64')}" alt="${escapeHTML(data.username)}">
                     </div>
                     <div>
-                        <h4 class="text-xl font-bold">${data.username}</h4>
-                        <p class="text-sm text-on-surface-variant">${data.email || 'N/A'}</p>
+                        <h4 class="text-xl font-bold">${escapeHTML(data.username)}</h4>
+                        <p class="text-sm text-on-surface-variant">${escapeHTML(data.email || 'N/A')}</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -675,11 +682,11 @@ async function viewUserDetails(userId) {
                     </div>
                     <div>
                         <span class="text-sm text-on-surface-variant">Member Since</span>
-                        <div class="font-semibold">${formatDate(data.created_at)}</div>
+                        <div class="font-semibold">${escapeHTML(formatDate(data.created_at))}</div>
                     </div>
                     <div>
                         <span class="text-sm text-on-surface-variant">Last Security Scan</span>
-                        <div class="font-semibold">${formatDate(data.last_security_scan)}</div>
+                        <div class="font-semibold">${escapeHTML(formatDate(data.last_security_scan))}</div>
                     </div>
                 </div>
                 <div class="border-t border-white/[0.06] pt-4">
@@ -701,8 +708,8 @@ async function viewUserDetails(userId) {
                         ${activity.recent_activity.map(activity => `
                             <div class="flex items-center gap-2 text-sm">
                                 <span class="material-symbols-outlined text-xs">${activity.type === 'chat' ? 'chat' : 'verified_user'}</span>
-                                <span class="text-on-surface-variant">${formatDate(activity.timestamp)}</span>
-                                <span>${activity.type === 'chat' ? activity.details.intent : activity.details.scan_type}</span>
+                                <span class="text-on-surface-variant">${escapeHTML(formatDate(activity.timestamp))}</span>
+                                <span>${escapeHTML(activity.type === 'chat' ? activity.details.intent : activity.details.scan_type)}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -788,13 +795,13 @@ async function loadCrawlerStats() {
                         ${run.status === 'completed' ? 'check_circle' : run.status === 'failed' ? 'error' : 'sync'}
                     </span>
                     <div>
-                        <div class="font-semibold text-sm">${formatDate(run.started_at)}</div>
-                        <div class="text-xs text-on-surface-variant">${run.articles_added} articles added</div>
+                        <div class="font-semibold text-sm">${escapeHTML(formatDate(run.started_at))}</div>
+                        <div class="text-xs text-on-surface-variant">${escapeHTML(run.articles_added)} articles added</div>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-xs ${run.status === 'completed' ? 'text-green-400' : run.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}">${run.status}</div>
-                    <div class="text-xs text-on-surface-variant">${run.error_count || 0} errors</div>
+                    <div class="text-xs ${run.status === 'completed' ? 'text-green-400' : run.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}">${escapeHTML(run.status)}</div>
+                    <div class="text-xs text-on-surface-variant">${escapeHTML(run.error_count || 0)} errors</div>
                 </div>
             </div>
         `).join('');
@@ -850,12 +857,12 @@ function renderNewsList(news) {
         <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
-                    <h4 class="font-semibold mb-1">${article.title}</h4>
-                    <p class="text-sm text-on-surface-variant mb-2">${article.summary?.substring(0, 200)}...</p>
+                    <h4 class="font-semibold mb-1">${escapeHTML(article.title)}</h4>
+                    <p class="text-sm text-on-surface-variant mb-2">${escapeHTML(article.summary?.substring(0, 200) || '')}...</p>
                     <div class="flex items-center gap-2 text-xs text-on-surface-variant">
-                        <span>${article.source}</span>
+                        <span>${escapeHTML(article.source)}</span>
                         <span>•</span>
-                        <span>${formatDate(article.published_at)}</span>
+                        <span>${escapeHTML(formatDate(article.published_at))}</span>
                         ${article.is_deleted ? '<span class="text-red-400">• Deleted</span>' : ''}
                     </div>
                 </div>
@@ -1060,7 +1067,7 @@ async function loadRAGData() {
         queriesList.innerHTML = intents.recent_queries.map(query => `
             <div class="flex items-center justify-between p-2 bg-white/[0.02] rounded-lg">
                 <div class="flex-1">
-                    <div class="text-sm">${query.query.substring(0, 100)}...</div>
+                    <div class="text-sm">${escapeHTML(query.query?.substring(0, 100) || '')}...</div>
                     <div class="text-xs text-on-surface-variant">
                         Intent: ${query.predicted_intent || 'None'} • Confidence: ${(query.confidence * 100).toFixed(1)}%
                     </div>
@@ -1080,11 +1087,11 @@ async function loadRAGData() {
         docsList.innerHTML = documents.documents.map(doc => `
             <div class="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg">
                 <div class="flex-1">
-                    <div class="text-sm font-semibold">${doc.metadata.filename || 'Unnamed'}</div>
+                    <div class="text-sm font-semibold">${escapeHTML(doc.metadata?.filename || 'Unnamed')}</div>
                     <div class="text-xs text-on-surface-variant">
-                        Type: ${doc.metadata.type} • Added: ${formatDate(doc.metadata.uploaded_at)}
+                        Type: ${escapeHTML(doc.metadata?.type || 'unknown')} • Added: ${escapeHTML(formatDate(doc.metadata?.uploaded_at))}
                     </div>
-                    <div class="text-xs text-on-surface-variant mt-1">${doc.content}</div>
+                    <div class="text-xs text-on-surface-variant mt-1">${escapeHTML(doc.content)}</div>
                 </div>
                 <button onclick="deleteRAGDocument('${doc.id}')" class="p-2 hover:bg-white/[0.04] rounded-lg text-red-400">
                     <span class="material-symbols-outlined text-sm">delete</span>

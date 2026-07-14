@@ -7,10 +7,10 @@ This package provides LLM integration for multiple providers:
 - Claude (Anthropic)
 
 Usage:
-    from llm.gemini_service import GeminiService
-    from llm.base_service import LLMService
+    from backend.llm.gemini_service import GeminiService
+    from backend.llm.base_service import LLMService
 """
 
-from llm.base_service import LLMService, LLMServiceException
+from backend.llm.base_service import LLMService, LLMServiceException
 
 __all__ = ['LLMService', 'LLMServiceException']

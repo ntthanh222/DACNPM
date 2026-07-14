@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import logging
 from datetime import datetime, timedelta
-from backend.database.crud.cve_lookups import get_cached_cve_with_fallback, create_cve_lookup
+from backend.repositories.cve_lookups import get_cached_cve_with_fallback, create_cve_lookup
 from backend.utils.cve_lookup import validate_cve_id, async_check_cve
 from backend.utils.cve_translator import translate_cve_response
 from backend.config import settings
@@ -91,7 +91,7 @@ async def lookup_cve_endpoint(request: CVERequest):
 @router.get("/stats")
 def get_cve_stats(current_user_id: UUID = Depends(get_current_user_id)):
     """Get CVE lookup statistics - requires authentication"""
-    from backend.database.crud.cve_lookups import get_cache_statistics
+    from backend.repositories.cve_lookups import get_cache_statistics
     stats = get_cache_statistics()
     if stats:
         return stats

@@ -13,13 +13,6 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
-# Add project root to path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)  # Go up to backend directory
-sys.path.insert(0, project_root)
-
-# Import directly from files, not through package
-import sys
 import importlib.util
 
 def import_module_from_file(module_name, file_path):

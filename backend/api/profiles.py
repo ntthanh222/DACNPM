@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from uuid import UUID
-from backend.database.crud.profiles import (
+from backend.repositories.profiles import (
     get_profile,
     get_profile_by_username,
     create_profile,

@@ -1,0 +1,15 @@
+﻿backend/venv/
+venv/
+.venv/
+node_modules/
+.git/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.cache/
+dist/
+build/
+coverage/
+*.pyc
+*.pyo
+*.log

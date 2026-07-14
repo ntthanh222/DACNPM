@@ -10,8 +10,8 @@ import time
 from typing import List, Dict, Optional
 from google import genai
 from google.genai import types
-from llm.base_service import LLMService, LLMServiceException
-from config import settings
+from backend.llm.base_service import LLMService, LLMServiceException
+from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
 

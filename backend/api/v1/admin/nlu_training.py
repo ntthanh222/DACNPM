@@ -16,9 +16,10 @@ import logging
 import asyncio
 import subprocess
 import os
+import shutil
 import threading
 
-from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client
+from backend.api.deps import require_admin, require_admin_or_analyst, get_admin_client, get_privileged_client
 from backend.config import settings
 
 logger = logging.getLogger(__name__)
@@ -251,7 +252,8 @@ async def add_reviewed_to_training(
 
 @router.post("/nlu/retrain")
 async def trigger_retraining(
-    admin_id: UUID = Depends(require_admin)
+    admin_id: UUID = Depends(require_admin),
+    admin_client = Depends(get_admin_client)
 ):
     """
     Trigger Rasa model retraining.
@@ -272,18 +274,15 @@ async def trigger_retraining(
 
     try:
         project_dir = str(settings.PROJECT_ROOT)
-        rasa_dir = os.path.join(project_dir, "rasa")
-
-        # Determine Rasa virtual environment Python interpreter
-        if os.name == 'nt':
-            rasa_python = os.path.join(rasa_dir, "venv", "Scripts", "python.exe")
-        else:
-            rasa_python = os.path.join(rasa_dir, "venv", "bin", "python")
-
-        # Fallback to system Python if venv not found
-        if not os.path.exists(rasa_python):
-            logger.warning(f"Rasa Python not found at {rasa_python}, falling back to system 'python'")
-            rasa_python = 'python'
+        compose_file = os.path.join(project_dir, "docker-compose.yml")
+        docker_executable = shutil.which("docker")
+        if not docker_executable:
+            raise HTTPException(
+                status_code=503,
+                detail="Docker CLI is unavailable. Run scripts/windows/train.bat on the Docker host."
+            )
+        if not os.path.exists(compose_file):
+            raise HTTPException(status_code=503, detail="docker-compose.yml was not found.")
 
         # Update status before starting
         _nlu_training_status["in_progress"] = True
@@ -301,16 +300,21 @@ async def trigger_retraining(
         }).execute()
 
         # Define a callback to reset status when process completes
-        def on_training_complete(pid):
+        def on_training_complete(pid, return_code):
             _nlu_training_status["in_progress"] = False
             _nlu_training_status["pid"] = None
-            _nlu_training_status["message"] = f"Training completed (PID: {pid})"
-            logger.info(f"Rasa training completed (PID: {pid})")
+            _nlu_training_status["message"] = (
+                f"Training completed (PID: {pid})" if return_code == 0
+                else f"Training failed with exit code {return_code} (PID: {pid})"
+            )
+            logger.info("Docker Rasa training finished (PID: %s, exit=%s)", pid, return_code)
 
-        # Call Rasa train directly through venv Python
+        # Train exclusively through Docker Compose; never use a local Rasa environment.
         process = subprocess.Popen(
-            [rasa_python, "-m", "rasa", "train"],
-            cwd=rasa_dir,
+            [docker_executable, "compose", "-f", compose_file, "run", "--rm", "--no-deps",
+             "--entrypoint", "rasa", "rasa", "train", "--config", "/app/config.yml",
+             "--domain", "/app/domain.yml", "--data", "/app/data", "--out", "/app/models"],
+            cwd=project_dir,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
@@ -322,8 +326,8 @@ async def trigger_retraining(
 
         # Start background thread to monitor process completion
         def monitor_process(pid):
-            process.wait()
-            on_training_complete(pid)
+            return_code = process.wait()
+            on_training_complete(pid, return_code)
 
         monitor_thread = threading.Thread(target=monitor_process, args=(process.pid,), daemon=True)
         monitor_thread.start()
@@ -362,7 +366,7 @@ async def get_nlu_training_status(admin_id: UUID = Depends(require_admin_or_anal
 async def get_intent_distribution(
     days: int = Query(7, ge=1, le=90),
     admin_id: UUID = Depends(require_admin_or_analyst),
-    admin_client = Depends(get_admin_client)  # SECURE: Admin client with role verification
+    admin_client = Depends(get_privileged_client)  # SECURE: verified admin/analyst client
 ):
     """
     Get intent distribution statistics for analytics.

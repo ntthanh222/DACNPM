@@ -42,36 +42,99 @@ services:
   # Rasa NLU Server
   # ============================================
   rasa:
-    image: rasa/rasa:3.6.21-full
+    image: rasa/rasa:3.6.20-full
     container_name: cybersec-rasa
+    working_dir: /app
     ports:
       - "5005:5005"
     volumes:
       - ./rasa/models:/app/models
       - ./rasa/data:/app/data
       - ./rasa/config.yml:/app/config.yml
-    command: run --enable-api --cors "*"
+      - ./rasa/domain.yml:/app/domain.yml:ro
+      - ./rasa/endpoints.yml:/app/endpoints.yml:ro
+      - ./rasa/credentials.yml:/app/credentials.yml:ro
+    entrypoint: ["/bin/sh"]
+    command:
+      - -c
+      - |
+        model="$$(find /app/models -maxdepth 1 -type f -name '*.tar.gz' -print -quit)"
+        if [ -z "$$model" ]; then
+          echo "[ERROR] No Rasa model found in /app/models. Run scripts\\windows\\train.bat first."
+          exit 1
+        fi
+        exec rasa run --enable-api --cors "*" --endpoints /app/endpoints.yml --credentials /app/credentials.yml --model "$$model"
     networks:
       - cybersec-network
+    depends_on:
+      rasa-actions:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5005/"]
+      test: ["CMD-SHELL", "test -n \"$$(find /app/models -maxdepth 1 -type f -name '*.tar.gz' -print -quit)\" && curl -f http://localhost:5005/"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # ============================================
+  # Rasa Custom Action Server
+  # ============================================
+  rasa-actions:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: actions
+    image: ncnpm-rasa-actions:latest
+    container_name: cybersec-rasa-actions
+    working_dir: /app
+    command: ["python", "-m", "rasa_sdk.__main__", "--actions", "backend.rasa_actions.actions", "--port", "5055"]
+    ports:
+      - "5055:5055"
+    volumes:
+      - ./backend:/app/backend
+      - backend_logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMADB_HOST=http://chromadb:8000
+      - ENVIRONMENT=development
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NIST_NVD_API_KEY=${NIST_NVD_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_API_KEY=${GEMINI_API_KEY}
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - cybersec-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   # ============================================
   # Backend API Server
   # ============================================
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
       target: development
     container_name: cybersec-backend
+    working_dir: /app
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend:ro
+      - ./rasa:/app/rasa:ro
       - backend_logs:/app/logs
     environment:
       - REDIS_URL=redis://redis:6379/0
@@ -80,10 +143,13 @@ services:
       - SECRET_KEY=dev-secret-key-change-in-production
       - ENVIRONMENT=development
       - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_API_KEY=${GEMINI_API_KEY}
       # Supabase credentials - cần set trong .env hoặc ở đây
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NIST_NVD_API_KEY=${NIST_NVD_API_KEY}
     depends_on:
       redis:
         condition: service_healthy
@@ -100,6 +166,48 @@ services:
       retries: 3
 
   # ============================================
+  # Security News Crawler
+  # ============================================
+  crawler:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: development
+    image: ncnpm-backend:latest
+    container_name: cybersec-crawler
+    working_dir: /app
+    command: uvicorn backend.services.crawler_service:crawler_app --host 0.0.0.0 --port 8002 --log-level info
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./backend:/app/backend
+      - ./rasa:/app/rasa:ro
+      - backend_logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMADB_HOST=http://chromadb:8000
+      - RASA_URL=http://rasa:5005
+      - ENVIRONMENT=development
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NIST_NVD_API_KEY=${NIST_NVD_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+      rasa:
+        condition: service_started
+    networks:
+      - cybersec-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
   # Frontend Server
   # ============================================
   frontend:
@@ -107,6 +215,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: cybersec-frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
     ports:
       - "3000:80"
     environment:

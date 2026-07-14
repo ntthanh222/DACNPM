@@ -1,0 +1,55 @@
+# Git and local tooling
+.git/
+.github/
+.vscode/
+.idea/
+.codex/
+.agents/
+.claude/
+.zcode/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.secret
+
+# Python environments and generated files
+**/venv/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+*.pyd
+*.dll
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+coverage.json
+htmlcov/
+
+# Runtime data and logs
+backend/chroma_db/
+rasa/models/
+logs/
+**/logs/
+*.log
+*.pid
+
+# Frontend dependencies and test output
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+my-app/node_modules/
+my-app/.next/
+my-app/dist/
+
+# Build artifacts and OS files
+build/
+dist/
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
