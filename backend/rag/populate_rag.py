@@ -15,8 +15,18 @@ logger = logging.getLogger(__name__)
 
 import importlib.util
 
-def import_module_from_file(module_name, file_path):
-    """Import a module directly from a file path."""
+def import_module_from_file(module_name: str, file_path: str):
+    """
+    Imports a Python module dynamically from a direct absolute file path.
+    Used to bypass sys.path import constraints during isolated script execution.
+
+    Args:
+        module_name (str): Arbitrary name to assign to the imported module.
+        file_path (str): Absolute file path to the Python script.
+
+    Returns:
+        ModuleType: The dynamically loaded Python module.
+    """
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
@@ -26,19 +36,31 @@ def import_module_from_file(module_name, file_path):
 # Import required modules directly
 current_path = os.path.dirname(os.path.abspath(__file__))
 
-# Load document_loader
+# Load document_loader dynamically
 document_loader_path = os.path.join(current_path, 'document_loader.py')
 document_loader_module = import_module_from_file('document_loader', document_loader_path)
 DocumentLoader = document_loader_module.DocumentLoader
 
-# Load vector_store
+# Load vector_store dynamically
 vector_store_path = os.path.join(current_path, 'vector_store.py')
 vector_store_module = import_module_from_file('vector_store', vector_store_path)
 get_vector_store = vector_store_module.get_vector_store
 
 
-def populate_vector_store():
-    """Populate vector store with all available security knowledge."""
+def populate_vector_store() -> int:
+    """
+    Populates the ChromaDB vector database with all available security knowledge documents.
+
+    Flow:
+    1. Loads the ChromaDB vector store instance.
+    2. Checks the current document count.
+    3. Loads security raw knowledge texts using DocumentLoader.
+    4. If the vector store is empty, parses, embeds and indexes the documents.
+    5. Runs a semantic test search ("phishing là gì?") to verify database health.
+
+    Returns:
+        int: The number of documents added or currently in the vector store.
+    """
     logger.info("🚀 Starting RAG vector store population...")
 
     try:
@@ -59,7 +81,7 @@ def populate_vector_store():
 
         logger.info(f"📄 Loaded {len(documents)} documents")
 
-        # Check if collection already has documents
+        # Check if collection already has documents. Prevents duplicate population.
         if stats.get('document_count', 0) > 0:
             logger.info(f"ℹ️ Collection already has {stats['document_count']} documents")
             logger.info("💡 If you want to re-populate, run: python rag/populate_rag.py --clear")
@@ -95,7 +117,9 @@ def populate_vector_store():
 
 
 def clear_vector_store():
-    """Clear the vector store collection."""
+    """
+    Clears the ChromaDB vector store collection by deleting the collection.
+    """
     logger.warning("🗑️ Clearing vector store collection...")
     vector_store = get_vector_store()
     vector_store.delete_collection()
@@ -105,6 +129,7 @@ def clear_vector_store():
 if __name__ == "__main__":
     import sys
 
+    # Parse args for --clear flag
     if len(sys.argv) > 1 and sys.argv[1] == "--clear":
         clear_vector_store()
     else:

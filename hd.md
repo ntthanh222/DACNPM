@@ -1,6 +1,6 @@
 # Hướng Dẫn Chạy Dự Án CyberSec Assistant
 
-Tài liệu này hướng dẫn chi tiết cách cài đặt và vận hành hệ thống CyberSec Assistant nhanh nhất trên máy tính của bạn thông qua Docker. Mọi cấu hình đã được tối ưu hóa để khởi chạy bằng Docker Compose.
+Tài liệu này hướng dẫn chi tiết cách cài đặt, vận hành và xử lý sự cố (Troubleshooting) đối với hệ thống CyberSec Assistant trên máy tính của bạn thông qua Docker. Mọi dịch vụ đã được tối ưu hóa để khởi chạy bằng Docker Compose.
 
 ---
 
@@ -21,7 +21,7 @@ Mở terminal tại thư mục gốc của dự án và chạy file script train
 ```powershell
 .\scripts\windows\train.bat
 ```
-*(Script này sẽ tự động khởi chạy container Rasa để train model chatbot, sau đó lưu model được sinh ra vào thư mục `rasa/models/`)*
+*(Script này sẽ tự động khởi chạy container Rasa để train model chatbot, sau đó lưu model được sinh ra dưới dạng file nén `.tar.gz` vào thư mục local `rasa/models/`)*
 
 ### Bước 2: Khởi động hệ thống dịch vụ
 Sau khi quá trình huấn luyện kết thúc, chạy lệnh sau để khởi động toàn bộ dịch vụ:
@@ -111,3 +111,49 @@ Dự án đã được tích hợp sẵn cấu hình kết nối đám mây Supa
      GEMINI_API_KEY=your_gemini_api_key
      VIRUSTOTAL_API_KEY=your_virustotal_api_key
      ```
+
+---
+
+## 🛠️ Hướng Dẫn Xử Lý Sự Cố (Troubleshooting)
+
+### 1. Rasa container báo lỗi: `[ERROR] No Rasa model found in /app/models`
+*   **Nguyên nhân**: Bạn chưa chạy bước huấn luyện Rasa nên thư mục `rasa/models/` không chứa tệp model nào (`.tar.gz`).
+*   **Khắc phục**: Chạy lệnh train Rasa trước:
+    - Trên Windows: `.\scripts\windows\train.bat`
+    - Trên các hệ điều hành khác: `docker compose run --rm --no-deps --entrypoint rasa rasa train --config /app/config.yml --domain /app/domain.yml --data /app/data --out /app/models`
+    Sau khi train xong, khởi chạy lại hệ thống: `docker compose up -d --build`.
+
+### 2. Lỗi trùng cổng (Port Conflict) - Ví dụ: Cổng 8000 hoặc 3000 đã bị chiếm dụng
+*   **Nguyên nhân**: Có một tiến trình hoặc dịch vụ khác chạy local đang chiếm dụng cổng mà container Docker muốn map (như cổng `3000` của Frontend, `8000` của FastAPI, hoặc `6379` của Redis).
+*   **Khắc phục (Windows)**:
+    1. Tìm PID của tiến trình đang chiếm dụng cổng (Ví dụ cổng `3000`):
+       ```powershell
+       netstat -ano | findstr :3000
+       ```
+    2. Tắt tiến trình đó (Ví dụ PID là `1234`):
+       ```powershell
+       taskkill /F /PID 1234
+       ```
+*   **Khắc phục (Linux/macOS)**:
+    1. Tìm PID:
+       ```bash
+       lsof -i :3000
+       ```
+    2. Tắt tiến trình:
+       ```bash
+       kill -9 <PID>
+       ```
+
+### 3. Lỗi kết nối Supabase Cloud: `connection to server at "..." failed`
+*   **Nguyên nhân**: Khóa mạng API của Supabase hoặc URL dự án điền trong `.env` bị sai, hoặc tường lửa máy tính chặn cổng HTTPS kết nối ra ngoài.
+*   **Khắc phục**:
+    - Kiểm tra lại chính xác các biến môi trường trong file `.env` hoặc `.env.local`.
+    - Thử chạy kiểm thử kết nối Supabase bằng script kiểm tra trong Backend:
+      - Bạn có thể vào container backend và kiểm thử:
+        ```bash
+        docker compose exec backend python -m backend.tests.test_supabase_connection
+        ```
+
+### 4. Lỗi không gọi được Gemini API hoặc quét URL VirusTotal trả về 0%
+*   **Nguyên nhân**: Chưa thiết lập hoặc nhập sai API key trong file cấu hình `.env`.
+*   **Khắc phục**: Đảm bảo các dòng `GEMINI_API_KEY` và `VIRUSTOTAL_API_KEY` trong file `.env` ở thư mục gốc chứa các khóa hợp lệ từ Google AI Studio và VirusTotal. Đảm bảo khởi động lại các container bằng `docker compose restart` để nhận cấu hình mới.

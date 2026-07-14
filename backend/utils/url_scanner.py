@@ -39,13 +39,20 @@ if not VIRUSTOTAL_API_KEY:
 
 def validate_url(url: str) -> bool:
     """
-    Validate URL format and security to prevent SSRF attacks
+    Validates the structure and safety of a URL to prevent Server-Side Request 
+    Forgery (SSRF) and path traversal attacks.
+
+    Checks applied:
+    1. Verify scheme is exclusively http or https.
+    2. Confirm netloc and hostname are present.
+    3. Exclude private IP subnets (RFC 1918) and loopback addresses.
+    4. Exclude localhost aliases and file:// protocol links.
 
     Args:
-        url: URL to validate
+        url (str): The raw URL to check.
 
     Returns:
-        bool: True if URL is valid and safe, False otherwise
+        bool: True if the URL conforms to safety checks, False otherwise.
     """
     try:
         result = urlparse(url)
@@ -67,18 +74,18 @@ def validate_url(url: str) -> bool:
         try:
             ip = ipaddress.ip_address(hostname)
 
-            # Use ipaddress module for accurate IP range checking
+            # Prevent SSRF: block private and loopback IP addresses
             if ip.is_private or ip.is_loopback:
                 return False
 
         except ValueError:
-            # Hostname is a domain name, not an IP
-            # Check for localhost domain names (case-insensitive)
+            # Hostname is a domain name, not a raw IP address.
+            # Block common local domain aliases (localhost, etc.)
             hostname_lower = hostname.lower()
             if hostname_lower in ['localhost', 'localhost.localdomain']:
                 return False
 
-        # Block local file access
+        # Block local file protocol indicators
         if result.scheme == 'file' or 'file://' in url:
             return False
 
@@ -90,18 +97,23 @@ def validate_url(url: str) -> bool:
 
 async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, Any]:
     """
-    Scan URL using VirusTotal API with validation and fallback (async version)
+    Submits a URL to VirusTotal API and retrieves the scan analysis result (asynchronous).
+
+    This process is wrapped in a Circuit Breaker pattern. It executes in 3 steps:
+    1. Base64 encodes the URL and tries to GET an existing report (avoids consuming API credits).
+    2. If no report is found, it POSTs the URL to initiate a new analysis.
+    3. It polls the analysis endpoint periodically until engines complete scanning.
 
     Args:
-        url: URL to scan
-        timeout: Request timeout in seconds (default: 10)
+        url (str): Safe URL to scan.
+        timeout (int, optional): Connection timeout in seconds. Defaults to 10.
 
     Returns:
-        Dict containing scan results or error information
+        Dict[str, Any]: Parsed API response or fallback payload on failure.
     """
-    # SECURITY: Wrap entire function with circuit breaker protection
+    # SECURITY: Wrap execution with circuit breaker protection
     async def _scan_with_virustotal():
-        # Validate URL format and security
+        # Double check URL safety first
         if not validate_url(url):
             return {
                 "error": "Invalid URL format or security check failed",
@@ -122,13 +134,14 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
         import time
         import asyncio
 
+        # VirusTotal requires URL identifier as base64 without trailing padding characters (=)
         url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
         headers = {
             "x-apikey": VIRUSTOTAL_API_KEY
         }
 
         async with httpx.AsyncClient(timeout=timeout) as client:
-            # 1. Try to get existing scan report for the URL (much faster, avoids starting a new scan)
+            # Step 1: Query for an existing report to minimize rate usage
             try:
                 get_response = await client.get(
                     f"https://www.virustotal.com/api/v3/urls/{url_id}",
@@ -153,7 +166,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
             except httpx.RequestError as e:
                 logger.error(f"VirusTotal GET /urls/{{id}} error: {e}")
 
-            # 2. If not found or empty, submit URL for scanning (POST)
+            # Step 2: Request a fresh scan since no cached report exists
             try:
                 submit_response = await client.post(
                     "https://www.virustotal.com/api/v3/urls",
@@ -186,7 +199,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                     "scan_date": datetime.utcnow().isoformat()
                 }
 
-            # 3. Poll GET /urls/{url_id} until results are complete (up to 8 attempts, waiting 4 seconds each)
+            # Step 3: Poll VirusTotal until analysis results populate
             poll_response = None
             poll_interval = 4
             max_poll_attempts = 8
@@ -214,7 +227,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                 except httpx.RequestError as e:
                     logger.error(f"VirusTotal API network error getting results during polling: {e}")
 
-            # If polling did not complete, return the last response anyway so parse_virustotal_results can try
+            # If polling did not complete in time, attempt to parse whatever exists in the final response
             if poll_response and poll_response.status_code == 200:
                 try:
                     return poll_response.json()
@@ -228,8 +241,6 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                 "scan_date": datetime.utcnow().isoformat()
             }
 
-
-    # Call the actual scan function through circuit breaker
     try:
         return await call_virustotal(_scan_with_virustotal)
     except CircuitBreakerOpenError as circuit_error:
@@ -253,18 +264,16 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
 
 def scan_url_virustotal(url: str) -> Dict[str, Any]:
     """
-    Scan URL using VirusTotal API with validation and fallback (sync version for backward compatibility)
+    Submits a URL to VirusTotal API and retrieves the scan analysis result (synchronous).
 
-    ⚠️ WARNING: This function uses blocking I/O (time.sleep, requests library).
-    For non-blocking async applications, use scan_url_virustotal_async() instead.
+    ⚠️ WARNING: Uses blocking network I/O. Prefer scan_url_virustotal_async() in async endpoints.
 
     Args:
-        url: URL to scan
+        url (str): URL to scan.
 
     Returns:
-        Dict containing scan results or error information
+        Dict[str, Any]: Parsed API response or fallback payload on failure.
     """
-    # Validate URL format and security
     if not validate_url(url):
         return {
             "error": "Invalid URL format or security check failed",
@@ -289,7 +298,6 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
         "x-apikey": VIRUSTOTAL_API_KEY
     }
 
-    # 1. Try to get existing scan report for the URL (much faster, avoids starting a new scan)
     try:
         import requests
         get_response = requests.get(
@@ -314,7 +322,6 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
     except requests.RequestException as e:
         logger.error(f"VirusTotal GET /urls/{{id}} error: {e}")
 
-    # 2. If not found or empty, submit URL for scanning (POST)
     try:
         submit_response = requests.post(
             "https://www.virustotal.com/api/v3/urls",
@@ -348,7 +355,6 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
             "scan_date": datetime.utcnow().isoformat()
         }
 
-    # 3. Poll GET /urls/{url_id} until results are complete (up to 8 attempts, waiting 4 seconds each)
     poll_response = None
     poll_interval = 4
     max_poll_attempts = 8
@@ -377,7 +383,6 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
         except requests.RequestException as e:
             logger.error(f"VirusTotal API network error getting results during polling: {e}")
 
-    # If polling did not complete, return the last response anyway so parse_virustotal_results can try
     if poll_response and poll_response.status_code == 200:
         try:
             return poll_response.json()
@@ -394,16 +399,15 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
 
 def parse_virustotal_results(result: Dict[str, Any], url: str) -> Dict[str, Any]:
     """
-    Parse VirusTotal API response into standardized format
+    Parses raw VirusTotal API analysis stats into a clean, standardized format.
 
     Args:
-        result: Raw VirusTotal API response
-        url: The URL that was scanned
+        result (Dict[str, Any]): Raw JSON output from VirusTotal.
+        url (str): The scanned URL.
 
     Returns:
-        Dict with standardized phishing check results
+        Dict[str, Any]: Unified phishing result model (risk_level, risk_score, reasons).
     """
-    # Check for API errors
     if 'error' in result:
         return {
             "url": url,
@@ -415,10 +419,7 @@ def parse_virustotal_results(result: Dict[str, Any], url: str) -> Dict[str, Any]
             "fallback": result.get('fallback', False)
         }
 
-    # Process VirusTotal results
     attributes = result.get('data', {}).get('attributes', {})
-    
-    # Support both direct URL report (last_analysis_stats) and asynchronous analysis report (stats)
     stats = attributes.get('last_analysis_stats') or attributes.get('stats') or {}
 
     malicious = stats.get('malicious', 0)
@@ -445,9 +446,10 @@ def parse_virustotal_results(result: Dict[str, Any], url: str) -> Dict[str, Any]
             }
         }
 
-    # Calculate risk score
+    # Calculate overall risk percentage from reporting engines
     risk_percentage = ((malicious + suspicious) / total_engines) * 100
 
+    # Categorize risk severity levels
     if malicious >= 5 or risk_percentage >= 50:
         risk_level = "HIGH"
         recommendation = "CẢNH BÁO: URL này đã được phát hiện độc hại bởi nhiều engine. KHÔNG nên truy cập."
@@ -481,14 +483,20 @@ def parse_virustotal_results(result: Dict[str, Any], url: str) -> Dict[str, Any]
 
 def basic_phishing_check(url: str, warning_message: str = "") -> Dict[str, Any]:
     """
-    Basic pattern matching fallback when VirusTotal API unavailable
+    Applies local regex and string heuristics to assess phishing risk when 
+    the external VirusTotal API is unreachable.
+
+    Heuristics evaluated:
+    - Keywords in domain (login, secure, bank, update).
+    - direct IP address access.
+    - Too many subdomains.
 
     Args:
-        url: URL to check
-        warning_message: Optional warning message to include
+        url (str): URL to scan.
+        warning_message (str, optional): Custom message explaining fallback cause.
 
     Returns:
-        Dict with basic phishing check results
+        Dict[str, Any]: Unified phishing result model.
     """
     suspicious_patterns = [
         r'https?://[^/]*login[^/]*\.',
@@ -502,19 +510,23 @@ def basic_phishing_check(url: str, warning_message: str = "") -> Dict[str, Any]:
     risk_score = 0
     reasons = []
 
+    # Check for suspicious phishing terms in domain/netloc
     for pattern in suspicious_patterns:
         if re.search(pattern, url, re.IGNORECASE):
             risk_score += 20
             reasons.append("Phát hiện mẫu URL đáng ngờ (ví dụ: login, secure...)")
 
+    # Check if host is a raw IP address (typical for malicious temporary hosts)
     if re.search(r'https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', url):
         risk_score += 30
         reasons.append("Sử dụng địa chỉ IP trực tiếp thay vì tên miền")
 
+    # Check for excessive subdomains
     if len(url.split('.')) > 4:
         risk_score += 10
         reasons.append("Cấu trúc chứa nhiều tên miền phụ đáng ngờ")
 
+    # Evaluate Heuristic Risk Score
     if risk_score >= 50:
         risk_level = "HIGH"
         recommendation = "CẢNH BÁO: URL này có nhiều dấu hiệu lừa đảo. KHÔNG nên nhập thông tin nhạy cảm."
@@ -537,6 +549,7 @@ def basic_phishing_check(url: str, warning_message: str = "") -> Dict[str, Any]:
 
 
 def _process_phishing_scan_result(result: Dict[str, Any], url: str) -> Dict[str, Any]:
+    """Helper to route results through parser or fallback checks on API error"""
     if 'error' not in result:
         return parse_virustotal_results(result, url)
 
@@ -552,44 +565,36 @@ def _process_phishing_scan_result(result: Dict[str, Any], url: str) -> Dict[str,
 
 async def check_phishing_url_async(url: str, timeout: int = 10) -> Dict[str, Any]:
     """
-    Main entry point for phishing URL checking (async version)
+    Main entry point for async phishing URL checking.
 
     Args:
-        url: URL to check for phishing
-        timeout: Request timeout in seconds (default: 10)
+        url (str): Target URL.
+        timeout (int, optional): Connection timeout. Defaults to 10.
 
     Returns:
-        Dict with phishing check results
+        Dict[str, Any]: Final unified phishing check details.
     """
     try:
-        # Call VirusTotal API (async)
         result = await scan_url_virustotal_async(url, timeout)
-
         return _process_phishing_scan_result(result, url)
-
     except Exception as e:
         logger.error(f"Phishing check error: {e}")
-        # Fall back to basic check
         return basic_phishing_check(url, f"Scan error: {str(e)}")
 
 
 def check_phishing_url(url: str) -> Dict[str, Any]:
     """
-    Main entry point for phishing URL checking (sync version for backward compatibility)
+    Main entry point for synchronous phishing URL checking.
 
     Args:
-        url: URL to check for phishing
+        url (str): Target URL.
 
     Returns:
-        Dict with phishing check results
+        Dict[str, Any]: Final unified phishing check details.
     """
     try:
-        # Call VirusTotal API (sync)
         result = scan_url_virustotal(url)
-
         return _process_phishing_scan_result(result, url)
-
     except Exception as e:
         logger.error(f"Phishing check error: {e}")
-        # Fall back to basic check
         return basic_phishing_check(url, f"Scan error: {str(e)}")
