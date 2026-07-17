@@ -48,7 +48,7 @@ Trong quá trình phát triển và hoàn thiện dự án **CyberSec Assistant*
   - Khi người dùng gửi câu hỏi, FastAPI chuyển tiếp đến Rasa NLU trước.
   - Nếu Rasa nhận diện ý định có độ tin cậy thấp (confidence < 0.7) hoặc nhận diện ý định là câu hỏi kỹ thuật bảo mật chuyên sâu (`ask_security_kb`), Rasa Custom Action Server hoặc Backend API sẽ tự động kích hoạt luồng xử lý RAG & Gemini.
   - LLM Gemini kết hợp với vector tìm kiếm từ ChromaDB sẽ trả lời câu hỏi dựa trên kho tài liệu kiến thức bảo mật nội bộ.
-- **Kết quả**: chatbot phản hồi chính xác cả những câu hỏi cơ bản lẫn những thắc mắc kỹ thuật phức tạp với tỷ lệ fallback giảm xuống dưới 5%.
+- **Kết quả**: chatbot phản hồi chính xác cả những câu hỏi cơ bản lẫn những thắc mắc kỹ thuật phức tạp với tỷ lệ fallback được tối ưu.
 
 ---
 

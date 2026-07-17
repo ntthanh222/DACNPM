@@ -8,6 +8,7 @@ import logging
 import subprocess
 import sys
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -22,11 +23,37 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 CRAWLER_PORT = int(os.getenv("CRAWLER_PORT", "8002"))
 
+
+@asynccontextmanager
+async def crawler_lifespan(app: FastAPI):
+    """Manage crawler startup and shutdown via lifespan events."""
+    # Startup
+    try:
+        scheduler = get_scheduler()
+        if not scheduler.get_job('security_news_crawler'):
+            schedule_crawler_job(hour_interval=4, max_articles=10)
+        if not scheduler.running:
+            scheduler.start()
+            logger.info("✅ Crawler service started on port %s", CRAWLER_PORT)
+    except Exception as e:
+        logger.error("❌ Failed to start crawler service: %s", e)
+    yield
+    # Shutdown
+    try:
+        scheduler = get_scheduler()
+        if scheduler.running:
+            scheduler.shutdown(wait=False)
+            logger.info("⏹️ Crawler service stopped")
+    except Exception as e:
+        logger.error("❌ Failed to stop crawler service: %s", e)
+
+
 # Initialize FastAPI app
 crawler_app = FastAPI(
     title="Crawler Service",
     description="Standalone crawler service for security news aggregation",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=crawler_lifespan
 )
 
 # Global scheduler instance
@@ -267,42 +294,6 @@ async def setup_schedule(
             status_code=500,
             detail='Failed to schedule crawler job'
         )
-
-
-# ============================================================================
-# Startup/Shutdown Events
-# ============================================================================
-
-@crawler_app.on_event("startup")
-async def startup_event():
-    """Initialize scheduler on service startup."""
-    try:
-        scheduler = get_scheduler()
-
-        # Add default crawler job if not already scheduled
-        if not scheduler.get_job('security_news_crawler'):
-            schedule_crawler_job(hour_interval=4, max_articles=10)
-
-        # Start scheduler
-        if not scheduler.running:
-            scheduler.start()
-            logger.info("✅ Crawler service started on port %s", CRAWLER_PORT)
-
-    except Exception as e:
-        logger.error(f"❌ Failed to start crawler service: {e}")
-
-
-@crawler_app.on_event("shutdown")
-async def shutdown_event():
-    """Shutdown scheduler on service shutdown."""
-    try:
-        scheduler = get_scheduler()
-        if scheduler.running:
-            scheduler.shutdown(wait=False)
-            logger.info("⏹️ Crawler service stopped")
-
-    except Exception as e:
-        logger.error(f"❌ Failed to stop crawler service: {e}")
 
 
 # ============================================================================

@@ -8,6 +8,11 @@ CyberSec Assistant được thiết kế theo mô hình **Microservices** phân 
 
 Dưới đây là mô hình phân tầng chi tiết của hệ thống từ Client đến Database và các thành phần giám sát:
 
+![CyberSec Assistant System Architecture](assets/architecture.svg)
+
+<details>
+<summary>💻 Xem mã nguồn Mermaid (Text-based Diagram)</summary>
+
 ```mermaid
 graph TB
     %% Layers Definition
@@ -30,7 +35,7 @@ graph TB
         Rasa[Rasa Core & NLU 3.6.20]
         Actions[Rasa Action Server]
         Chroma[ChromaDB Vector Store]
-        Gemini[Google Gemini 1.5 Flash]
+        Gemini[Google Gemini 2.5 Flash]
         
         Rasa <--> Actions
     end
@@ -46,7 +51,7 @@ graph TB
     end
 
     %% Interactions
-    JS <-->|HTTPS / Websockets| FastAPI
+    JS <-->|HTTPS / SSE| FastAPI
     Router <-->|REST API| Rasa
     Router <-->|Semantic Queries| Chroma
     Router <-->|API Calls| Gemini
@@ -58,6 +63,7 @@ graph TB
     Prom -.->|Scrape /metrics| Rasa
     Graf -.->|Query Metrics| Prom
 ```
+</details>
 
 ---
 
@@ -88,12 +94,12 @@ graph TB
 
 ### 2.4. RAG & LLM Engine (`/backend/rag`, `/backend/llm`)
 - **Vai trò**: Trả lời các truy vấn bảo mật phức tạp dựa trên kho tri thức sẵn có.
-- **Công nghệ**: **Google Gemini 1.5 Flash API** & **ChromaDB**.
+- **Công nghệ**: **Google Gemini 2.5 Flash API** & **ChromaDB**.
 - **Luồng xử lý RAG (Retrieval-Augmented Generation)**:
   1. Câu hỏi bảo mật của người dùng được chuyển đổi thành vector embedding qua Gemini Embedding API.
   2. ChromaDB thực hiện so khớp vector tương tự để trích xuất các phân đoạn văn bản liên quan nhất từ kho tri thức bảo mật nội bộ.
   3. Kết quả trích xuất được kết hợp cùng câu hỏi gốc thành một prompt nâng cao (augmented prompt).
-  4. Prompt này được gửi đến Gemini 1.5 Flash để tổng hợp câu trả lời chính xác, đáng tin cậy và không bị hiện tượng ảo tưởng (hallucination).
+  4. Prompt này được gửi đến Gemini 2.5 Flash để tổng hợp câu trả lời chính xác, đáng tin cậy dựa trên dữ liệu truy xuất.
 
 ```mermaid
 sequenceDiagram

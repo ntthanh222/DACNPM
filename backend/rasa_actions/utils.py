@@ -13,6 +13,11 @@ from uuid import UUID
 logger = logging.getLogger(__name__)
 
 
+def _is_missing_is_deleted_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return "is_deleted" in message and ("does not exist" in message or "could not find" in message)
+
+
 def _validate_uuid(uuid_string: Optional[str]) -> bool:
     """
     Validate if string is valid UUID format
@@ -64,10 +69,17 @@ def get_security_news(limit: int = 5) -> List[Dict[str, Any]]:
 
         # Get news from the last 7 days
         week_ago = datetime.now() - timedelta(days=7)
-        response = supabase.table('news_articles').select('*')\
-            .eq('is_deleted', False)\
-            .gte('published_at', week_ago.isoformat())\
-            .order('published_at', desc=True).limit(limit).execute()
+        try:
+            response = supabase.table('news_articles').select('*')\
+                .eq('is_deleted', False)\
+                .gte('published_at', week_ago.isoformat())\
+                .order('published_at', desc=True).limit(limit).execute()
+        except Exception as e:
+            if not _is_missing_is_deleted_error(e):
+                raise
+            response = supabase.table('news_articles').select('*')\
+                .gte('published_at', week_ago.isoformat())\
+                .order('published_at', desc=True).limit(limit).execute()
 
         if response.data and len(response.data) >= limit:
             return [

@@ -1,0 +1,33 @@
+﻿{
+    "sender":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+    "checked":  "2026-07-16T13:46:09.0402185Z",
+    "response":  {
+                     "value":  [
+                                   {
+                                       "recipient_id":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+                                       "text":  "Chào bạn, rất vui được hỗ trợ! 👋"
+                                   },
+                                   {
+                                       "recipient_id":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+                                       "text":  "**Phishing** (lừa đảo trực tuyến) là một hình thức tấn công mạng mà kẻ xấu cố gắng lừa bạn tiết lộ thông tin nhạy cảm như tên đăng nhập, mật khẩu, số thẻ tín dụng hoặc thông tin cá nhân khác."
+                                   },
+                                   {
+                                       "recipient_id":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+                                       "text":  "Kẻ tấn công thường giả mạo thành một tổ chức, công ty hoặc người mà bạn tin tưởng (ví dụ: ngân hàng, công ty công nghệ, bạn bè, đồng nghiệp) thông qua:\n*   📧 **Email giả mạo:** Thường có vẻ ngoài giống hệt email thật.\n*   💬 **Tin nhắn (SMS/chat) giả mạo:** Giả vờ là từ ngân hàng, nhà mạng, v.v.\n*   🌐 **Trang web giả mạo:** Có giao diện giống hệt trang web gốc để đánh lừa bạn nhập thông tin."
+                                   },
+                                   {
+                                       "recipient_id":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+                                       "text":  "**Mục tiêu của chúng là gì?** Để đánh cắp thông tin của bạn, từ đó có thể truy cập tài khoản, thực hiện giao dịch gian lận hoặc đánh cắp danh tính. 😱"
+                                   },
+                                   {
+                                       "recipient_id":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+                                       "text":  "**Làm sao để phòng tránh?** Luôn cảnh giác!\n*   Kiểm tra kỹ địa chỉ email người gửi.\n*   Tuyệt đối không nhấp vào các liên kết đáng ngờ.\n*   Không tải xuống tệp đính kèm từ các nguồn không xác định.\n*   Luôn truy cập trang web bằng cách gõ trực tiếp địa chỉ hoặc dùng dấu trang đã lưu."
+                                   },
+                                   {
+                                       "recipient_id":  "3652f245-4e84-4e02-9f9f-d73dbe5510b2",
+                                       "text":  "Hãy nhớ rằng, các tổ chức uy tín sẽ không bao giờ yêu cầu bạn cung cấp thông tin nhạy cảm qua email hoặc tin nhắn không bảo mật. Bảo vệ bản thân là ưu tiên hàng đầu! 💪"
+                                   }
+                               ],
+                     "Count":  6
+                 }
+}

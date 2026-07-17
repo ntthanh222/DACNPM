@@ -230,6 +230,7 @@ class AuthHelper {
      */
     async login(username, password) {
         try {
+            this.clearStoredSession();
             const response = await fetch(`${this.apiEndpoint}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -299,6 +300,11 @@ class AuthHelper {
      * Destroy session and redirect to login
      */
     logout() {
+        this.clearStoredSession();
+        window.location.href = this.getLoginRedirectUrl();
+    }
+
+    clearStoredSession() {
         // Remove encrypted token
         localStorage.removeItem('cybersec_access_token_encrypted');
         // Remove unencrypted token (if exists)
@@ -306,7 +312,6 @@ class AuthHelper {
         localStorage.removeItem('cybersec_username');
         localStorage.removeItem('cybersec_user_id');
         localStorage.removeItem('cybersec_user_role');
-        window.location.href = this.getLoginRedirectUrl();
     }
 
     // Storage accessors
@@ -342,7 +347,7 @@ class AuthHelper {
     getUsername() { return localStorage.getItem('cybersec_username'); }
     getUserId() { return localStorage.getItem('cybersec_user_id'); }
     getUserRole() { return localStorage.getItem('cybersec_user_role'); }
-    isAdminRole(role) { return role === 'admin' || role === 'security_analyst'; }
+    isAdminRole(role) { return role === 'admin' || role === 'super_admin' || role === 'security_analyst'; }
     isAdmin() { return this.isAdminRole(this.getUserRole()); }
 
     /**

@@ -10,6 +10,7 @@ import os
 import re
 import time
 import threading
+from types import SimpleNamespace
 from functools import wraps
 try:
     from supabase import create_client
@@ -24,6 +25,15 @@ except (ImportError, RuntimeError) as exc:
     SyncClientOptions = None
     SUPABASE_SDK_AVAILABLE = False
     logging.getLogger(__name__).warning("Supabase SDK unavailable: %s", exc)
+try:
+    import httpx
+    from postgrest import SyncPostgrestClient
+    POSTGREST_FALLBACK_AVAILABLE = True
+except ImportError as exc:
+    httpx = None
+    SyncPostgrestClient = None
+    POSTGREST_FALLBACK_AVAILABLE = False
+    logging.getLogger(__name__).warning("PostgREST fallback unavailable: %s", exc)
 from backend.core.config import settings
 
 # Configure logging at module level (before try/except block)
@@ -76,7 +86,7 @@ def _test_supabase_connection(client, test_tables=None):
 def _create_supabase_client(supabase_url, supabase_key):
     """Create a client compatible with both legacy and modern Supabase keys."""
     if not SUPABASE_SDK_AVAILABLE:
-        raise RuntimeError("Supabase SDK is unavailable in this runtime")
+        return _create_postgrest_fallback_client(supabase_url, supabase_key)
 
     if supabase_key.startswith(("sb_publishable_", "sb_secret_")):
         # Modern keys are valid only in the `apikey` header. supabase-py also
@@ -90,11 +100,49 @@ def _create_supabase_client(supabase_url, supabase_key):
 
     return create_client(supabase_url, supabase_key)
 
+
+class PostgRESTSupabaseClient:
+    """Small Supabase-compatible REST client for runtimes without supabase-py."""
+
+    def __init__(self, supabase_url: str, supabase_key: str):
+        if not POSTGREST_FALLBACK_AVAILABLE:
+            raise RuntimeError("PostgREST fallback dependencies are unavailable")
+
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "apikey": supabase_key,
+        }
+        if not supabase_key.startswith(("sb_publishable_", "sb_secret_")):
+            headers["Authorization"] = f"Bearer {supabase_key}"
+
+        base_url = f"{supabase_url.rstrip('/')}/rest/v1"
+        self._http_client = httpx.Client(http2=False)
+        self._postgrest = SyncPostgrestClient(
+            base_url,
+            headers=headers,
+            http_client=self._http_client,
+        )
+        self.postgrest = SimpleNamespace(headers=headers)
+
+    def table(self, table_name: str):
+        return self._postgrest.from_(table_name)
+
+    def from_(self, table_name: str):
+        return self._postgrest.from_(table_name)
+
+    def rpc(self, func: str, params: dict, **kwargs):
+        return self._postgrest.rpc(func, params, **kwargs)
+
+
+def _create_postgrest_fallback_client(supabase_url, supabase_key):
+    """Create a minimal PostgREST client when supabase-py cannot import."""
+    logger.info("Using PostgREST fallback client because Supabase SDK is unavailable")
+    return PostgRESTSupabaseClient(supabase_url, supabase_key)
+
 def get_supabase_client():
     """Get Supabase client with public key for user operations"""
     try:
-        if not SUPABASE_SDK_AVAILABLE:
-            return None
         if not settings.supabase_url or not settings.supabase_key:
             logger.warning("Supabase credentials not configured")
             return None
@@ -119,8 +167,6 @@ def get_supabase_admin_client():
     The service role key must be set via environment variable only.
     """
     try:
-        if not SUPABASE_SDK_AVAILABLE:
-            return None
         # SECURITY: Service role key must come from environment variable
         service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or getattr(settings, 'supabase_service_role_key', None)
         if not service_role_key:
@@ -163,11 +209,11 @@ def get_raw_postgres_connection():
         postgres_host = f"db.{project_ref}.supabase.co"
 
         # Use the database settings from config, or construct from Supabase URL
-        db_host = getattr(settings, 'db_host', postgres_host)
+        db_host = os.environ.get("DB_HOST") or (settings.db_host if settings.db_host and settings.db_host != "localhost" else postgres_host)
         db_port = getattr(settings, 'db_port', 5432)
         db_name = getattr(settings, 'db_name', 'postgres')
-        db_user = getattr(settings, 'db_user', 'postgres')
-        db_password = getattr(settings, 'db_password', settings.supabase_service_role_key)
+        db_user = os.environ.get("DB_USER") or getattr(settings, 'db_user', 'postgres')
+        db_password = settings.db_password or getattr(settings, 'supabase_service_role_key', None) or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
         if not db_password:
             raise ValueError("Database password not configured - set DB_PASSWORD or SUPABASE_SERVICE_ROLE_KEY")

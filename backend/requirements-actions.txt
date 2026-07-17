@@ -2,7 +2,7 @@
 # This environment is Python 3.10 because rasa-sdk 3.6.2 requires Python <3.11.
 pydantic==2.13.4
 pydantic-settings==2.14.2
-fastapi==0.139.0
+fastapi>=0.115.0
 cachetools==6.2.2
 pyasn1==0.6.3
 pyasn1-modules==0.4.2
@@ -27,7 +27,12 @@ prompt-toolkit==3.0.28
 ruamel.yaml==0.17.21
 sanic==21.12.2
 sanic-cors==2.0.1
-setuptools==70.3.0
+setuptools==83.0.0
 typing-extensions==4.16.0
 websockets==10.4
 wheel==0.42.0
+# Runtime imports used by RAG and security fallback actions.
+cryptography==49.0.0
+# HTTP-only Chroma client used by the action server; the Chroma server runs in
+# its own Docker service.
+chromadb-client==1.5.9

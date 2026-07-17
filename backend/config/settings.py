@@ -46,6 +46,18 @@ class Settings(BaseSettings):
     # CORS Configuration
     cors_origins: str = "http://localhost:3000,http://localhost:8000"
 
+    # Official Server-Side Role Mapping
+    # Cấu hình chính thức để phân quyền super_admin mà không cần bypass constraint database
+    super_admin_ids: str = Field(
+        default="", 
+        description="Comma-separated UUIDs for super_admin users"
+    )
+
+    def get_super_admin_ids(self) -> list[str]:
+        if not self.super_admin_ids:
+            return []
+        return [uid.strip() for uid in self.super_admin_ids.split(',')]
+
     def get_cors_origins(self) -> list[str]:
         """Parse CORS origins from comma-separated string"""
         if isinstance(self.cors_origins, str):
@@ -119,7 +131,9 @@ class Settings(BaseSettings):
     @classmethod
     def validate_environment(cls, v: str) -> str:
         """Validate environment setting"""
-        allowed = ['development', 'production', 'staging']
+        # Also map APP_ENV to environment if it's set in the env
+        v = os.getenv("APP_ENV", v)
+        allowed = ['development', 'production', 'staging', 'test', 'qa']
         if v not in allowed:
             raise ValueError(f'Environment must be one of {allowed}')
         return v
@@ -130,6 +144,26 @@ class Settings(BaseSettings):
 
     def is_development(self) -> bool:
         return self.environment == 'development'
+
+    def is_test(self) -> bool:
+        return self.environment == 'test'
+
+    def is_qa(self) -> bool:
+        return self.environment == 'qa'
+
+    @model_validator(mode='after')
+    def validate_security(self) -> 'Settings':
+        if self.environment == 'production':
+            if self.jwt_secret == "change-this-to-a-secure-random-key-in-production":
+                raise ValueError("Must set a secure JWT_SECRET in production!")
+            if self.api_debug:
+                raise ValueError("API_DEBUG must be false in production!")
+        
+        # Prevent destructive QA/test operations on production URLs.
+        if self.environment in {'test', 'qa'}:
+            if 'aivvorhfsxjpfeqpcxxh' in self.supabase_url: # The known production project ID
+                raise ValueError("Test/QA environment must not connect to the production Supabase database.")
+        return self
 
     model_config = {
         "env_file": [

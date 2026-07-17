@@ -13,6 +13,27 @@ from starlette.exceptions import HTTPException as HTTPException
 
 logger = logging.getLogger(__name__)
 
+SENSITIVE_QUERY_PARAMS = {
+    "access_token",
+    "api_key",
+    "authorization",
+    "password",
+    "stream_ticket",
+    "token",
+}
+REDACTED_VALUE = "[REDACTED]"
+
+
+def _sanitize_query_params(request: Request) -> dict:
+    if not request:
+        return {}
+
+    return {
+        key: REDACTED_VALUE if key.lower() in SENSITIVE_QUERY_PARAMS else value
+        for key, value in request.query_params.items()
+    }
+
+
 class ErrorResponse:
     """Standard error response format"""
     def __init__(self, error: str, message: str, status_code: int, details: dict = None):
@@ -36,7 +57,7 @@ def log_error(error: Exception, request: Request, context: dict = None):
         'error_message': str(error),
         'method': request.method if request else "N/A",
         'path': request.url.path if request else "N/A",
-        'query_params': dict(request.query_params) if request else {},
+        'query_params': _sanitize_query_params(request),
         'ip_address': request.client.host if (request and request.client) else None,
         'user_agent': request.headers.get('user-agent', 'Unknown') if request else 'Unknown',
         'timestamp': None
@@ -45,8 +66,8 @@ def log_error(error: Exception, request: Request, context: dict = None):
     if context:
         error_info['context'] = context
 
-    # Add stack trace for debugging (but don't include in logs in production)
-    error_info['stack_trace'] = traceback.format_exc()
+    if not isinstance(error, HTTPException) or error.status_code >= 500:
+        error_info['stack_trace'] = traceback.format_exc()
 
     # Log at different levels based on error type
     if isinstance(error, HTTPException):

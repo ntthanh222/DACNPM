@@ -8,7 +8,6 @@ services:
   # ============================================
   redis:
     image: redis:7-alpine
-    container_name: cybersec-redis
     ports:
       - "6379:6379"
     volumes:
@@ -27,9 +26,8 @@ services:
   # ============================================
   chromadb:
     image: chromadb/chroma:latest
-    container_name: cybersec-chromadb
-    ports:
-      - "8001:8000"
+    # Chroma is consumed only over the internal Compose network. Do not expose
+    # its unauthenticated HTTP API on the host; backend/crawler use chromadb:8000.
     volumes:
       - chromadb_data:/chroma/chroma
     environment:
@@ -43,10 +41,9 @@ services:
   # ============================================
   rasa:
     image: rasa/rasa:3.6.20-full
-    container_name: cybersec-rasa
     working_dir: /app
     ports:
-      - "5005:5005"
+      - "${RASA_HOST_PORT:-15005}:5005"
     volumes:
       - ./rasa/models:/app/models
       - ./rasa/data:/app/data
@@ -75,6 +72,10 @@ services:
       test: ["CMD-SHELL", "test -n \"$$(find /app/models -maxdepth 1 -type f -name '*.tar.gz' -print -quit)\" && curl -f http://localhost:5005/"]
       interval: 30s
       timeout: 10s
+      # The mounted Rasa model takes several minutes to load on a cold start.
+      # Without a start period Docker marks the service unhealthy before the
+      # server has had a chance to bind port 5005.
+      start_period: 300s
       retries: 3
 
   # ============================================
@@ -86,17 +87,21 @@ services:
       dockerfile: backend/Dockerfile
       target: actions
     image: ncnpm-rasa-actions:latest
-    container_name: cybersec-rasa-actions
     working_dir: /app
     command: ["python", "-m", "rasa_sdk.__main__", "--actions", "backend.rasa_actions.actions", "--port", "5055"]
     ports:
-      - "5055:5055"
+      - "${RASA_ACTIONS_HOST_PORT:-15055}:5055"
     volumes:
       - ./backend:/app/backend
       - backend_logs:/app/logs
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - CHROMADB_HOST=http://chromadb:8000
+      # Keep action-server embeddings aligned with the backend's deterministic
+      # 384-dimensional fallback in the lightweight Python 3.10 image.
+      - EMBEDDING_BACKEND=hash
       - ENVIRONMENT=development
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
@@ -105,8 +110,6 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - LLM_API_KEY=${GEMINI_API_KEY}
       - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - LLM_API_KEY=${GEMINI_API_KEY}
     depends_on:
       redis:
         condition: service_healthy
@@ -126,7 +129,6 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       target: development
-    container_name: cybersec-backend
     working_dir: /app
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
     ports:
@@ -135,16 +137,29 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend:ro
       - ./rasa:/app/rasa:ro
+      - ./scripts:/app/scripts:ro
+      - ./testing:/app/testing:ro
+      - ./prometheus.yml:/app/prometheus.yml:ro
+      - ./docker-compose.yml:/app/docker-compose.yml:ro
+      - ./docker-compose.test.yml:/app/docker-compose.test.yml:ro
       - backend_logs:/app/logs
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - CHROMADB_HOST=http://chromadb:8000
       - RASA_URL=http://rasa:5005
       - SECRET_KEY=dev-secret-key-change-in-production
+      # Keep JWT signatures stable across backend restarts in local Docker.
+      - JWT_SECRET=dev-secret-key-change-in-production
+      - HF_HOME=/tmp/huggingface
+      - SENTENCE_TRANSFORMERS_HOME=/tmp/sentence_transformers
+      - EMBEDDING_BACKEND=hash
       - ENVIRONMENT=development
       - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - LLM_API_KEY=${GEMINI_API_KEY}
+      - SUPER_ADMIN_IDS=${SUPER_ADMIN_IDS}
       # Supabase credentials - cần set trong .env hoặc ở đây
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
@@ -174,7 +189,6 @@ services:
       dockerfile: backend/Dockerfile
       target: development
     image: ncnpm-backend:latest
-    container_name: cybersec-crawler
     working_dir: /app
     command: uvicorn backend.services.crawler_service:crawler_app --host 0.0.0.0 --port 8002 --log-level info
     ports:
@@ -214,7 +228,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: cybersec-frontend
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
     ports:
@@ -231,13 +244,18 @@ services:
   # ============================================
   redis-commander:
     image: rediscommander/redis-commander:latest
-    container_name: cybersec-redis-commander
     environment:
       - REDIS_HOSTS=local:redis:6379
     ports:
       - "8081:8081"
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 5 http://127.0.0.1:8081"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
     networks:
       - cybersec-network
 
@@ -246,7 +264,6 @@ services:
   # ============================================
   prometheus:
     image: prom/prometheus:latest
-    container_name: cybersec-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -263,7 +280,6 @@ services:
   # ============================================
   grafana:
     image: grafana/grafana:latest
-    container_name: cybersec-grafana
     ports:
       - "3001:3000"
     environment:

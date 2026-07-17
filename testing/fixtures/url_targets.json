@@ -1,0 +1,5 @@
+{
+  "safe": ["https://example.com/", "http://example.com/path?q=1"],
+  "invalid": ["", "not a url", "file:///etc/passwd", "gopher://127.0.0.1/"],
+  "ssrf": ["http://127.0.0.1/", "http://localhost/", "http://0.0.0.0/", "http://169.254.169.254/", "http://redis:6379/"]
+}

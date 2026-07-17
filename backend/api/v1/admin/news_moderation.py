@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _is_missing_is_deleted_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return "is_deleted" in message and ("does not exist" in message or "could not find" in message)
+
+
 # ============================================================================
 # Pydantic Models
 # ============================================================================
@@ -62,10 +67,21 @@ async def get_all_news(
             query = query.eq('is_deleted', False)
 
         if search:
-            query = query.or_(f"title.ilike.%{search}%,description.ilike.%{search}%")
+            safe = search.replace(',', ' ').replace('.', ' ').replace('(', '').replace(')', '').strip()
+            query = query.or_(f"title.ilike.%{safe}%,description.ilike.%{safe}%")
 
         # Get data with pagination
-        response = query.order('published_at', desc=True).range(offset, offset + page_size - 1).execute()
+        try:
+            response = query.order('published_at', desc=True).range(offset, offset + page_size - 1).execute()
+        except Exception as e:
+            if include_deleted or not _is_missing_is_deleted_error(e):
+                raise
+            logger.warning("news_articles.is_deleted missing; returning news without soft-delete filter")
+            query = admin_client.table('news_articles').select('*', count='exact')
+            if search:
+                safe = search.replace(',', ' ').replace('.', ' ').replace('(', '').replace(')', '').strip()
+            query = query.or_(f"title.ilike.%{safe}%,description.ilike.%{safe}%")
+            response = query.order('published_at', desc=True).range(offset, offset + page_size - 1).execute()
 
         total = response.count if hasattr(response, 'count') else len(response.data)
 

@@ -22,8 +22,8 @@ Quản lý đăng ký, đăng nhập, xác thực phiên làm việc.
 - **Body**:
   ```json
   {
-    "email_or_username": "admin",
-    "password": "A1a!Y5Sorgv5xZ_Dr1JPQKjtunVKLVrBFAWA"
+    "username": "admin",
+    "password": "<set-via-env-or-secret-store>"
   }
   ```
 - **Phản hồi thành công (200 OK)**:

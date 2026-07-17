@@ -64,8 +64,27 @@ class ChatController {
             return;
         }
 
-        await this.sendMessage(message);
-        this.ui.input.value = '';
+        // Disable input to prevent double submit
+        this.setLoadingState(true);
+
+        try {
+            this.ui.input.value = '';
+            await this.sendMessage(message);
+        } finally {
+            this.setLoadingState(false);
+            this.ui.input.focus();
+        }
+    }
+
+    /**
+     * Manage input UI loading state
+     */
+    setLoadingState(isLoading) {
+        if (this.ui.input) this.ui.input.disabled = isLoading;
+        if (this.ui.button) {
+            this.ui.button.disabled = isLoading;
+            this.ui.button.style.opacity = isLoading ? '0.5' : '1';
+        }
     }
 
     /**
@@ -90,6 +109,10 @@ class ChatController {
 
         // Display user message
         this.displayUserMessage(message);
+
+        // Display typing indicator
+        const indicatorId = `typing-${messageId}`;
+        this.displayTypingIndicator(indicatorId);
 
         // Send to chatbot via REST API
         console.log('🔵 Sending chat API request:', {
@@ -124,6 +147,7 @@ class ChatController {
 
             const responseData = await response.json();
             console.log('🟢 Chat Response Data:', responseData);
+            this.removeTypingIndicator(indicatorId);
             this.handleChatbotResponse(responseData, messageId);
 
         } catch (error) {
@@ -133,6 +157,7 @@ class ChatController {
                 endpoint: this.chatbotEndpoint
             });
 
+            this.removeTypingIndicator(indicatorId);
             // Remove from queue on error
             this.pendingMessages.delete(messageId);
 
@@ -194,6 +219,39 @@ class ChatController {
 
         this.ui.messages.insertAdjacentHTML('beforeend', messageHTML);
         this.ui.messages.scrollTop = this.ui.messages.scrollHeight;
+    }
+
+    /**
+     * Display typing indicator
+     */
+    displayTypingIndicator(id) {
+        if (!this.ui.messages) return;
+        const typingHTML = `
+            <div id="${id}" class="flex gap-6">
+                <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0 border border-primary/20">
+                    <span class="material-symbols-outlined text-primary" aria-hidden="true">smart_toy</span>
+                </div>
+                <div class="flex-1 space-y-4">
+                    <div class="bg-surface-container p-4 rounded-2xl border-l-2 border-primary inline-block">
+                        <div class="flex space-x-1 items-center h-4">
+                            <div class="w-2 h-2 bg-primary/50 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            <div class="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.ui.messages.insertAdjacentHTML('beforeend', typingHTML);
+        this.ui.messages.scrollTop = this.ui.messages.scrollHeight;
+    }
+
+    /**
+     * Remove typing indicator
+     */
+    removeTypingIndicator(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
     }
 
     /**

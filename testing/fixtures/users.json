@@ -1,0 +1,8 @@
+{
+  "super_admin": {"username": "qa_super_admin", "email": "qa-super-admin@example.test", "role": "super_admin", "status": "active"},
+  "admin": {"username": "qa_admin", "email": "qa-admin@example.test", "role": "admin", "status": "active"},
+  "user_a": {"username": "qa_user_a", "email": "qa-user-a@example.test", "role": "user", "status": "active", "ai": true},
+  "user_b": {"username": "qa_user_b", "email": "qa-user-b@example.test", "role": "user", "status": "active", "ai": false},
+  "locked": {"username": "qa_locked", "email": "qa-locked@example.test", "role": "user", "status": "locked"},
+  "disabled": {"username": "qa_disabled", "email": "qa-disabled@example.test", "role": "user", "status": "disabled"}
+}

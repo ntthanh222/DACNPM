@@ -223,15 +223,14 @@ class PerformanceDashboard:
                     <th>Change</th>
                     <th>Status</th>
                 </tr>
-                {"".join(f"""
-                <tr>
-                    <td>{test_name}</td>
-                    <td>{data['current']:.4f}s</td>
-                    <td>{data['baseline']:.4f}s</td>
-                    <td>{data['change_percentage']:+.2f}%</td>
-                    <td class="{data['status']}">{data['status']}</td>
-                </tr>
-                """ for test_name, data in endpoints.items())}
+                {"".join(
+                    f"<tr><td>{test_name}</td>"
+                    f"<td>{data['current']:.4f}s</td>"
+                    f"<td>{data['baseline']:.4f}s</td>"
+                    f"<td>{data['change_percentage']:+.2f}%</td>"
+                    f"<td class={chr(34)}{data['status']}{chr(34)}>{data['status']}</td></tr>"
+                    for test_name, data in endpoints.items()
+                )}
             </table>
         </div>
 
@@ -245,14 +244,13 @@ class PerformanceDashboard:
                     <th>Improvements</th>
                     <th>Stable</th>
                 </tr>
-                {"".join(f"""
-                <tr>
-                    <td>{point['date']}</td>
-                    <td>{point['regressions']}</td>
-                    <td>{point['improvements']}</td>
-                    <td>{point['stable']}</td>
-                </tr>
-                """ for point in trends['data_points'])}
+                {"".join(
+                    f"<tr><td>{point['date']}</td>"
+                    f"<td>{point['regressions']}</td>"
+                    f"<td>{point['improvements']}</td>"
+                    f"<td>{point['stable']}</td></tr>"
+                    for point in trends['data_points']
+                )}
             </table>
         </div>
     </div>

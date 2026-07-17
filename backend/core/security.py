@@ -3,13 +3,14 @@
 import logging
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import bcrypt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError as JWTError
 
 from backend.application.auth.schemas import TokenData
 from backend.core.config import get_settings
@@ -55,7 +56,7 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         str: Encoded and signed JWT token.
     """
     payload = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=get_settings().access_token_expire_minutes))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=get_settings().access_token_expire_minutes))
     payload["exp"] = expire
     return jwt.encode(payload, _get_jwt_secret(), algorithm=ALGORITHM)
 

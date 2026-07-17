@@ -147,7 +147,7 @@ class UserService {
     async checkAdminRole(token) {
         try {
             const user = await this.getCurrentUser(token);
-            const isAdmin = user.role === 'admin' || user.role === 'security_analyst';
+            const isAdmin = user.role === 'admin' || user.role === 'super_admin' || user.role === 'security_analyst';
 
             if (isAdmin) {
                 console.log(`✅ Admin access granted for user: ${user.username} (${user.role})`);

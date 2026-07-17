@@ -233,6 +233,8 @@ class ActionCheckPhishing(Action):
         try:
             if not user_id:
                 return {}
+            if isinstance(user_id, str) and not _validate_uuid(user_id):
+                return {}
 
             from backend.repositories.users import get_user
             user = get_user(user_id)
@@ -427,6 +429,8 @@ class ActionLookupCVE(Action):
         try:
             if not user_id:
                 return {}
+            if isinstance(user_id, str) and not _validate_uuid(user_id):
+                return {}
 
             from backend.repositories.users import get_user
             user = get_user(user_id)
@@ -562,7 +566,7 @@ class ActionCheckPasswordStrength(Action):
 
             # Get user context for personalization
             user_context = None
-            if user_id:
+            if user_id and (not isinstance(user_id, str) or _validate_uuid(user_id)):
                 try:
                     user = get_user(UUID(user_id)) if isinstance(user_id, str) else get_user(user_id)
                     if user:
@@ -916,13 +920,23 @@ class ActionDefaultFallback(Action):
             # Build security-aware system prompt
             system_prompt = self._build_security_system_prompt(security_context)
 
-            # Generate LLM response
-            response = llm.generate_response(
-                message=message,
-                context=rag_context,
-                history=history,
-                system_prompt=system_prompt
-            )
+            # Generate LLM response. Gemini can be rate-limited or temporarily
+            # unavailable; the chat path should still return a useful answer
+            # instead of surfacing a runtime error in Rasa action logs.
+            try:
+                response = llm.generate_response(
+                    message=message,
+                    context=rag_context,
+                    history=history,
+                    system_prompt=system_prompt
+                )
+            except Exception as provider_error:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Fallback LLM unavailable, using local response: %s",
+                    provider_error,
+                )
+                response = self._local_fallback_response(message)
 
             # Send response
             dispatcher.utter_message(text=response)
@@ -939,6 +953,35 @@ class ActionDefaultFallback(Action):
             )
 
         return []
+
+    def _local_fallback_response(self, message: str) -> str:
+        """Deterministic fallback for low-confidence chat when the LLM is unavailable."""
+        message_lower = (message or "").lower()
+
+        if any(term in message_lower for term in ["url", "link", "phishing", "domain"]):
+            return (
+                "Toi chua the xac minh truc tiep noi dung nay qua AI provider. "
+                "Hay kiem tra domain, scheme, redirect, chung chi TLS, ngu canh nguoi gui "
+                "va khong nhap mat khau vao trang dang nghi. Neu can, hay dung chuc nang scan URL."
+            )
+
+        if any(term in message_lower for term in ["password", "mat khau", "mật khẩu", "credential", "token"]):
+            return (
+                "Toi khong luu hoac yeu cau mat khau plaintext. Hay dung mat khau dai, duy nhat, "
+                "password manager va MFA. Neu nghi credential bi lo, hay thu hoi token, doi mat khau "
+                "va kiem tra audit log."
+            )
+
+        if any(term in message_lower for term in ["cve", "vulnerability", "lo hong", "lỗ hổng", "patch"]):
+            return (
+                "Toi chua co du bang chung de ket luan ve CVE nay. Hay cung cap ma CVE, san pham, "
+                "phien ban va muc do exposure; sau do doi chieu severity, kha nang khai thac va ban va."
+            )
+
+        return (
+            "Toi chua hieu ro yeu cau nay va AI provider hien khong kha dung. "
+            "Ban co the hoi ve kiem tra URL, mat khau, CVE, incident response hoac hardening he thong."
+        )
 
     def _format_conversation_history(self, tracker: Tracker) -> List[Dict[str, str]]:
         """Format Rasa tracker events into conversation history for LLM"""
@@ -980,6 +1023,8 @@ class ActionDefaultFallback(Action):
         """Get user security context from database"""
         try:
             if not user_id:
+                return {}
+            if isinstance(user_id, str) and not _validate_uuid(user_id):
                 return {}
 
             from backend.repositories.users import get_user
@@ -1039,9 +1084,18 @@ class ActionDefaultFallback(Action):
                 'review_status': 'pending',
                 'added_to_training': False
             }
-            # Only add user_id if it exists (nullable field)
-            if user_id:
-                insert_data['user_id'] = str(user_id)
+            # Only attach an owner that actually exists. Rasa REST probes and
+            # anonymous clients may send UUID-shaped sender IDs; forwarding
+            # those IDs violates the intent_analytics foreign key.
+            if user_id and _validate_uuid(str(user_id)):
+                try:
+                    from backend.repositories.users import get_user
+                    if get_user(str(user_id)):
+                        insert_data['user_id'] = str(user_id)
+                except Exception:
+                    # Analytics must remain best-effort and owner-less rather
+                    # than creating a false cross-user relationship.
+                    pass
 
             supabase_admin.table('intent_analytics').insert(insert_data).execute()
         except Exception as e:
@@ -1165,6 +1219,8 @@ class ActionKnowledgeBaseQuery(Action):
         """Get user security context for personalization"""
         try:
             if not user_id:
+                return {}
+            if isinstance(user_id, str) and not _validate_uuid(user_id):
                 return {}
 
             from backend.repositories.users import get_user

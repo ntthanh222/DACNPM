@@ -106,18 +106,29 @@ class GeminiService(LLMService):
                 error_str = str(e).lower()
                 is_rate_limit = any(code in error_str for code in ['429', 'resource_exhausted', 'quota'])
 
-                if is_rate_limit and attempt < max_retries - 1:
-                    # Calculate exponential backoff delay
+                if is_rate_limit:
+                    logger.warning(
+                        "Gemini rate limit or quota reached; failing fast to local fallback: %s",
+                        e,
+                    )
+                    raise LLMServiceException(
+                        message="Failed to generate response with Gemini",
+                        provider="gemini",
+                        original_error=e
+                    )
+
+                if attempt < max_retries - 1:
                     delay = base_delay * (2 ** attempt)
-                    logger.warning(f"⚠️ Gemini rate limit hit (attempt {attempt + 1}/{max_retries}). "
-                                   f"Retrying in {delay}s... Error: {e}")
+                    logger.warning(
+                        "Gemini API error (attempt %s/%s), retrying in %ss: %s",
+                        attempt + 1,
+                        max_retries,
+                        delay,
+                        e,
+                    )
                     time.sleep(delay)
                 else:
-                    # Either not a rate limit error or reached max retries
-                    if is_rate_limit:
-                        logger.error(f"❌ Gemini rate limit reached after {max_retries} attempts: {e}")
-                    else:
-                        logger.error(f"❌ Gemini API error: {e}")
+                    logger.error(f"Gemini API error: {e}")
                     raise LLMServiceException(
                         message="Failed to generate response with Gemini",
                         provider="gemini",

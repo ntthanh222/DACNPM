@@ -16,6 +16,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _get_verified_service_client():
+    from backend.database import connection
+
+    existing_client = connection.supabase_admin
+    if existing_client and existing_client.__class__.__name__ == "LocalPostgreSQLClient":
+        return existing_client
+    return connection.get_supabase_admin_client()
+
+
 async def get_current_user_id(
     jwt_user: Optional[TokenData] = Depends(get_current_user),
     x_user_id: Optional[str] = Header(None)
@@ -60,12 +69,24 @@ async def get_current_user_id(
         logger.warning(f"X-User-ID header ignored for security - JWT required")
 
     try:
-        return UUID(jwt_user.user_id)
+        user_id = UUID(jwt_user.user_id)
     except ValueError:
         raise HTTPException(
             status_code=400,
             detail="Invalid user ID in token."
         )
+
+    from backend.database.connection import is_database_available
+    from backend.repositories.users import get_user
+
+    if is_database_available():
+        user = get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=403, detail="User not found. Access denied.")
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is inactive. Access denied.")
+
+    return user_id
 
 
 async def require_current_user_id(
@@ -102,21 +123,12 @@ async def require_current_user_id(
                 detail="Invalid user ID in token."
             )
     else:
-        from backend.config.settings import settings
-
-        if settings.environment != "development" or not x_user_id:
-            logger.warning("Authentication attempt without JWT token")
-            raise HTTPException(
-                status_code=401,
-                detail="Authentication required. Please provide valid JWT token.",
-                headers={"WWW-Authenticate": "Bearer"}
-            )
-
-        logger.warning(f"⚠️ SECURITY WARNING: Using deprecated X-User-ID fallback for user {x_user_id} in development mode")
-        try:
-            user_id = UUID(x_user_id)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid user ID in X-User-ID header.")
+        logger.warning("Authentication attempt without JWT token")
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Please provide valid JWT token.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
 
     # Check if user exists in database
     from backend.repositories.users import get_user
@@ -134,6 +146,11 @@ async def require_current_user_id(
         raise HTTPException(
             status_code=403,
             detail="User not found. Invalid user ID."
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Account is inactive. Access denied."
         )
     return user_id
 
@@ -196,7 +213,7 @@ async def require_admin(user_id: UUID = Depends(require_current_user_id)) -> UUI
                 detail="User not found. Access denied."
             )
 
-        if user.role != 'admin':
+        if user.role not in ('admin', 'super_admin'):
             raise HTTPException(
                 status_code=403,
                 detail="Admin role required. Access denied."
@@ -248,7 +265,7 @@ async def require_admin_or_analyst(user_id: UUID = Depends(require_current_user_
                 detail="User not found. Access denied."
             )
 
-        if user.role not in ['admin', 'security_analyst']:
+        if user.role not in ['admin', 'security_analyst', 'super_admin']:
             raise HTTPException(
                 status_code=403,
                 detail="Admin or Security Analyst role required. Access denied."
@@ -292,9 +309,7 @@ async def get_admin_client(admin_id: UUID = Depends(require_admin)):
         HTTPException: 500 if admin client initialization fails
     """
     try:
-        from backend.database.connection import get_supabase_admin_client
-
-        admin_client = get_supabase_admin_client()
+        admin_client = _get_verified_service_client()
 
         if not admin_client:
             logger.error("Failed to initialize admin client for verified admin")
@@ -325,9 +340,7 @@ async def get_privileged_client(user_id: UUID = Depends(require_admin_or_analyst
     read-only admin dashboards without gaining access to admin-only writes.
     """
     try:
-        from backend.database.connection import get_supabase_admin_client
-
-        client = get_supabase_admin_client()
+        client = _get_verified_service_client()
         if not client:
             logger.error("Failed to initialize privileged client")
             raise HTTPException(

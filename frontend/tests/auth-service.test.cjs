@@ -110,6 +110,41 @@ test('login stores the role before returning the successful result', async () =>
     assert.equal(requests.length, 2);
 });
 
+test('login clears stale session values before submitting new credentials', async () => {
+    const requests = [];
+    const { auth, values } = createAuthRuntime({
+        storedValues: {
+            cybersec_access_token: 'old-token',
+            cybersec_access_token_encrypted: 'old-encrypted-token',
+            cybersec_username: 'old-user',
+            cybersec_user_id: 'old-id',
+            cybersec_user_role: 'admin'
+        },
+        fetchImpl: async (url, options) => {
+            requests.push({ url, options });
+            if (url.endsWith('/api/auth/login')) {
+                return response({
+                    access_token: 'new-token',
+                    username: 'qa_admin',
+                    user_id: 'new-id',
+                    message: 'Login successful'
+                });
+            }
+            if (url.endsWith('/api/auth/me')) {
+                return response({ role: 'admin' });
+            }
+            throw new Error(`Unexpected request: ${url}`);
+        }
+    });
+
+    const result = await auth.login('qa_admin', 'password');
+
+    assert.equal(result.success, true, result.error);
+    assert.equal(requests[0].options.headers.Authorization, undefined);
+    assert.equal(values.get('cybersec_username'), 'qa_admin');
+    assert.equal(values.get('cybersec_access_token'), 'new-token');
+});
+
 test('route guard redirects to admin panel only after backend verifies an encrypted session', async () => {
     const cryptoUtils = {
         async encrypt() { return 'encrypted-token'; },
@@ -183,6 +218,13 @@ test('login form accepts an email identifier but registration keeps username val
     assert.match(loginPageSource, /currentTab === 'login'[\s\S]*isValidLoginIdentifier\(username\)/);
     assert.match(loginPageSource, /currentTab === 'register'[\s\S]*\^\[a-zA-Z0-9_\]\+\$/);
     assert.match(loginPageSource, /id="username-label"/);
+});
+
+test('login page clearly identifies development and QA environments', () => {
+    assert.match(loginPageSource, /id="environment-badge"/);
+    assert.match(loginPageSource, /function detectEnvironment\(\)/);
+    assert.match(loginPageSource, /QA \/ Backend 8100/);
+    assert.match(loginPageSource, /Development \/ Backend 8000/);
 });
 
 test('admin page uses the shared encrypted session guard', () => {

@@ -25,6 +25,11 @@ Dưới đây là giao diện làm việc chính của **CyberSec Assistant**, g
 
 Hệ thống được thiết kế theo kiến trúc Microservices phân tán, đóng gói hoàn toàn bằng Docker để đảm bảo tính độc lập và khả năng mở rộng. Sơ đồ luồng xử lý yêu cầu dưới đây minh họa cách thức hoạt động của các thành phần:
 
+![CyberSec Assistant System Architecture](docs/assets/architecture.svg)
+
+<details>
+<summary>💻 Xem mã nguồn Mermaid (Text-based Diagram)</summary>
+
 ```mermaid
 graph TD
     %% Client Layer
@@ -43,7 +48,7 @@ graph TD
     subgraph AI_Engine ["AI & Natural Language Processing"]
         Rasa[Rasa NLU Server 3.6.20]
         RasaActions[Rasa Action Server]
-        Gemini[Google Gemini 1.5 Flash]
+        Gemini[Google Gemini 2.5 Flash]
         Chroma[ChromaDB Vector Store]
         
         Rasa <--> RasaActions
@@ -62,7 +67,7 @@ graph TD
     end
 
     %% Data Flows
-    FE <-->|HTTPS / WebSockets| BE
+    FE <-->|HTTPS / SSE| BE
     BE <-->|REST API / Intention Routing| Rasa
     BE <-->|Semantic Query / Embeddings| Chroma
     BE <-->|Context Enhancement| Gemini
@@ -75,6 +80,7 @@ graph TD
     Graf -.->|Query Metrics| Prom
     Graf -.->|Cache Metrics| Redis
 ```
+</details>
 
 *Để có phân tích chi tiết hơn về các thành phần và luồng dữ liệu, vui lòng xem [Tài liệu Kiến trúc Hệ thống (docs/architecture.md)](docs/architecture.md).*
 
@@ -100,7 +106,7 @@ graph TD
 *   **Ngôn ngữ chính**: **Python (65.1%)**, **JavaScript / HTML / CSS (34.9%)**.
 *   **Backend Framework**: **FastAPI** (Python 3.10/3.11), sử dụng cơ chế Async IO đảm bảo hiệu năng cao và độ trễ thấp.
 *   **NLU & Chatbot**: **Rasa Open Source 3.6.20** & **Rasa SDK**.
-*   **LLM API**: **Google Gemini 1.5 Flash** (sử dụng thư viện `google-genai` mới nhất).
+*   **LLM API**: **Google Gemini 2.5 Flash** (sử dụng thư viện `google-genai` mới nhất).
 *   **Vector Database (RAG)**: **ChromaDB** phục vụ tìm kiếm ngữ nghĩa (semantic search) trên kho tri thức bảo mật.
 *   **Database chính**: **Supabase Cloud (PostgreSQL)** quản lý Users, Chat History, và Security News.
 *   **Cache**: **Redis** tăng tốc độ truy vấn tin tức và cache kết quả quét CVE/URL.
@@ -137,6 +143,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 *   **Trên Windows**:
     ```powershell
     .\scripts\windows\start.bat
+    ```
+    Script này tự đặt `COMPOSE_BAKE=false` và, khi dự án nằm trong thư mục có ký tự tiếng Việt như `D:\Đồ án CNPM`, tự đồng bộ sang `D:\codex_docker_cybersec_ascii` rồi chạy Docker Compose từ đó. Nếu muốn chạy Docker Compose trực tiếp, hãy chạy trong workspace ASCII:
+    ```powershell
+    cd D:\codex_docker_cybersec_ascii
+    docker compose up -d --build
     ```
 *   **Trên Linux / macOS**:
     ```bash

@@ -1,0 +1,100 @@
+services:
+  postgres-qa:
+    image: pgvector/pgvector:pg16
+    container_name: cybersec-postgres-qa
+    environment:
+      POSTGRES_DB: cybersec_qa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cybersec_qa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - cybersec_postgres_qa_data:/var/lib/postgresql/data
+    networks:
+      - cybersec-test-network
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: cybersec-redis-test
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cybersec-test-network
+
+  chromadb-test:
+    image: chromadb/chroma:latest
+    container_name: cybersec-chromadb-test
+    ports:
+      - "8001:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    networks:
+      - cybersec-test-network
+
+  backend-qa:
+    image: ncnpm-backend:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: development
+      args:
+        INSTALL_BROWSER: "false"
+    container_name: cybersec-backend-qa
+    depends_on:
+      postgres-qa:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: test
+      APP_ENV: test
+      ALLOW_QA_MUTATIONS: "true"
+      QA_DATABASE_CONFIRMATION: ISOLATED_QA_DATABASE
+      SUPABASE_URL: http://local-qa.invalid
+      SUPABASE_KEY: test_anon_key
+      SUPABASE_SERVICE_ROLE_KEY: test_service_role_key
+      JWT_SECRET: test-secret-key-min-32-chars-long-enough
+      DB_HOST: postgres-qa
+      DB_PORT: 5432
+      DB_NAME: cybersec_qa
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      CHROMADB_HOST: http://chromadb-test:8000
+      API_DEBUG: "true"
+    ports:
+      - "8100:8000"
+    networks:
+      cybersec-test-network:
+        aliases:
+          - backend
+
+  frontend-qa:
+    image: codex_docker_cybersec_ascii-frontend:latest
+    container_name: cybersec-frontend-qa
+    depends_on:
+      backend-qa:
+        condition: service_started
+    ports:
+      - "3100:80"
+    networks:
+      - cybersec-test-network
+
+networks:
+  cybersec-test-network:
+    driver: bridge
+
+volumes:
+  cybersec_postgres_qa_data:

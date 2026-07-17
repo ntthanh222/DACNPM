@@ -48,7 +48,14 @@ class RasaClient:
                 if response.status_code == 200:
                     data = response.json()
                     if data and len(data) > 0:
-                        return data[0].get('text', 'Xin lỗi, tôi không hiểu.')
+                        response_parts = [
+                            item.get("text", "")
+                            for item in data
+                            if item.get("text")
+                        ]
+                        if response_parts:
+                            return "\n\n".join(response_parts)
+                        return "Xin lỗi, tôi không hiểu."
                     else:
                         logger.warning("Empty response from Rasa")
                         return None

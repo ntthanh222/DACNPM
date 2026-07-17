@@ -131,7 +131,7 @@ class DashboardController {
             if (response.ok) {
                 const user = await response.json();
                 localStorage.setItem('cybersec_user_role', user.role || 'user');
-                if (user.role === 'admin' || user.role === 'security_analyst') {
+                if (user.role === 'admin' || user.role === 'super_admin' || user.role === 'security_analyst') {
                     if (adminLink) {
                         adminLink.classList.remove('hidden');
                         adminLink.classList.add('flex');

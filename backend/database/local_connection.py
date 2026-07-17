@@ -7,9 +7,15 @@ for development when Supabase is not available.
 
 import os
 import logging
+import json
 from typing import Optional, List, Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
+try:
+    from psycopg2.extras import Json
+except ImportError:
+    def Json(value):
+        return json.dumps(value)
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +37,7 @@ class LocalPostgreSQLClient:
         if self._connection is None or self._connection.closed:
             try:
                 self._connection = psycopg2.connect(**self.connection_params)
+                self._connection.autocommit = True
                 logger.info(f"✅ Connected to local PostgreSQL: {self.connection_params['host']}:{self.connection_params['port']}/{self.connection_params['database']}")
             except Exception as e:
                 logger.error(f"❌ Failed to connect to PostgreSQL: {e}")
@@ -54,9 +61,15 @@ class TableOperations:
         self.conn = connection
         self.table_name = table_name
 
-    def select(self, columns: str = '*'):
+    def select(self, columns: str = '*', **kwargs):
         """Start a SELECT query"""
-        return QueryBuilder(self.conn, self.table_name, 'SELECT', columns)
+        return QueryBuilder(
+            self.conn,
+            self.table_name,
+            'SELECT',
+            columns,
+            count=kwargs.get('count'),
+        )
 
     def insert(self, data: Dict[str, Any], returning: str = '*'):
         """Execute an INSERT query"""
@@ -74,18 +87,25 @@ class QueryBuilder:
     """Build and execute SQL queries with Supabase-like interface"""
 
     def __init__(self, connection, table_name: str, operation: str,
-                 columns: str = None, data: Dict[str, Any] = None, returning: str = '*'):
+                 columns: str = None, data: Dict[str, Any] = None, returning: str = '*',
+                 count: str = None):
         self.conn = connection
         self.table_name = table_name
         self.operation = operation
         self.columns = columns or '*'
         self.data = data or {}
         self.returning = returning
+        self.count_requested = count == 'exact'
         self.filters = []
         self.limit_value = None
         self.offset_value = None
         self.order_by_clause = None
         self._not_mode = False  # Initialize NOT modifier state
+
+    def _adapt_value(self, value: Any) -> Any:
+        if isinstance(value, (dict, list)):
+            return Json(value)
+        return value
 
     def filter(self, condition: str, *args):
         """Add WHERE condition (for simple cases)"""
@@ -101,6 +121,27 @@ class QueryBuilder:
         self.filter_values.append(value)
         return self
 
+    def or_(self, condition: str):
+        """Add a limited OR filter for PostgREST-style ilike user search."""
+        clauses = []
+        values = []
+        for raw_part in condition.split(','):
+            parts = raw_part.split('.')
+            if len(parts) < 3:
+                continue
+            column, operator = parts[0], parts[1]
+            value = '.'.join(parts[2:])
+            if operator != 'ilike' or column not in {'username', 'full_name', 'email'}:
+                continue
+            clauses.append(f"{column} ILIKE %s")
+            values.append(value.replace('*', '%'))
+        if clauses:
+            self.filters.append("(" + " OR ".join(clauses) + ")")
+            self.filter_values = getattr(self, 'filter_values', [])
+            self.filter_values.extend(values)
+        return self
+
+    @property
     def not_(self):
         """Add NOT modifier for next condition - returns self for chaining"""
         # Store NOT state for next condition
@@ -125,6 +166,12 @@ class QueryBuilder:
         self.offset_value = count
         return self
 
+    def range(self, start: int, end: int):
+        """Add inclusive Supabase-style range pagination."""
+        self.offset_value = start
+        self.limit_value = max(0, end - start + 1)
+        return self
+
     def order(self, column: str, desc: bool = False):
         """Add ORDER BY clause"""
         direction = 'DESC' if desc else 'ASC'
@@ -138,17 +185,24 @@ class QueryBuilder:
         if self.filters:
             query += " WHERE " + " AND ".join(self.filters)
             params = getattr(self, 'filter_values', [])
+        total_count = None
+        if self.count_requested:
+            count_query = f"SELECT COUNT(*) AS count FROM {self.table_name}"
+            if self.filters:
+                count_query += " WHERE " + " AND ".join(self.filters)
+            cursor.execute(count_query, params)
+            total_count = cursor.fetchone()["count"]
         if self.order_by_clause:
             query += f" {self.order_by_clause}"
-        if self.limit_value:
+        if self.limit_value is not None:
             query += f" LIMIT {self.limit_value}"
-        if self.offset_value:
+        if self.offset_value is not None:
             query += f" OFFSET {self.offset_value}"
 
         cursor.execute(query, params)
         results = cursor.fetchall()
         cursor.close()
-        return ExecuteResult(data=results, error=None)
+        return ExecuteResult(data=results, error=None, count=total_count)
 
     def _execute_insert(self, cursor):
         columns = ', '.join(self.data.keys())
@@ -158,7 +212,7 @@ class QueryBuilder:
         if self.returning:
             query += f" RETURNING {self.returning}"
 
-        cursor.execute(query, list(self.data.values()))
+        cursor.execute(query, [self._adapt_value(value) for value in self.data.values()])
         result = [cursor.fetchone()] if self.returning else []
         cursor.close()
         self.conn.commit()
@@ -167,7 +221,7 @@ class QueryBuilder:
     def _execute_update(self, cursor):
         set_clause = ', '.join([f"{key} = %s" for key in self.data])
         query = f"UPDATE {self.table_name} SET {set_clause}"
-        params = list(self.data.values())
+        params = [self._adapt_value(value) for value in self.data.values()]
 
         if self.filters:
             query += " WHERE " + " AND ".join(self.filters)
@@ -218,9 +272,10 @@ class QueryBuilder:
 
 class ExecuteResult:
     """Mimics Supabase query result"""
-    def __init__(self, data: List[Dict] = None, error: str = None):
+    def __init__(self, data: List[Dict] = None, error: str = None, count: int = None):
         self.data = data or []
         self.error = error
+        self.count = count
 
 # Global instances
 local_client: Optional[LocalPostgreSQLClient] = None

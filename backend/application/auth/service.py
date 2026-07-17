@@ -44,7 +44,16 @@ def authenticate_user(username: str, password: Optional[str] = None) -> Optional
     from backend.repositories.users import get_user_by_email, get_user_by_username
 
     try:
-        user = get_user_by_username(username)
+        # Always read the latest record during authentication. A cached user
+        # may contain an old password hash after an admin reset it externally.
+        try:
+            user = get_user_by_username(username, use_cache=False)
+        except TypeError as exc:
+            # Keep compatibility with lightweight test doubles and older
+            # repository adapters that still accept one positional argument.
+            if "use_cache" not in str(exc):
+                raise
+            user = get_user_by_username(username)
         if not user and "@" in username:
             user = get_user_by_email(username)
         if not user or not user.is_active:

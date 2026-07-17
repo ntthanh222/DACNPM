@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e17"/>
+      <stop offset="100%" stop-color="#121824"/>
+    </linearGradient>
+
+    <!-- Card Glow / Gradients -->
+    <linearGradient id="client-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="100%" stop-color="#4facfe"/>
+    </linearGradient>
+    
+    <linearGradient id="backend-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff9900"/>
+      <stop offset="100%" stop-color="#ff5b00"/>
+    </linearGradient>
+
+    <linearGradient id="storage-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38ef7d"/>
+      <stop offset="100%" stop-color="#11998e"/>
+    </linearGradient>
+
+    <linearGradient id="ai-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f107a3"/>
+      <stop offset="100%" stop-color="#7b2ff7"/>
+    </linearGradient>
+
+    <linearGradient id="monitor-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f39c12"/>
+      <stop offset="100%" stop-color="#d35400"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
+      <feOffset dx="0" dy="8" />
+      <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Glowing Lines Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Markers for Arrows -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6e7681"/>
+    </marker>
+    <marker id="arrow-glow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#00f2fe"/>
+    </marker>
+    <marker id="arrow-glow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ff9900"/>
+    </marker>
+    <marker id="arrow-glow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#7b2ff7"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bg-grad)" rx="15"/>
+  <rect width="1196" height="896" x="2" y="2" fill="none" stroke="#21262d" stroke-width="2" rx="13"/>
+
+  <!-- Title -->
+  <text x="600" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">CYBERSEC ASSISTANT PLATFORM ARCHITECTURE</text>
+  <text x="600" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#8b949e" text-anchor="middle">Distributed Microservices, AI/RAG Integration &amp; Telemetry</text>
+
+  <!-- ==================== LAYERS OUTLINE (Subgraphs) ==================== -->
+  
+  <!-- Client Layer Group -->
+  <rect x="420" y="90" width="360" height="140" fill="#161b22" fill-opacity="0.4" stroke="#30363d" stroke-width="1.5" stroke-dasharray="6 4" rx="10"/>
+  <text x="435" y="112" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#58a6ff" opacity="0.8">TẦNG GIAO DIỆN (CLIENT)</text>
+
+  <!-- Routing & Storage Layer Group -->
+  <rect x="50" y="255" width="1100" height="190" fill="#161b22" fill-opacity="0.4" stroke="#30363d" stroke-width="1.5" stroke-dasharray="6 4" rx="10"/>
+  <text x="65" y="277" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ff7b72" opacity="0.8">TẦNG NGHIỆP VỤ, CACHING &amp; LƯU TRỮ</text>
+
+  <!-- AI & Knowledge Layer Group -->
+  <rect x="50" y="475" width="1100" height="210" fill="#161b22" fill-opacity="0.4" stroke="#30363d" stroke-width="1.5" stroke-dasharray="6 4" rx="10"/>
+  <text x="65" y="497" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#d2a8ff" opacity="0.8">TẦNG TRÍ TUỆ NHÂN TẠO &amp; TRI THỨC (AI / RAG)</text>
+
+  <!-- Telemetry Layer Group -->
+  <rect x="200" y="715" width="800" height="150" fill="#161b22" fill-opacity="0.4" stroke="#30363d" stroke-width="1.5" stroke-dasharray="6 4" rx="10"/>
+  <text x="215" y="737" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffa657" opacity="0.8">TẦNG GIÁM SÁT &amp; ĐO LƯỜNG (MONITORING)</text>
+
+
+  <!-- ==================== CONNECTION PATHS & LABELS ==================== -->
+
+  <!-- Frontend <-> FastAPI -->
+  <path d="M 600 210 L 600 270" stroke="url(#client-grad)" stroke-width="2" marker-end="url(#arrow-glow-blue)" filter="url(#glow)"/>
+  <path d="M 600 270 L 600 210" stroke="url(#client-grad)" stroke-width="2" marker-end="url(#arrow-glow-blue)"/>
+  <rect x="530" y="228" width="140" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="600" y="242" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#c9d1d9" text-anchor="middle" font-weight="500">HTTPS / WebSockets</text>
+
+  <!-- FastAPI <-> Redis -->
+  <path d="M 450 340 L 310 340" stroke="url(#backend-grad)" stroke-width="2" marker-end="url(#arrow-glow-orange)"/>
+  <path d="M 310 340 L 450 340" stroke="url(#backend-grad)" stroke-width="2" marker-end="url(#arrow-glow-orange)"/>
+  <rect x="330" y="315" width="100" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="380" y="329" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#c9d1d9" text-anchor="middle">Session &amp; CVE Cache</text>
+
+  <!-- FastAPI <-> Supabase -->
+  <path d="M 750 340 L 890 340" stroke="url(#backend-grad)" stroke-width="2" marker-end="url(#arrow-glow-orange)"/>
+  <path d="M 890 340 L 750 340" stroke="url(#backend-grad)" stroke-width="2" marker-end="url(#arrow-glow-orange)"/>
+  <rect x="765" y="315" width="110" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="820" y="329" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#c9d1d9" text-anchor="middle">SQL Database / Auth</text>
+
+  <!-- FastAPI -> Rasa NLU -->
+  <path d="M 470 380 Q 400 420 220 495" stroke="url(#backend-grad)" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 220 495 Q 400 420 470 380" stroke="url(#backend-grad)" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#arrow)"/>
+  <rect x="290" y="415" width="110" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="345" y="429" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Intention Routing</text>
+
+  <!-- FastAPI <-> ChromaDB -->
+  <path d="M 600 380 L 600 495" stroke="url(#backend-grad)" stroke-width="2" marker-end="url(#arrow-glow-orange)"/>
+  <path d="M 600 495 L 600 380" stroke="url(#backend-grad)" stroke-width="2" marker-end="url(#arrow-glow-orange)"/>
+  <rect x="545" y="425" width="110" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="600" y="439" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#c9d1d9" text-anchor="middle">Semantic Query / RAG</text>
+
+  <!-- FastAPI <-> Gemini -->
+  <path d="M 730 380 Q 800 420 980 495" stroke="url(#backend-grad)" stroke-width="2" fill="none" marker-end="url(#arrow-glow-orange)"/>
+  <path d="M 980 495 Q 800 420 730 380" stroke="url(#backend-grad)" stroke-width="2" fill="none" marker-end="url(#arrow-glow-orange)"/>
+  <rect x="800" y="415" width="110" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="855" y="429" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#c9d1d9" text-anchor="middle">LLM API / Embeddings</text>
+
+  <!-- Rasa -> Prometheus -->
+  <path d="M 170 635 C 170 700 300 700 340 735" stroke="#6e7681" stroke-width="1.5" stroke-dasharray="3 3" fill="none" marker-end="url(#arrow)"/>
+  <rect x="180" y="675" width="90" height="18" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="225" y="687" font-family="system-ui, -apple-system, sans-serif" font-size="8.5" fill="#8b949e" text-anchor="middle">Pull Metrics</text>
+
+  <!-- FastAPI -> Prometheus -->
+  <path d="M 520 380 Q 430 520 400 735" stroke="#6e7681" stroke-width="1.5" stroke-dasharray="3 3" fill="none" marker-end="url(#arrow)"/>
+  <rect x="420" y="580" width="90" height="18" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="465" y="592" font-family="system-ui, -apple-system, sans-serif" font-size="8.5" fill="#8b949e" text-anchor="middle">Pull Metrics</text>
+
+  <!-- Prometheus -> Grafana -->
+  <path d="M 550 785 L 650 785" stroke="url(#monitor-grad)" stroke-width="2" marker-end="url(#arrow-glow-purple)" filter="url(#glow)"/>
+  <rect x="565" y="760" width="70" height="20" fill="#0d1117" stroke="#30363d" rx="4"/>
+  <text x="600" y="774" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#c9d1d9" text-anchor="middle">Query Metrics</text>
+
+
+  <!-- ==================== CARDS & CONTENTS ==================== -->
+
+  <!-- 1. Frontend Client -->
+  <g filter="url(#shadow)">
+    <!-- Card Border Glow -->
+    <rect x="470" y="110" width="260" height="90" fill="#0d1117" stroke="url(#client-grad)" stroke-width="2" rx="8"/>
+    <!-- Top indicator line -->
+    <path d="M 470 118 L 470 110 L 730 110 L 730 118" fill="none" stroke="url(#client-grad)" stroke-width="3"/>
+    <!-- Content -->
+    <text x="600" y="132" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">FRONTEND CLIENT</text>
+    <text x="600" y="148" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#58a6ff" text-anchor="middle">HTML5 / CSS3 / Vanilla JS</text>
+    <line x1="490" y1="156" x2="710" y2="156" stroke="#21262d" stroke-width="1"/>
+    <text x="490" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• UI Chatbot &amp; Markdown Renderer</text>
+    <text x="490" y="184" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Phishing scanner &amp; CVE analytics</text>
+  </g>
+
+  <!-- 2. FastAPI Backend (Centerpiece) -->
+  <g filter="url(#shadow)">
+    <rect x="450" y="270" width="300" height="110" fill="#0d1117" stroke="url(#backend-grad)" stroke-width="2" rx="8"/>
+    <path d="M 450 278 L 450 270 L 750 270 L 750 278" fill="none" stroke="url(#backend-grad)" stroke-width="3"/>
+    <text x="600" y="292" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">FASTAPI BACKEND</text>
+    <text x="600" y="308" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#ffa657" text-anchor="middle">Python 3.10+ / Async IO</text>
+    <line x1="470" y1="316" x2="730" y2="316" stroke="#21262d" stroke-width="1"/>
+    <text x="470" y="330" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Smart Intent-based Dialog Router</text>
+    <text x="470" y="344" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• JWT Authentication &amp; Sessions</text>
+    <text x="470" y="358" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Prometheus Custom Metrics Exporter</text>
+  </g>
+
+  <!-- 3. Redis Cache -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="290" width="240" height="90" fill="#0d1117" stroke="url(#storage-grad)" stroke-width="2" rx="8"/>
+    <path d="M 70 298 L 70 290 L 310 290 L 310 298" fill="none" stroke="url(#storage-grad)" stroke-width="3"/>
+    <text x="190" y="312" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">REDIS CACHE</text>
+    <text x="190" y="328" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#7ee787" text-anchor="middle">In-Memory Store</text>
+    <line x1="90" y1="336" x2="290" y2="336" stroke="#21262d" stroke-width="1"/>
+    <text x="90" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• NVD CVE Queries Cache</text>
+    <text x="90" y="364" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Crawler Jobs &amp; State Cache</text>
+  </g>
+
+  <!-- 4. Supabase PostgreSQL -->
+  <g filter="url(#shadow)">
+    <rect x="890" y="290" width="240" height="90" fill="#0d1117" stroke="url(#storage-grad)" stroke-width="2" rx="8"/>
+    <path d="M 890 298 L 890 290 L 1130 290 L 1130 298" fill="none" stroke="url(#storage-grad)" stroke-width="3"/>
+    <text x="1010" y="312" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">SUPABASE CLOUD</text>
+    <text x="1010" y="328" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#7ee787" text-anchor="middle">PostgreSQL Database</text>
+    <line x1="910" y1="336" x2="1110" y2="336" stroke="#21262d" stroke-width="1"/>
+    <text x="910" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• User Credentials &amp; Profiles</text>
+    <text x="910" y="364" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Chat history, Logs &amp; Crawled News</text>
+  </g>
+
+  <!-- 5. Rasa NLU Engine -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="495" width="240" height="110" fill="#0d1117" stroke="url(#ai-grad)" stroke-width="2" rx="8"/>
+    <path d="M 70 503 L 70 495 L 310 495 L 310 503" fill="none" stroke="url(#ai-grad)" stroke-width="3"/>
+    <text x="190" y="517" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">RASA NLU ENGINE</text>
+    <text x="190" y="533" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#d2a8ff" text-anchor="middle">Rasa Open Source v3.6.20</text>
+    <line x1="90" y1="541" x2="290" y2="541" stroke="#21262d" stroke-width="1"/>
+    <text x="90" y="555" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Intent Classifier (DIETClassifier)</text>
+    <text x="90" y="569" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Entity Extractor (Regex/CRF)</text>
+    <text x="90" y="583" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Custom Action Server (Rasa SDK)</text>
+  </g>
+
+  <!-- 6. ChromaDB Vector Store -->
+  <g filter="url(#shadow)">
+    <rect x="450" y="495" width="300" height="110" fill="#0d1117" stroke="url(#ai-grad)" stroke-width="2" rx="8"/>
+    <path d="M 450 503 L 450 495 L 750 495 L 750 503" fill="none" stroke="url(#ai-grad)" stroke-width="3"/>
+    <text x="600" y="517" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">CHROMADB (VECTOR DB)</text>
+    <text x="600" y="533" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#d2a8ff" text-anchor="middle">Local Embeddings Storage</text>
+    <line x1="470" y1="541" x2="730" y2="541" stroke="#21262d" stroke-width="1"/>
+    <text x="470" y="555" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Cyber Security Knowledge Base</text>
+    <text x="470" y="569" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Vector Similarity Search (Cosine)</text>
+    <text x="470" y="583" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Context Retrieval for Gemini RAG</text>
+  </g>
+
+  <!-- 7. Google Gemini LLM -->
+  <g filter="url(#shadow)">
+    <rect x="890" y="495" width="240" height="110" fill="#0d1117" stroke="url(#ai-grad)" stroke-width="2" rx="8"/>
+    <path d="M 890 503 L 890 495 L 1130 495 L 1130 503" fill="none" stroke="url(#ai-grad)" stroke-width="3"/>
+    <text x="1010" y="517" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">GEMINI API</text>
+    <text x="1010" y="533" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#d2a8ff" text-anchor="middle">Gemini 1.5 Flash</text>
+    <line x1="910" y1="541" x2="1110" y2="541" stroke="#21262d" stroke-width="1"/>
+    <text x="910" y="555" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Text-to-Vector Embeddings</text>
+    <text x="910" y="569" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Context Synthesis &amp; Generation</text>
+    <text x="910" y="583" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Security CVE Remediation Planner</text>
+  </g>
+
+  <!-- 8. Prometheus -->
+  <g filter="url(#shadow)">
+    <rect x="250" y="735" width="300" height="90" fill="#0d1117" stroke="url(#monitor-grad)" stroke-width="2" rx="8"/>
+    <path d="M 250 743 L 250 735 L 550 735 L 550 743" fill="none" stroke="url(#monitor-grad)" stroke-width="3"/>
+    <text x="400" y="757" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">PROMETHEUS</text>
+    <text x="400" y="773" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#ffa657" text-anchor="middle">Telemetry &amp; Metrics Collector</text>
+    <line x1="270" y1="781" x2="530" y2="781" stroke="#21262d" stroke-width="1"/>
+    <text x="270" y="795" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Time-Series Database / Pull Model</text>
+    <text x="270" y="809" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Scrapes /metrics endpoints hourly/secondly</text>
+  </g>
+
+  <!-- 9. Grafana -->
+  <g filter="url(#shadow)">
+    <rect x="650" y="735" width="300" height="90" fill="#0d1117" stroke="url(#monitor-grad)" stroke-width="2" rx="8"/>
+    <path d="M 650 743 L 650 735 L 950 735 L 950 743" fill="none" stroke="url(#monitor-grad)" stroke-width="3"/>
+    <text x="800" y="757" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">GRAFANA</text>
+    <text x="800" y="773" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#ffa657" text-anchor="middle">Visualization Dashboard</text>
+    <line x1="670" y1="781" x2="930" y2="781" stroke="#21262d" stroke-width="1"/>
+    <text x="670" y="795" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Real-Time System Health Display</text>
+    <text x="670" y="809" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" fill="#c9d1d9">• Dashboards for Latency, Requests &amp; CPU</text>
+  </g>
+</svg>

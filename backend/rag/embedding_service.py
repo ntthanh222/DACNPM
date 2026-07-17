@@ -13,6 +13,7 @@ import logging
 import sys
 import warnings
 import hashlib
+import os
 from collections import Counter
 
 # Suppress NumPy warnings for Python 3.14
@@ -114,7 +115,7 @@ class EmbeddingService:
                 self._init_tfidf()
         elif self.backend == "sentence-transformers":
             self._init_sentence_transformers()
-        elif self.backend == "tfidf":
+        elif self.backend in ("tfidf", "hash"):
             self._init_tfidf()
         else:
             raise ValueError(f"Unknown backend: {self.backend}")
@@ -217,5 +218,8 @@ def get_embedding_service() -> EmbeddingService:
     global _embedding_service
     if _embedding_service is None:
         logger.info("Initializing global embedding service...")
-        _embedding_service = EmbeddingService(backend='auto')
+        # Docker can explicitly select the deterministic fallback so the first
+        # request never blocks on downloading a large Hugging Face model.
+        backend = os.getenv("EMBEDDING_BACKEND", "auto").strip().lower() or "auto"
+        _embedding_service = EmbeddingService(backend=backend)
     return _embedding_service

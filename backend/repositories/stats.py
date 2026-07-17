@@ -137,7 +137,7 @@ def normalize_vulnerability_categories(raw_stats: Dict[str, int]) -> Dict[str, i
     return normalized
 
 
-def get_chat_statistics(limit: int = 1000) -> Dict:
+def get_chat_statistics(limit: int = 1000, user_id: str = None) -> Dict:
     """
     Get aggregate chat statistics
     """
@@ -150,10 +150,10 @@ def get_chat_statistics(limit: int = 1000) -> Dict:
                 "top_intents": [], "average_message_length": 0,
                 "message": "Database not configured."
             }
-        response = client.table('chat_history').select('*')\
-            .order('created_at', desc=True)\
-            .limit(limit)\
-            .execute()
+        query = client.table('chat_history').select('*')
+        if user_id:
+            query = query.eq('user_id', str(user_id))
+        response = query.order('created_at', desc=True).limit(limit).execute()
 
         messages = response.data
 

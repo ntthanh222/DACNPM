@@ -16,7 +16,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from backend.database.connection import supabase_admin
-from backend.api.deps import get_optional_user_id, require_current_user_id
+from backend.api.deps import require_admin, require_admin_or_analyst, require_current_user_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -256,3 +256,108 @@ def get_export_stats(
                 'newest': None
             }
         }
+
+
+# ============================================================================
+# NEW UPGRADED EXPORT ENDPOINTS
+# ============================================================================
+
+@router.get("/export/incidents")
+def export_incidents_report(
+    format: str = "csv",
+    current_user_id: UUID = Depends(require_admin_or_analyst)
+):
+    from backend.api.incidents import router as incident_router
+    # Fetch incidents directly from memory fallback or database
+    from backend.database.connection import supabase, supabase_admin, DATABASE_AVAILABLE
+    client = supabase_admin if supabase_admin else supabase
+    results = []
+    if DATABASE_AVAILABLE and client:
+        try:
+            response = client.table("incidents").select("*").execute()
+            results = response.data or []
+        except Exception:
+            pass
+    if not results:
+        from backend.api.incidents import _in_memory_incidents
+        results = list(_in_memory_incidents.values())
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "title", "severity", "status", "created_at", "closed_at"])
+    for r in results:
+        writer.writerow([r.get("id"), r.get("title"), r.get("severity"), r.get("status"), r.get("created_at"), r.get("closed_at")])
+
+    output.seek(0)
+    data_bytes = output.getvalue().encode("utf-8")
+    
+    filename = f"incidents_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
+    media_type = "text/csv" if format == "csv" else "application/octet-stream"
+    
+    return StreamingResponse(
+        io.BytesIO(data_bytes),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.get("/export/assets")
+def export_assets_report(
+    format: str = "csv",
+    current_user_id: UUID = Depends(require_admin_or_analyst)
+):
+    from backend.database.connection import supabase, supabase_admin, DATABASE_AVAILABLE
+    client = supabase_admin if supabase_admin else supabase
+    results = []
+    if DATABASE_AVAILABLE and client:
+        try:
+            response = client.table("assets").select("*").eq("is_deleted", False).execute()
+            results = response.data or []
+        except Exception:
+            pass
+    if not results:
+        from backend.api.assets import _in_memory_assets
+        results = [v for v in _in_memory_assets.values() if not v.get("is_deleted")]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["name", "asset_type", "hostname", "ip_address", "criticality", "status"])
+    for r in results:
+        writer.writerow([r.get("name"), r.get("asset_type"), r.get("hostname"), r.get("ip_address"), r.get("criticality"), r.get("status")])
+
+    output.seek(0)
+    data_bytes = output.getvalue().encode("utf-8")
+    
+    filename = f"assets_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
+    media_type = "text/csv" if format == "csv" else "application/octet-stream"
+    
+    return StreamingResponse(
+        io.BytesIO(data_bytes),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.get("/export/audit-logs")
+def export_audit_logs_report(
+    format: str = "csv",
+    current_user_id: UUID = Depends(require_admin)
+):
+    from backend.services.audit_service import get_audit_logs
+    results = get_audit_logs(limit=1000)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["timestamp", "actor", "action", "resource_type", "result", "ip_address"])
+    for r in results:
+        writer.writerow([r.get("timestamp"), r.get("actor"), r.get("action"), r.get("resource_type"), r.get("result"), r.get("ip_address")])
+
+    output.seek(0)
+    data_bytes = output.getvalue().encode("utf-8")
+    
+    filename = f"audit_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
+    media_type = "text/csv" if format == "csv" else "application/octet-stream"
+    
+    return StreamingResponse(
+        io.BytesIO(data_bytes),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

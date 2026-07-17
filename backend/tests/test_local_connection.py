@@ -6,11 +6,13 @@ import pytest
 psycopg2 = types.ModuleType("psycopg2")
 psycopg2_extras = types.ModuleType("psycopg2.extras")
 psycopg2_extras.RealDictCursor = object
+psycopg2.connect = lambda **_params: None
 psycopg2.extras = psycopg2_extras
 sys.modules.setdefault("psycopg2", psycopg2)
 sys.modules.setdefault("psycopg2.extras", psycopg2_extras)
 
-from backend.database.local_connection import QueryBuilder
+from backend.database import local_connection
+from backend.database.local_connection import LocalPostgreSQLClient, QueryBuilder
 
 
 class CursorStub:
@@ -47,6 +49,28 @@ class ConnectionStub:
         self.rollbacks += 1
 
 
+class ConnectableConnectionStub(ConnectionStub):
+    def __init__(self):
+        super().__init__()
+        self.closed = False
+        self.autocommit = False
+
+
+def test_local_postgres_client_uses_autocommit_to_avoid_idle_select_locks(monkeypatch):
+    connection = ConnectableConnectionStub()
+    monkeypatch.setattr(
+        local_connection.psycopg2,
+        "connect",
+        lambda **_params: connection,
+        raising=False,
+    )
+
+    client = LocalPostgreSQLClient()
+
+    assert client._get_connection() is connection
+    assert connection.autocommit is True
+
+
 def test_query_builder_select_preserves_filters_order_and_pagination():
     connection = ConnectionStub()
 
@@ -69,6 +93,22 @@ def test_query_builder_select_preserves_filters_order_and_pagination():
     ]
     assert connection.cursor_instance.closed is True
     assert connection.commits == 0
+
+
+def test_query_builder_supports_supabase_not_property_is_null_filter():
+    connection = ConnectionStub()
+
+    result = (
+        QueryBuilder(connection, "news_articles", "SELECT", "*")
+        .not_.is_("published_at", "null")
+        .execute()
+    )
+
+    assert result.data == [{"id": 1}]
+    assert result.error is None
+    assert connection.cursor_instance.executed == [
+        ("SELECT * FROM news_articles WHERE published_at IS NOT NULL", [])
+    ]
 
 
 @pytest.mark.parametrize(

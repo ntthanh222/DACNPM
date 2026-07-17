@@ -110,7 +110,7 @@ class ProfileRepository(BaseRepository[Profile]):
 
             # Search using ilike for case-insensitive partial matching
             response = client.table(self.table_name).select('*').or_(
-                f'username.ilike.%{search_term}%,full_name.ilike.%{search_term}%'
+                f'username.ilike.%{search_term.replace(",", " ").replace(".", " ").replace("(", "").replace(")", "").strip()}%,full_name.ilike.%{search_term.replace(",", " ").replace(".", " ").replace("(", "").replace(")", "").strip()}%'
             ).limit(limit).execute()
 
             return [Profile(**item) for item in response.data]

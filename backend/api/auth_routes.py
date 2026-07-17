@@ -211,6 +211,8 @@ def get_current_user_info(
                 detail="User not found"
             )
 
+        logger.info(f"DEBUG /me: user_id={user_id}, DB username={user.username}, DB role={user.role}")
+
         return {
             "id": str(user.id),
             "username": user.username,

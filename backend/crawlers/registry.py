@@ -2,14 +2,7 @@
 
 from typing import Dict, Type, Optional, List
 from .base import BaseCrawler
-from .thehackernews import TheHackerNewsCrawler
-from .vnexpress import VnExpressCrawler
-from .securityweek import SecurityWeekCrawler
-from .krebsonsecurity import KrebsOnSecurityCrawler
-from .bleepingcomputer import BleepingComputerCrawler
-from .darkreading import DarkReadingCrawler
-from .helpnetsecurity import HelpNetSecurityCrawler
-from .theregister import TheRegisterCrawler
+from .config_driven import ConfigDrivenCrawler
 
 from backend.utils.logging_setup import get_logger
 
@@ -21,14 +14,12 @@ class CrawlerRegistry:
         """Initialize the crawler registry."""
         self.logger = get_logger('CrawlerRegistry')
         self._crawlers: Dict[str, Type[BaseCrawler]] = {
-            'thehackernews': TheHackerNewsCrawler,
-            'vnexpress': VnExpressCrawler,
-            'securityweek': SecurityWeekCrawler,
-            'krebsonsecurity': KrebsOnSecurityCrawler,
-            'bleepingcomputer': BleepingComputerCrawler,
-            'darkreading': DarkReadingCrawler,
-            'helpnetsecurity': HelpNetSecurityCrawler,
-            'theregister': TheRegisterCrawler,
+            name: ConfigDrivenCrawler
+            for name in (
+                'thehackernews', 'vnexpress', 'securityweek',
+                'krebsonsecurity', 'bleepingcomputer', 'darkreading',
+                'helpnetsecurity', 'theregister'
+            )
         }
 
     def register(self, name: str, crawler_class: Type[BaseCrawler]):
@@ -80,7 +71,7 @@ class CrawlerRegistry:
 
         try:
             crawler_class = self._crawlers[name]
-            return crawler_class(**kwargs)
+            return crawler_class(source_name=name, **kwargs)
         except Exception as e:
             self.logger.error(f"Error instantiating crawler '{name}': {e}")
             return None

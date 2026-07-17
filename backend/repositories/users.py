@@ -7,13 +7,30 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 import logging
 from backend.database.models import User, UserCreate, UserUpdate
-from backend.database.connection import supabase, supabase_admin, is_database_available
+from backend.database.connection import (
+    supabase,
+    supabase_admin,
+    is_database_available,
+    get_supabase_admin_client,
+)
 
 logger = logging.getLogger(__name__)
 
 # In-memory user storage for offline mode (dual-index for O(1) lookups)
 _in_memory_users_by_username = {}
 _in_memory_users_by_id = {}
+
+def _apply_dynamic_roles(user: User) -> User:
+    """Apply official server-side role mapping based on UUID."""
+    if not user:
+        return user
+    try:
+        from backend.config.settings import get_settings
+        if str(user.id) in get_settings().get_super_admin_ids():
+            user.role = 'super_admin'
+    except Exception as e:
+        logger.error(f"Error applying dynamic roles: {e}")
+    return user
 
 
 def _update_cache(user: User):
@@ -55,7 +72,7 @@ def get_user(user_id: UUID) -> Optional[User]:
     user_id_str = str(user_id)
     if user_id_str in _in_memory_users_by_id:
         logger.debug(f"Retrieved user {user_id} from in-memory storage")
-        return _in_memory_users_by_id[user_id_str]
+        return _apply_dynamic_roles(_in_memory_users_by_id[user_id_str])
 
     # Try admin client first (bypasses RLS)
     if supabase_admin:
@@ -65,7 +82,7 @@ def get_user(user_id: UUID) -> Optional[User]:
                 user = User(**response.data[0])
                 # Cache in memory for future requests
                 _update_cache(user)
-                return user
+                return _apply_dynamic_roles(user)
             return None
         except Exception as admin_error:
             logger.warning(f"Admin client error for user {user_id}: {admin_error}")
@@ -81,7 +98,7 @@ def get_user(user_id: UUID) -> Optional[User]:
             user = User(**response.data[0])
             # Cache in memory for future requests
             _update_cache(user)
-            return user
+            return _apply_dynamic_roles(user)
         return None
     except AttributeError as e:
         logger.error(f"Supabase client error for user {user_id}: {e}")
@@ -91,28 +108,46 @@ def get_user(user_id: UUID) -> Optional[User]:
         return None
 
 
-def get_user_by_username(username: str) -> Optional[User]:
+def get_user_by_username(username: str, use_cache: bool = True) -> Optional[User]:
     """
     Get user by username with graceful fallback to in-memory storage.
     Security: Uses supabase_admin to bypass RLS for authentication/registration checks
     """
-    # Check in-memory storage first (O(1) lookup)
-    if username in _in_memory_users_by_username:
+    global supabase_admin
+    # Authentication can opt out of this cache because password resets and
+    # role changes may happen in Supabase from another process.
+    if use_cache and username in _in_memory_users_by_username:
         logger.debug(f"Retrieved user {username} from in-memory storage")
-        return _in_memory_users_by_username[username]
+        return _apply_dynamic_roles(_in_memory_users_by_username[username])
 
     # Try admin client first (bypasses RLS for auth checks)
     if supabase_admin:
-        try:
-            response = supabase_admin.table('users').select('*').eq('username', username).execute()
-            if response.data:
-                user = User(**response.data[0])
-                # Cache in memory for future requests
-                _update_cache(user)
-                return user
-            return None
-        except Exception as admin_error:
-            logger.warning(f"Admin client error for username {username}: {admin_error}")
+        # PostgREST/httpx can close an idle HTTP/2 connection between the
+        # registration and the next login. Recreate the client and retry a
+        # bounded number of times so a transient disconnect is not converted
+        # into a false 401. This is deliberately finite and does not mask
+        # authentication failures returned by a healthy database.
+        import time
+        for attempt in range(3):
+            try:
+                response = supabase_admin.table('users').select('*').eq('username', username).execute()
+                if response.data:
+                    user = User(**response.data[0])
+                    if use_cache:
+                        _update_cache(user)
+                    return _apply_dynamic_roles(user)
+                return None
+            except Exception as admin_error:
+                logger.warning(
+                    "Admin client error for username %s (attempt %s/3): %s",
+                    username, attempt + 1, admin_error,
+                )
+                if attempt == 2:
+                    break
+                time.sleep(0.25 * (2 ** attempt))
+                refreshed_client = get_supabase_admin_client()
+                if refreshed_client:
+                    supabase_admin = refreshed_client
 
     # Fallback to regular client (may be blocked by RLS)
     if not supabase:
@@ -125,7 +160,7 @@ def get_user_by_username(username: str) -> Optional[User]:
             user = User(**response.data[0])
             # Cache in memory for future requests
             _update_cache(user)
-            return user
+            return _apply_dynamic_roles(user)
 
         return None
     except AttributeError as e:
@@ -146,7 +181,7 @@ def get_user_by_email(email: str) -> Optional[User]:
         try:
             response = supabase_admin.table('users').select('*').eq('email', email).execute()
             if response.data:
-                return User(**response.data[0])
+                return _apply_dynamic_roles(User(**response.data[0]))
             return None
         except Exception as admin_error:
             logger.warning(f"Admin client error for email {email}: {admin_error}")
@@ -158,7 +193,7 @@ def get_user_by_email(email: str) -> Optional[User]:
     try:
         response = supabase.table('users').select('*').eq('email', email).execute()
         if response.data:
-            return User(**response.data[0])
+            return _apply_dynamic_roles(User(**response.data[0]))
         return None
     except Exception as e:
         logger.error(f"Error getting user by email {email}: {e}")

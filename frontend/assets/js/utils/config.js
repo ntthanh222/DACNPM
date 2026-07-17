@@ -10,7 +10,10 @@ class ConfigManager {
     loadConfig() {
         // Try to load from global config object (if injected by build process)
         if (window.APP_CONFIG) {
-            return window.APP_CONFIG;
+            return {
+                ...window.APP_CONFIG,
+                chatbotEndpoint: this.normalizeChatbotEndpoint(window.APP_CONFIG.chatbotEndpoint)
+            };
         }
 
         // Fallback: detect environment
@@ -22,7 +25,7 @@ class ConfigManager {
 
         // Default configuration for development
         return {
-            chatbotEndpoint: `${origin}/api/chatbot`,
+            chatbotEndpoint: this.normalizeChatbotEndpoint(`${origin}/api/chatbot`),
             apiEndpoint: origin,
             phishingCheckEndpoint: `${origin}/api/chatbot/phishing-check`,
             passwordStrengthEndpoint: `${origin}/api/chatbot/password-strength`,
@@ -30,6 +33,14 @@ class ConfigManager {
             isDevelopment: isDevelopment,
             debug: isDevelopment
         };
+    }
+
+    normalizeChatbotEndpoint(endpoint) {
+        if (!endpoint || typeof endpoint !== 'string') {
+            return endpoint;
+        }
+
+        return endpoint.replace(/\/+$/, '').replace(/\/chat$/, '');
     }
 
     get(key) {

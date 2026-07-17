@@ -10,10 +10,12 @@ FROM python:3.11-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=5
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     curl \
@@ -36,13 +38,16 @@ FROM python:3.11-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies. Browser packages are only needed when this
+# image also runs Selenium-based crawler work; QA API containers skip them.
+ARG INSTALL_BROWSER=true
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl \
+    $(if [ "$INSTALL_BROWSER" = "true" ]; then echo chromium chromium-driver; fi) && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd -r appuser && useradd -m -r -g appuser appuser
 
 # Set work directory
 WORKDIR /app
@@ -81,7 +86,7 @@ FROM runtime AS development
 USER root
 
 # Install development dependencies (system-wide, accessible by all users)
-RUN pip install pytest pytest-asyncio pytest-cov black flake8 pylint mypy
+RUN pip install --timeout 120 --retries 5 pytest pytest-asyncio pytest-cov black flake8 pylint mypy
 
 # Copy test files
 COPY backend/tests/ /app/backend/tests/
@@ -108,22 +113,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=5 \
     PYTHONPATH=/app
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     curl \
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd -r appuser && useradd -m -r -g appuser appuser
 
 WORKDIR /app
 
 COPY backend/requirements-actions.txt /tmp/requirements-actions.txt
-RUN pip install --upgrade pip && \
-    pip install -r /tmp/requirements-actions.txt && \
-    pip install --no-deps \
+RUN pip install --timeout 120 --retries 5 --upgrade pip && \
+    pip install --timeout 120 --retries 5 -r /tmp/requirements-actions.txt && \
+    pip install --timeout 120 --retries 5 --no-deps \
       rasa-sdk==3.6.2 \
       supabase==2.31.0 \
       postgrest==2.31.0 \

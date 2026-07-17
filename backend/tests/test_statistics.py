@@ -6,7 +6,7 @@ from backend.utils.statistics import StatisticsTracker
 def test_statistics_records_persists_and_reloads(tmp_path, monkeypatch, capsys):
     path = tmp_path / "stats.json"
     clock = iter([10, 70])
-    monkeypatch.setattr("backend.utils.statistics.time.time", lambda: next(clock))
+    monkeypatch.setattr("backend.utils.statistics._current_time", lambda: next(clock))
     tracker = StatisticsTracker(stats_file=str(path))
     tracker.start()
     tracker.record_article_found("nvd", 4)

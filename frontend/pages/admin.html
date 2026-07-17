@@ -18,7 +18,7 @@
 
     <!-- Authentication Guard -->
     <script src="../../assets/js/utils/crypto-utils.js?v=1.0.3"></script>
-    <script src="../../assets/js/services/auth-service.js?v=1.0.6"></script>
+    <script src="../../assets/js/services/auth-service.js?v=1.0.7"></script>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-container">
 
@@ -130,6 +130,7 @@
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
                     <option value="security_analyst">Security Analyst</option>
+                    <option value="super_admin">Super Admin</option>
                 </select>
                 <button onclick="searchUsers()" class="bg-primary/10 border border-primary/30 text-primary px-6 py-3 rounded-xl hover:bg-primary/20 transition-colors">
                     <span class="material-symbols-outlined text-sm">search</span>
@@ -608,6 +609,7 @@ function renderUsersTable(users) {
 
 function getRoleBadgeClass(role) {
     switch(role) {
+        case 'super_admin': return 'bg-purple-500/10 text-purple-400 border border-purple-500/30';
         case 'admin': return 'bg-red-500/10 text-red-400 border border-red-500/30';
         case 'security_analyst': return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
         default: return 'bg-gray-500/10 text-gray-400 border border-gray-500/30';
@@ -616,6 +618,7 @@ function getRoleBadgeClass(role) {
 
 function formatRole(role) {
     switch(role) {
+        case 'super_admin': return 'Super Admin';
         case 'admin': return 'Admin';
         case 'security_analyst': return 'Analyst';
         default: return 'User';
@@ -730,7 +733,7 @@ function closeUserModal() {
 }
 
 async function changeUserRole(userId, currentRole) {
-    const newRole = prompt(`Current role: ${currentRole}\nEnter new role (user, admin, security_analyst):`);
+    const newRole = prompt(`Current role: ${currentRole}\nEnter new role (user, admin, security_analyst, super_admin):`);
     if (!newRole) return;
 
     showLoading();
@@ -1206,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
     .then(user => {
         // Check if user has admin role
-        if (user.role !== 'admin' && user.role !== 'security_analyst') {
+        if (user.role !== 'admin' && user.role !== 'security_analyst' && user.role !== 'super_admin') {
             alert('Access denied. Admin or Security Analyst role required.');
             window.location.href = '../../dashboard.html';
             return;

@@ -38,6 +38,7 @@ def get_vulnerability_stats(
         raise HTTPException(status_code=500, detail=f"Failed to fetch vulnerability stats: {str(e)}")
 
 
+@router.get("/chat")
 @router.get("/chat/statistics")
 def get_chat_statistics_endpoint(
     limit: int = 1000,
@@ -56,7 +57,10 @@ def get_chat_statistics_endpoint(
     - average_message_length: Average user message length
     """
     try:
-        return get_chat_statistics(limit)
+        # This endpoint is used by the user dashboard. Never expose the
+        # aggregate chat table to a normal user; admin-wide analytics live
+        # under /api/admin/system/analytics and are admin-protected.
+        return get_chat_statistics(limit, user_id=str(current_user_id))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch chat statistics: {str(e)}")
 

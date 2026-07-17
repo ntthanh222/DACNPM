@@ -78,6 +78,83 @@ test('chat service streams through the chatbot endpoint', async () => {
     );
 });
 
+test('chat page controller normalizes duplicate chatbot path segments', () => {
+    const controllerSource = readFrontend('assets/js/controllers/chat-page-controller.js');
+    const context = {
+        document: { addEventListener() {} }
+    };
+
+    vm.createContext(context);
+    vm.runInContext(controllerSource, context);
+
+    assert.equal(
+        vm.runInContext(
+            "ChatController.prototype.normalizeChatbotEndpoint('http://localhost:3000/api/chatbot')",
+            context
+        ),
+        'http://localhost:3000/api/chatbot'
+    );
+    assert.equal(
+        vm.runInContext(
+            "ChatController.prototype.normalizeChatbotEndpoint('http://localhost:3000/api/chatbot/chat')",
+            context
+        ),
+        'http://localhost:3000/api/chatbot'
+    );
+    assert.equal(
+        vm.runInContext(
+            "ChatController.prototype.normalizeChatbotEndpoint('http://localhost:3000/api/chatbot/chat/')",
+            context
+        ),
+        'http://localhost:3000/api/chatbot'
+    );
+});
+
+test('streaming status is scoped away from the assistant icon and finalized after completion', () => {
+    const controllerSource = readFrontend('assets/js/controllers/chat-page-controller.js');
+
+    assert.match(controllerSource, /class="material-symbols-outlined text-primary streaming-icon animate-pulse"/);
+    assert.match(controllerSource, /class="streaming-status text-\[10px\] text-primary animate-pulse"/);
+    assert.match(controllerSource, /querySelector\('\.streaming-status'\)/);
+    assert.match(controllerSource, /this\.finalizeStreamingMessage\(botMessageId\)/);
+    assert.match(controllerSource, /statusElement\?\.remove\(\)/);
+    assert.match(controllerSource, /cursorElement\?\.remove\(\)/);
+});
+
+test('chat page streaming uses short-lived tickets instead of JWT query params', () => {
+    const controllerSource = readFrontend('assets/js/controllers/chat-page-controller.js');
+
+    assert.match(controllerSource, /\/chat\/stream-ticket/);
+    assert.match(controllerSource, /stream_ticket=/);
+    assert.doesNotMatch(controllerSource, /&token=/);
+    assert.doesNotMatch(controllerSource, /getTokenSync\(\)/);
+});
+
+test('chatbot endpoint normalization prevents duplicate chat path segments', () => {
+    const configSource = readFrontend('assets/js/utils/config.js');
+    const context = {
+        window: {
+            APP_CONFIG: {
+                chatbotEndpoint: 'http://localhost:3000/api/chatbot/chat',
+                apiEndpoint: 'http://localhost:3000'
+            },
+            location: {
+                hostname: 'localhost',
+                origin: 'http://localhost:3000'
+            }
+        },
+        console: { log() {}, warn() {}, error() {} }
+    };
+
+    vm.createContext(context);
+    vm.runInContext(configSource, context);
+
+    assert.equal(
+        context.window.config.get('chatbotEndpoint'),
+        'http://localhost:3000/api/chatbot'
+    );
+});
+
 test('frontend sources no longer reference the legacy streambot endpoint', () => {
     const files = [
         'assets/js/controllers/chat-page-controller.js',

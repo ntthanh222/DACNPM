@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from uuid import UUID, uuid4
@@ -14,7 +14,7 @@ class UserBase(BaseModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
-    role: str = Field(default="user", pattern="^(user|admin|security_analyst)$")
+    role: str = Field(default="user", pattern="^(user|admin|security_analyst|super_admin)$")
     is_active: bool = True
     security_context: Optional[Dict[str, Any]] = None
     # Field name kept as hashed_password for code clarity; DB column is password_hash.
@@ -35,7 +35,7 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
-    role: Optional[str] = Field(None, pattern="^(user|admin|security_analyst)$")
+    role: Optional[str] = Field(None, pattern="^(user|admin|security_analyst|super_admin)$")
     is_active: Optional[bool] = None
     security_context: Optional[Dict[str, Any]] = None
     last_security_scan: Optional[datetime] = None
@@ -47,6 +47,7 @@ class User(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 # ============================================================================
 # PROFILE MODELS (Legacy - kept for backward compatibility)
@@ -253,3 +254,168 @@ class ScanStatistics(BaseModel):
     last_scan_timestamp: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# ENTERPRISE UPGRADE MODELS
+# ============================================================================
+
+class AssetBase(BaseModel):
+    name: str = Field(..., min_length=1)
+    asset_type: str = Field(..., min_length=1)
+    hostname: Optional[str] = None
+    ip_address: Optional[str] = None
+    os: Optional[str] = None
+    vendor: Optional[str] = None
+    product: Optional[str] = None
+    version: Optional[str] = None
+    cpe: Optional[str] = None
+    owner: Optional[str] = None
+    department: Optional[str] = None
+    environment: Optional[str] = None
+    criticality: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
+    internet_exposure: bool = False
+    status: str = Field(default="active", pattern="^(active|inactive)$")
+    notes: Optional[str] = None
+
+class AssetCreate(AssetBase):
+    pass
+
+class AssetUpdate(BaseModel):
+    name: Optional[str] = None
+    asset_type: Optional[str] = None
+    hostname: Optional[str] = None
+    ip_address: Optional[str] = None
+    os: Optional[str] = None
+    vendor: Optional[str] = None
+    product: Optional[str] = None
+    version: Optional[str] = None
+    cpe: Optional[str] = None
+    owner: Optional[str] = None
+    department: Optional[str] = None
+    environment: Optional[str] = None
+    criticality: Optional[str] = Field(None, pattern="^(low|medium|high|critical)$")
+    internet_exposure: Optional[bool] = None
+    status: Optional[str] = Field(None, pattern="^(active|inactive)$")
+    notes: Optional[str] = None
+
+class Asset(AssetBase):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CVEWatchlistBase(BaseModel):
+    cve_id: str = Field(..., pattern=r"^CVE-\d{4}-\d{4,}$")
+    notes: Optional[str] = None
+    asset_id: Optional[UUID] = None
+    notification_preference: str = Field(default="all")
+
+class CVEWatchlistCreate(CVEWatchlistBase):
+    pass
+
+class CVEWatchlist(CVEWatchlistBase):
+    id: UUID
+    user_id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SecurityAlertBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    severity: str = Field(default="medium", pattern="^(info|low|medium|high|critical)$")
+    alert_type: str
+    status: str = Field(default="unread", pattern="^(unread|acknowledged|resolved)$")
+    related_entity_type: Optional[str] = None
+    related_entity_id: Optional[str] = None
+
+class SecurityAlertCreate(SecurityAlertBase):
+    pass
+
+class SecurityAlert(SecurityAlertBase):
+    id: UUID
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IncidentBase(BaseModel):
+    title: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    severity: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
+    status: str = Field(default="open", pattern="^(open|investigating|contained|remediated|closed)$")
+    owner_id: Optional[UUID] = None
+    assignee_id: Optional[UUID] = None
+    timeline: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    tasks: List[Dict[str, Any]] = Field(default_factory=list)
+
+class IncidentCreate(IncidentBase):
+    pass
+
+class IncidentUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    severity: Optional[str] = Field(None, pattern="^(low|medium|high|critical)$")
+    status: Optional[str] = Field(None, pattern="^(open|investigating|contained|remediated|closed)$")
+    owner_id: Optional[UUID] = None
+    assignee_id: Optional[UUID] = None
+    timeline: Optional[List[Dict[str, Any]]] = None
+    evidence: Optional[Dict[str, Any]] = None
+    notes: Optional[str] = None
+    tasks: Optional[List[Dict[str, Any]]] = None
+
+class Incident(IncidentBase):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+    closed_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuditLogBase(BaseModel):
+    actor: str
+    action: str
+    resource_type: str
+    resource_id: Optional[str] = None
+    result: str = Field(..., pattern="^(success|failure)$")
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    request_id: Optional[str] = None
+    trace_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class AuditLogCreate(AuditLogBase):
+    pass
+
+class AuditLog(AuditLogBase):
+    id: UUID
+    timestamp: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationBase(BaseModel):
+    title: str
+    message: str
+    type: str
+    is_read: bool = False
+
+class NotificationCreate(NotificationBase):
+    user_id: UUID
+
+class Notification(NotificationBase):
+    id: UUID
+    user_id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+

@@ -10,6 +10,9 @@ from collections import defaultdict
 from backend.utils.logging_setup import get_logger
 
 
+_current_time = time.time
+
+
 class StatisticsTracker:
     """Track and report crawler statistics."""
 
@@ -53,7 +56,7 @@ class StatisticsTracker:
         if not self.enabled:
             return
 
-        self.start_time = time.time()
+        self.start_time = _current_time()
         self.logger.info("Statistics tracking started")
 
     def stop(self):
@@ -61,7 +64,7 @@ class StatisticsTracker:
         if not self.enabled:
             return
 
-        self.end_time = time.time()
+        self.end_time = _current_time()
         self.logger.info("Statistics tracking stopped")
 
     def record_article_found(self, source: str, count: int = 1):

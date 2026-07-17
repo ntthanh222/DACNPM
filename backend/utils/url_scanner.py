@@ -13,7 +13,7 @@ import logging
 import asyncio
 import time
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 from backend.utils.circuit_breaker import call_virustotal, CircuitBreakerOpenError
 
@@ -117,7 +117,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
         if not validate_url(url):
             return {
                 "error": "Invalid URL format or security check failed",
-                "scan_date": datetime.utcnow().isoformat(),
+                "scan_date": datetime.now(timezone.utc).isoformat(),
                 "fallback": True
             }
 
@@ -127,7 +127,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                 "error": "VirusTotal API key not configured",
                 "message": "VirusTotal API key not configured. Using fallback heuristic check.",
                 "fallback": True,
-                "scan_date": datetime.utcnow().isoformat()
+                "scan_date": datetime.now(timezone.utc).isoformat()
             }
 
         import base64
@@ -179,7 +179,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                     "error": "API timeout",
                     "message": "VirusTotal service unavailable. Please try again later.",
                     "fallback": True,
-                    "scan_date": datetime.utcnow().isoformat()
+                    "scan_date": datetime.now(timezone.utc).isoformat()
                 }
             except httpx.RequestError as e:
                 logger.error(f"VirusTotal API network error: {e}")
@@ -187,7 +187,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                     "error": f"Network error: {str(e)}",
                     "message": "VirusTotal service unavailable. Please try again later.",
                     "fallback": True,
-                    "scan_date": datetime.utcnow().isoformat()
+                    "scan_date": datetime.now(timezone.utc).isoformat()
                 }
 
             if submit_response.status_code not in (200, 201):
@@ -196,7 +196,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                     "error": f"API error: {submit_response.status_code}",
                     "message": "VirusTotal service unavailable. Please try again later.",
                     "fallback": True,
-                    "scan_date": datetime.utcnow().isoformat()
+                    "scan_date": datetime.now(timezone.utc).isoformat()
                 }
 
             # Step 3: Poll VirusTotal until analysis results populate
@@ -238,7 +238,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
                 "error": "Analysis timed out or incomplete",
                 "message": "VirusTotal analysis is taking longer than expected. Please try again in a moment.",
                 "fallback": True,
-                "scan_date": datetime.utcnow().isoformat()
+                "scan_date": datetime.now(timezone.utc).isoformat()
             }
 
     try:
@@ -250,7 +250,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
             "message": "VirusTotal API is experiencing issues. Circuit breaker is open to prevent cascading failures.",
             "fallback": True,
             "circuit_breaker_open": True,
-            "scan_date": datetime.utcnow().isoformat()
+            "scan_date": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Unexpected error in VirusTotal scan: {e}")
@@ -258,7 +258,7 @@ async def scan_url_virustotal_async(url: str, timeout: int = 10) -> Dict[str, An
             "error": "VirusTotal scan failed",
             "message": f"Unexpected error: {str(e)}",
             "fallback": True,
-            "scan_date": datetime.utcnow().isoformat()
+            "scan_date": datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -277,7 +277,7 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
     if not validate_url(url):
         return {
             "error": "Invalid URL format or security check failed",
-            "scan_date": datetime.utcnow().isoformat(),
+            "scan_date": datetime.now(timezone.utc).isoformat(),
             "fallback": True
         }
 
@@ -287,7 +287,7 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
             "error": "VirusTotal API key not configured",
             "message": "VirusTotal API key not configured. Using fallback heuristic check.",
             "fallback": True,
-            "scan_date": datetime.utcnow().isoformat()
+            "scan_date": datetime.now(timezone.utc).isoformat()
         }
 
     import base64
@@ -335,7 +335,7 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
             "error": "API timeout",
             "message": "VirusTotal service unavailable. Please try again later.",
             "fallback": True,
-            "scan_date": datetime.utcnow().isoformat()
+            "scan_date": datetime.now(timezone.utc).isoformat()
         }
     except requests.RequestException as e:
         logger.error(f"VirusTotal API network error: {e}")
@@ -343,7 +343,7 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
             "error": f"Network error: {str(e)}",
             "message": "VirusTotal service unavailable. Please try again later.",
             "fallback": True,
-            "scan_date": datetime.utcnow().isoformat()
+            "scan_date": datetime.now(timezone.utc).isoformat()
         }
 
     if submit_response.status_code not in (200, 201):
@@ -352,7 +352,7 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
             "error": f"API error: {submit_response.status_code}",
             "message": "VirusTotal service unavailable. Please try again later.",
             "fallback": True,
-            "scan_date": datetime.utcnow().isoformat()
+            "scan_date": datetime.now(timezone.utc).isoformat()
         }
 
     poll_response = None
@@ -393,7 +393,7 @@ def scan_url_virustotal(url: str) -> Dict[str, Any]:
         "error": "Analysis timed out or incomplete",
         "message": "VirusTotal analysis is taking longer than expected. Please try again in a moment.",
         "fallback": True,
-        "scan_date": datetime.utcnow().isoformat()
+        "scan_date": datetime.now(timezone.utc).isoformat()
     }
 
 

@@ -42,9 +42,21 @@ logs/
 frontend/node_modules/
 frontend/test-results/
 frontend/playwright-report/
+frontend/tests/
+frontend/playwright*.config.cjs
 my-app/node_modules/
 my-app/.next/
 my-app/dist/
+
+# QA/reporting and documentation are mounted or consumed outside application
+# images; keeping them out of the build context avoids multi-gigabyte uploads.
+testing/
+test-reports/
+docs/
+repomix-output.xml
+ROLE_PERMISSION_MATRIX.md
+USER_FUNCTION_TEST_REPORT.md
+yeucau.md
 
 # Build artifacts and OS files
 build/

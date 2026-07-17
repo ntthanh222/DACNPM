@@ -5,7 +5,9 @@
 class ChatController {
     constructor() {
         this.userId = this.getOrCreateUserId();
-        this.chatbotEndpoint = window.config.get('chatbotEndpoint');
+        this.chatbotEndpoint = this.normalizeChatbotEndpoint(
+            window.config.get('chatbotEndpoint')
+        );
         this.apiEndpoint = window.config.get('apiEndpoint');
 
         // Streaming cancellation support
@@ -13,6 +15,14 @@ class ChatController {
         this.currentAbortController = null;
 
         this.init();
+    }
+
+    normalizeChatbotEndpoint(endpoint) {
+        if (!endpoint || typeof endpoint !== 'string') {
+            return endpoint;
+        }
+
+        return endpoint.replace(/\/+$/, '').replace(/\/chat$/, '');
     }
 
     init() {
@@ -274,25 +284,46 @@ class ChatController {
             return;
         }
 
-        // Cancel any previous stream before starting new one
-        this.cancelCurrentStream();
+        // Prevent double send
+        this.setLoadingState(true);
 
-        // Clear textarea and reset height
-        if (textarea) {
-            textarea.value = '';
-            textarea.style.height = 'auto';
+        try {
+            // Cancel any previous stream before starting new one
+            this.cancelCurrentStream();
+
+            // Clear textarea and reset height
+            if (textarea) {
+                textarea.value = '';
+                textarea.style.height = 'auto';
+            }
+
+            // Add user message
+            this.addUserMessage(message);
+
+            // Check if streaming is enabled (default: true for better UX)
+            const useStreaming = true;
+
+            if (useStreaming) {
+                await this.sendMessageStreaming(message);
+            } else {
+                await this.sendMessageRegular(message);
+            }
+        } finally {
+            this.setLoadingState(false);
+            if (textarea) textarea.focus();
         }
+    }
 
-        // Add user message
-        this.addUserMessage(message);
-
-        // Check if streaming is enabled (default: true for better UX)
-        const useStreaming = true;
-
-        if (useStreaming) {
-            await this.sendMessageStreaming(message);
-        } else {
-            await this.sendMessageRegular(message);
+    setLoadingState(isLoading) {
+        const textarea = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        if (textarea) {
+            textarea.disabled = isLoading;
+            textarea.style.opacity = isLoading ? '0.6' : '1';
+        }
+        if (sendButton) {
+            sendButton.disabled = isLoading;
+            sendButton.style.opacity = isLoading ? '0.5' : '1';
         }
     }
 
@@ -352,30 +383,53 @@ class ChatController {
         }
     }
 
-    async sendMessageStreaming(message) {
+    async sendMessageStreaming(message, retryCount = 0) {
+        const MAX_RETRIES = 3;
         // Send message using SSE streaming for real-time token display
         console.log('🔵 Sending chat API request (streaming):', {
             message: message,
-            userId: this.userId
+            userId: this.userId,
+            retryCount: retryCount
         });
 
         // Cancel any previous stream before starting new one
-        this.cancelCurrentStream();
+        if (retryCount === 0) {
+            this.cancelCurrentStream();
+        }
 
-        // Create bot message container with empty content initially
+        // Create bot message container with empty content initially if first try
         const botMessageId = 'bot-message-' + Date.now();
-        this.addStreamingBotMessage(botMessageId);
+        if (retryCount === 0) {
+            this.addStreamingBotMessage(botMessageId);
+        }
 
         try {
             // Create abort controller for this request
             this.currentAbortController = new AbortController();
 
-            // Build streaming URL with token and session ID query params for EventSource compatibility
-            const token = window.authService ? window.authService.getTokenSync() : null;
+            // Build streaming URL. Authenticated users receive a short-lived
+            // stream ticket so the JWT is not exposed in browser/proxy URLs.
+            let streamTicket = null;
+            const token = window.authService && window.authService.getToken
+                ? await window.authService.getToken()
+                : null;
+            if (token) {
+                const ticketResponse = await fetch(`${this.chatbotEndpoint}/chat/stream-ticket`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: this.currentAbortController.signal
+                });
+                if (!ticketResponse.ok) {
+                    throw new Error(`Stream ticket request failed: ${ticketResponse.status}`);
+                }
+                const ticketData = await ticketResponse.json();
+                streamTicket = ticketData.stream_ticket;
+            }
+
             const sessionId = this.userId;
             let streamUrl = `${this.chatbotEndpoint}/chat/stream?message=${encodeURIComponent(message)}`;
-            if (token) {
-                streamUrl += `&token=${encodeURIComponent(token)}`;
+            if (streamTicket) {
+                streamUrl += `&stream_ticket=${encodeURIComponent(streamTicket)}`;
             }
             if (sessionId) {
                 streamUrl += `&session_id=${encodeURIComponent(sessionId)}`;
@@ -409,14 +463,18 @@ class ChatController {
                         eventSource.close();
                         this.currentEventSource = null;
                         this.currentAbortController = null;
+                        this.finalizeStreamingMessage(botMessageId);
                     } else if (data.type === 'error') {
                         // Error occurred
-                        console.error('❌ Streaming error:', data.error);
+                        console.error('❌ Streaming error:', data.message || data.error);
                         streamCompleted = true;
                         eventSource.close();
                         this.currentEventSource = null;
                         this.currentAbortController = null;
-                        this.updateStreamingMessage(botMessageId, '❌ Xin lỗi, đã xảy ra lỗi khi xử lý tin nhắn.');
+                        this.updateStreamingMessage(
+                            botMessageId,
+                            data.message || data.error || '❌ Xin lỗi, đã xảy ra lỗi khi xử lý tin nhắn.'
+                        );
                     }
                 } catch (parseError) {
                     console.error('Error parsing SSE data:', parseError, event.data);
@@ -425,15 +483,34 @@ class ChatController {
 
             eventSource.onerror = (error) => {
                 console.error('🔴 SSE connection error:', error);
-                streamCompleted = true;
                 eventSource.close();
                 this.currentEventSource = null;
                 this.currentAbortController = null;
 
-                // Only show error if stream didn't complete successfully
-                if (!fullResponse || !streamCompleted) {
-                    this.hideTypingIndicator();
-                    this.addBotMessage('Xin lỗi, kết nối streaming thất bại. Vui lòng thử lại.');
+                if (!streamCompleted && !fullResponse) {
+                    if (retryCount < MAX_RETRIES) {
+                        console.warn(`⚠️ SSE connection lost. Retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+                        this.updateStreamingMessage(botMessageId, `🔄 Đang thử kết nối lại... (${retryCount + 1}/${MAX_RETRIES})`);
+                        setTimeout(() => {
+                            this.sendMessageStreaming(message, retryCount + 1);
+                        }, 2000);
+                    } else {
+                        streamCompleted = true;
+                        this.hideTypingIndicator();
+                        this.updateStreamingMessage(
+                            botMessageId,
+                            '❌ Xin lỗi, kết nối streaming liên tục thất bại. Vui lòng thử lại sau.'
+                        );
+                        this.finalizeStreamingMessage(botMessageId);
+                    }
+                } else if (!streamCompleted && fullResponse) {
+                    // Stream was partially received then disconnected. Finalize what we have.
+                    streamCompleted = true;
+                    this.finalizeStreamingMessage(botMessageId);
+                    const chatContainer = document.getElementById('chatMessages');
+                    if (chatContainer) {
+                        chatContainer.insertAdjacentHTML('beforeend', '<div class="text-xs text-orange-500 text-center my-2">⚠️ Kết nối bị gián đoạn, nội dung có thể không đầy đủ.</div>');
+                    }
                 }
             };
 
@@ -543,13 +620,13 @@ class ChatController {
         const messageHTML = `
             <div id="${messageId}" class="flex gap-6 group animate-fade-in">
                 <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0 border border-primary/20 shadow-[0_4px_12px_rgba(132,253,173,0.05)]">
-                    <span class="material-symbols-outlined text-primary animate-pulse" aria-hidden="true">smart_toy</span>
+                    <span class="material-symbols-outlined text-primary streaming-icon animate-pulse" aria-hidden="true">smart_toy</span>
                 </div>
                 <div class="flex-1 space-y-2">
                     <div class="flex items-baseline gap-3">
                         <span class="font-headline font-bold text-xs uppercase tracking-widest text-primary">Sentinel_AI</span>
                         <span class="text-[10px] text-outline">${new Date().toLocaleTimeString('en-US', {hour12: false})} UTC</span>
-                        <span class="text-[10px] text-primary animate-pulse">• Đang nhập...</span>
+                        <span class="streaming-status text-[10px] text-primary animate-pulse">• Đang nhập...</span>
                     </div>
                     <div class="bg-surface-container/60 backdrop-blur-md p-5 rounded-2xl border-l-2 border-primary shadow-[0_4px_15px_rgba(0,0,0,0.15)] border border-white/[0.02]">
                         <div class="streaming-content"></div>
@@ -569,7 +646,7 @@ class ChatController {
         if (!messageElement) return;
 
         const contentElement = messageElement.querySelector('.streaming-content');
-        const statusElement = messageElement.querySelector('.text-primary');
+        const statusElement = messageElement.querySelector('.streaming-status');
         const cursorElement = messageElement.querySelector('.streaming-cursor');
 
         if (contentElement) {
@@ -593,6 +670,19 @@ class ChatController {
         if (cursorElement && content && content.length > 0 && !content.endsWith('|')) {
             cursorElement.style.display = 'none';
         }
+    }
+
+    finalizeStreamingMessage(messageId) {
+        const messageElement = document.getElementById(messageId);
+        if (!messageElement) return;
+
+        const statusElement = messageElement.querySelector('.streaming-status');
+        const cursorElement = messageElement.querySelector('.streaming-cursor');
+        const iconElement = messageElement.querySelector('.streaming-icon');
+
+        statusElement?.remove();
+        cursorElement?.remove();
+        iconElement?.classList.remove('animate-pulse');
     }
 
     renderMarkdown(text) {

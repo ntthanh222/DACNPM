@@ -8,7 +8,9 @@ import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Optional
 import logging
+import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +29,18 @@ class VectorStore:
         self.collection_name = collection_name
         self.persist_directory = persist_directory or str(Path(__file__).parent.parent / "chroma_db")
 
-        # Initialize ChromaDB client (persistent storage)
-        logger.info(f"Initializing ChromaDB with persistence directory: {self.persist_directory}")
-        self.client = chromadb.PersistentClient(path=self.persist_directory)
+        # Containers use the dedicated Chroma service over HTTP. Local runs
+        # without CHROMADB_HOST retain the persistent on-disk client.
+        chroma_host = os.getenv("CHROMADB_HOST")
+        if chroma_host:
+            parsed = urlparse(chroma_host if "://" in chroma_host else f"http://{chroma_host}")
+            host = parsed.hostname or "chromadb"
+            port = parsed.port or 8000
+            logger.info("Initializing Chroma HTTP client at %s:%s", host, port)
+            self.client = chromadb.HttpClient(host=host, port=port)
+        else:
+            logger.info(f"Initializing ChromaDB with persistence directory: {self.persist_directory}")
+            self.client = chromadb.PersistentClient(path=self.persist_directory)
 
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
@@ -107,7 +118,7 @@ class VectorStore:
         """
         try:
             # Generate query embedding
-                from backend.rag.embedding_service import get_embedding_service
+            from backend.rag.embedding_service import get_embedding_service
             embedding_service = get_embedding_service()
             query_embedding = embedding_service.embed_text(query)
 

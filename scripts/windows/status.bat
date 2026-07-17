@@ -3,8 +3,17 @@ chcp 65001 >nul 2>&1
 setlocal EnableExtensions EnableDelayedExpansion
 
 set "PROJECT_ROOT=%~dp0..\.."
-set PORTS=8000 8002 5055 5005
+set PORTS=8000 8002 15055 15005
 cd /d "%PROJECT_ROOT%"
+set "COMPOSE_BAKE=false"
+set "COMPOSE_PROJECT_DIR=%PROJECT_ROOT%"
+set "ASCII_PROJECT_ROOT=D:\codex_docker_cybersec_ascii"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$p = [IO.Path]::GetFullPath($env:COMPOSE_PROJECT_DIR); if ($p.ToCharArray() | Where-Object { [int]$_ -gt 127 }) { exit 10 } else { exit 0 }"
+if "%ERRORLEVEL%"=="10" (
+    if exist "%ASCII_PROJECT_ROOT%\docker-compose.yml" cd /d "%ASCII_PROJECT_ROOT%"
+)
 
 echo ========================================
 echo CyberSec Assistant - Docker Status
@@ -29,7 +38,7 @@ for %%p in (%PORTS%) do (
 
 echo.
 echo HTTP health:
-for %%u in ("http://localhost:8000/health" "http://localhost:8002/health" "http://localhost:5055/health" "http://localhost:5005/" "http://localhost:3000/health" "http://localhost:9090/-/ready") do (
+for %%u in ("http://localhost:8000/health" "http://localhost:8002/health" "http://localhost:15055/health" "http://localhost:15005/" "http://localhost:3000/health" "http://localhost:9090/-/ready") do (
     curl.exe -fsS -o nul "%%~u" >nul 2>&1
     if errorlevel 1 (echo [FAIL] %%~u) else (echo [OK]   %%~u)
 )

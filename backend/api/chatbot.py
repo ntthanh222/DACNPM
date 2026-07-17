@@ -18,6 +18,8 @@ import html
 import os
 import asyncio
 import json
+import secrets
+import time
 
 from backend.api.deps import get_optional_user_id, require_current_user_id, require_admin
 from backend.services.chatbot_service import get_chatbot_service
@@ -31,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize rate limiter for chatbot endpoints
 limiter = Limiter(key_func=get_remote_address)
+
+STREAM_TICKET_TTL_SECONDS = int(os.environ.get("STREAM_TICKET_TTL_SECONDS", "60"))
+_stream_tickets: Dict[str, tuple[UUID, float]] = {}
 
 
 def sanitize_html(text: str) -> str:
@@ -61,6 +66,11 @@ class ChatResponse(BaseModel):
     suggested_actions: Optional[list] = None
 
 
+class StreamTicketResponse(BaseModel):
+    stream_ticket: str
+    expires_in: int
+
+
 class PhishingCheckRequest(BaseModel):
     url: str
 
@@ -74,6 +84,32 @@ class PasswordStrengthRequest(BaseModel):
 # ============================================================================
 
 router = APIRouter()
+
+
+def _issue_stream_ticket(user_id: UUID) -> str:
+    now = time.time()
+    expired = [
+        ticket
+        for ticket, (_, expires_at) in _stream_tickets.items()
+        if expires_at <= now
+    ]
+    for ticket in expired:
+        _stream_tickets.pop(ticket, None)
+
+    ticket = secrets.token_urlsafe(32)
+    _stream_tickets[ticket] = (user_id, now + STREAM_TICKET_TTL_SECONDS)
+    return ticket
+
+
+def _consume_stream_ticket(ticket: str) -> Optional[UUID]:
+    ticket_data = _stream_tickets.pop(ticket, None)
+    if not ticket_data:
+        return None
+
+    user_id, expires_at = ticket_data
+    if expires_at <= time.time():
+        return None
+    return user_id
 
 
 # ============================================================================
@@ -93,30 +129,41 @@ async def chat(
         # Sanitize user input to prevent XSS
         sanitized_message = sanitize_html(payload.message)
 
-        # Use authenticated user ID if available, otherwise use session_id
+        # A session UUID identifies an anonymous browser session; it is not a
+        # database user and must not route the request through the authenticated
+        # Rasa/action path. Keep it only for validation/log correlation.
         user_id = None
         if current_user_id:
             user_id = current_user_id
             logger.info(f"Processing chat for authenticated user: {user_id}")
         else:
-            # For anonymous users, use session_id (generate if missing)
+            # For anonymous users, validate the optional session_id but keep
+            # user_id unset so the deterministic anonymous fallback is used.
             if x_session_id:
                 try:
-                    user_id = UUID(x_session_id)
-                    logger.info(f"Processing chat for anonymous user with session: {user_id}")
+                    UUID(x_session_id)
+                    logger.info(f"Processing chat for anonymous user with session: {x_session_id}")
                 except ValueError:
                     logger.warning(f"Invalid session_id format: {x_session_id}")
                     raise HTTPException(status_code=400, detail="Invalid session ID format. Must be a valid UUID.")
             else:
-                # Generate new session UUID for anonymous users
-                user_id = uuid4()
-                logger.info(f"Generated new session ID for anonymous user: {user_id}")
+                logger.info("Processing chat for anonymous user without a session ID")
 
         # Get response from chatbot service
         chatbot_service = get_chatbot_service()
-        response_data = await chatbot_service.process_message(sanitized_message, user_id)
+        # Anonymous sessions do not have a row in public.users and therefore
+        # must not be persisted to chat_history (the FK would reject them).
+        response_data = await chatbot_service.process_message(
+            sanitized_message,
+            user_id,
+            save_to_db=current_user_id is not None,
+        )
 
-        logger.info(f"Chat message: '{sanitized_message}', User: {user_id if user_id else 'anonymous'}")
+        logger.info(
+            "Chat processed for %s, message_length=%s",
+            user_id if user_id else "anonymous",
+            len(sanitized_message),
+        )
 
         return ChatResponse(
             response=response_data['response'],
@@ -134,12 +181,27 @@ async def chat(
         raise HTTPException(status_code=500, detail="Chat processing failed")
 
 
+@router.post("/chat/stream-ticket", response_model=StreamTicketResponse)
+@limiter.limit("30/minute")
+async def create_stream_ticket(
+    request: Request,
+    current_user_id: UUID = Depends(require_current_user_id),
+):
+    """Issue a short-lived ticket for EventSource without putting the JWT in the URL."""
+    ticket = _issue_stream_ticket(current_user_id)
+    return StreamTicketResponse(
+        stream_ticket=ticket,
+        expires_in=STREAM_TICKET_TTL_SECONDS,
+    )
+
+
 @router.get("/chat/stream")
 @limiter.limit("30/minute")
 async def chat_stream(
     request: Request,
     message: str,
     token: Optional[str] = None,
+    stream_ticket: Optional[str] = None,
     session_id: Optional[str] = None,
     current_user_id: Optional[UUID] = Depends(get_optional_user_id),
     x_session_id: Optional[str] = Header(None)
@@ -150,14 +212,23 @@ async def chat_stream(
     Streams the response token by token for real-time user feedback.
     Includes DDoS protection via SSE connection limits.
     """
-    # Fallback authentication/session via query parameters for EventSource compatibility
+    if not current_user_id and stream_ticket:
+        ticket_user_id = _consume_stream_ticket(stream_ticket)
+        if ticket_user_id:
+            current_user_id = ticket_user_id
+            logger.info("Authenticated streaming client via short-lived ticket")
+        else:
+            logger.warning("Invalid or expired stream ticket")
+            raise HTTPException(status_code=401, detail="Invalid or expired stream ticket.")
+
+    # Legacy fallback for older clients. New frontend code uses stream_ticket.
     if not current_user_id and token:
         try:
             from backend.api.auth import verify_token
             token_data = verify_token(token)
             if token_data and token_data.user_id:
                 current_user_id = UUID(token_data.user_id)
-                logger.info(f"Authenticated streaming client via query token: {current_user_id}")
+                logger.info("Authenticated streaming client via legacy query token")
         except Exception as e:
             logger.warning(f"Failed to authenticate streaming client via query token: {e}")
 
@@ -198,7 +269,11 @@ async def chat_stream(
             try:
                 # Get response from chatbot service
                 chatbot_service = get_chatbot_service()
-                response_data = await chatbot_service.process_message(sanitized_message, user_id)
+                response_data = await chatbot_service.process_message(
+                    sanitized_message,
+                    user_id,
+                    save_to_db=current_user_id is not None,
+                )
                 response_text = response_data.get('response', '')
 
                 # Send metadata first

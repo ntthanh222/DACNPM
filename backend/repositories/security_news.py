@@ -14,6 +14,15 @@ except ImportError:
     pass  # Use Supabase client as normal
 
 
+def _is_missing_is_deleted_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return "is_deleted" in message and ("does not exist" in message or "could not find" in message)
+
+
+def _news_select_query():
+    return supabase_admin.table('news_articles').select('*')
+
+
 def get_news_item(news_id: UUID) -> Optional[SecurityNews]:
     """Get a news item by ID"""
     try:
@@ -33,14 +42,22 @@ def get_all_news(limit: int = 50, source: Optional[str] = None) -> List[Security
     try:
         if not supabase_admin:
             return []
-        query = supabase_admin.table('news_articles').select('*').eq('is_deleted', False)
+        try:
+            query = _news_select_query().eq('is_deleted', False)
 
-        if source:
-            query = query.eq('source', source)
+            if source:
+                query = query.eq('source', source)
 
-        # Filter out NULL published_at values before ordering to avoid inconsistent sorting
-        response = query.not_.is_('published_at', 'null')\
-            .order('published_at', desc=True).limit(limit).execute()
+            response = query.not_.is_('published_at', 'null')\
+                .order('published_at', desc=True).limit(limit).execute()
+        except Exception as e:
+            if not _is_missing_is_deleted_error(e):
+                raise
+            query = _news_select_query()
+            if source:
+                query = query.eq('source', source)
+            response = query.not_.is_('published_at', 'null')\
+                .order('published_at', desc=True).limit(limit).execute()
         return [SecurityNews(**item) for item in response.data]
     except Exception as e:
         print(f"Error fetching news: {e}")
@@ -52,11 +69,15 @@ def get_latest_news(limit: int = 10) -> List[SecurityNews]:
     try:
         if not supabase_admin:
             return []
-        # Filter out NULL published_at values before ordering to avoid inconsistent sorting
-        response = supabase_admin.table('news_articles').select('*')\
-            .eq('is_deleted', False)\
-            .not_.is_('published_at', 'null')\
-            .order('published_at', desc=True).limit(limit).execute()
+        try:
+            response = _news_select_query().eq('is_deleted', False)\
+                .not_.is_('published_at', 'null')\
+                .order('published_at', desc=True).limit(limit).execute()
+        except Exception as e:
+            if not _is_missing_is_deleted_error(e):
+                raise
+            response = _news_select_query().not_.is_('published_at', 'null')\
+                .order('published_at', desc=True).limit(limit).execute()
         return [SecurityNews(**item) for item in response.data]
     except Exception as e:
         print(f"Error fetching latest news: {e}")

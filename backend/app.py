@@ -13,6 +13,7 @@ from backend.config import settings
 from backend.core.observability import limiter, record_request
 from backend.middleware.error_handler import setup_exception_handling
 from backend.web.static import mount_static
+from backend.core.tracing import setup_tracing
 
 
 def create_app() -> FastAPI:
@@ -39,6 +40,9 @@ def create_app() -> FastAPI:
     
     # Configure global exception handers (e.g. database errors, general exceptions)
     setup_exception_handling(app)
+    
+    # Initialize OpenTelemetry Distributed Tracing
+    setup_tracing(app)
     
     # Initialize slowapi rate limiter configuration
     app.state.limiter = limiter

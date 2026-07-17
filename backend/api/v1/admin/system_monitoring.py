@@ -24,6 +24,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _is_missing_is_deleted_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return "is_deleted" in message and ("does not exist" in message or "could not find" in message)
+
+
+def _count_active_news(admin_client):
+    try:
+        return admin_client.table('news_articles').select('id', count='exact').eq('is_deleted', False).execute()
+    except Exception as e:
+        if not _is_missing_is_deleted_error(e):
+            raise
+        logger.warning("news_articles.is_deleted missing; counting news without soft-delete filter")
+        return admin_client.table('news_articles').select('id', count='exact').execute()
+
+
 # ============================================================================
 # Pydantic Models
 # ============================================================================
@@ -100,13 +115,13 @@ async def get_cve_cache_stats(
     """
     try:
         # Get cache statistics
-        response = admin_client.table('cve_lookups').select('cve_id, query_count, last_refreshed_at').order('query_count', desc=True).limit(100).execute()
+        response = admin_client.table('cve_lookups').select('cve_id, query_count, last_accessed, cache_expires_at').order('query_count', desc=True).limit(100).execute()
 
         total_cached = len(response.data)
         total_queries = sum(r.get('query_count', 0) for r in response.data)
 
         # Get recently cached entries
-        recent_response = admin_client.table('cve_lookups').select('*').order('last_refreshed_at', desc=True).limit(20).execute()
+        recent_response = admin_client.table('cve_lookups').select('*').order('last_accessed', desc=True).limit(20).execute()
 
         return {
             'total_cached_entries': total_cached,
@@ -166,7 +181,7 @@ async def refresh_cve_cache(
     try:
         # Update last_refreshed_at timestamp
         response = admin_client.table('cve_lookups').update({
-            'last_refreshed_at': datetime.now().isoformat()
+            'last_accessed': datetime.now().isoformat()
         }).eq('cve_id', cve_id).execute()
 
         if not response.data:
@@ -210,13 +225,13 @@ async def get_system_analytics(
         total_scans_response = admin_client.table('security_scans').select('id', count='exact').execute()
 
         # Get news statistics
-        total_news_response = admin_client.table('news_articles').select('id', count='exact').eq('is_deleted', False).execute()
+        total_news_response = _count_active_news(admin_client)
 
         # Get severity distribution
         severity_response = admin_client.table('security_scans').select('severity').execute()
         severity_distribution = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0}
         for scan in severity_response.data:
-            severity = scan.get('severity', 'info').lower()
+            severity = (scan.get('severity') or 'info').lower()
             if severity in severity_distribution:
                 severity_distribution[severity] += 1
 
@@ -273,7 +288,7 @@ async def get_cached_dashboard_stats(
                 total_scans_response = admin_client.table('security_scans').select('id', count='exact').execute()
 
                 # Get news statistics
-                total_news_response = admin_client.table('news_articles').select('id', count='exact').eq('is_deleted', False).execute()
+                total_news_response = _count_active_news(admin_client)
 
                 # Get vulnerability distribution
                 vuln_distribution = get_vulnerability_distribution()
@@ -328,7 +343,8 @@ async def get_cached_dashboard_stats(
 
 @router.post("/system/dashboard/clear-cache")
 async def clear_dashboard_cache(
-    admin_id: UUID = Depends(require_admin)
+    admin_id: UUID = Depends(require_admin),
+    admin_client=Depends(get_admin_client)
 ):
     """
     Clear dashboard statistics cache.
@@ -345,7 +361,7 @@ async def clear_dashboard_cache(
         cleared_count += await invalidate_pattern("admin_stats:*")
 
         # Log admin action
-        supabase.table('admin_audit_log').insert({
+        admin_client.table('admin_audit_log').insert({
             'admin_user_id': str(admin_id),
             'action_type': 'cache_clear',
             'target_type': 'dashboard_cache',
