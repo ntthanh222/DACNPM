@@ -1,0 +1,1 @@
+﻿Kubernetes security requires RBAC and network policies to restrict pod communication.

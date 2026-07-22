@@ -410,8 +410,8 @@ class ChatController {
             // Build streaming URL. Authenticated users receive a short-lived
             // stream ticket so the JWT is not exposed in browser/proxy URLs.
             let streamTicket = null;
-            const token = window.authService && window.authService.getToken
-                ? await window.authService.getToken()
+            const token = window.auth && window.auth.getToken
+                ? await window.auth.getToken()
                 : null;
             if (token) {
                 const ticketResponse = await fetch(`${this.chatbotEndpoint}/chat/stream-ticket`, {
@@ -444,7 +444,7 @@ class ChatController {
             let fullResponse = '';
             let streamCompleted = false;
 
-            eventSource.onmessage = (event) => {
+            const handleSSEEvent = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     console.log('📨 Streaming chunk received:', data);
@@ -480,6 +480,11 @@ class ChatController {
                     console.error('Error parsing SSE data:', parseError, event.data);
                 }
             };
+
+            eventSource.onmessage = handleSSEEvent;
+            eventSource.addEventListener('metadata', handleSSEEvent);
+            eventSource.addEventListener('chunk', handleSSEEvent);
+            eventSource.addEventListener('complete', handleSSEEvent);
 
             eventSource.onerror = (error) => {
                 console.error('🔴 SSE connection error:', error);

@@ -1,0 +1,1 @@
+﻿Access control models include DAC, MAC, and RBAC to manage permissions.

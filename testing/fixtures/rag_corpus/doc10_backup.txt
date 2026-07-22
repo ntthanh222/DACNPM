@@ -1,0 +1,1 @@
+Maintain tested, encrypted, versioned offline backups to quickly recover from ransomware without paying ransoms. Keep backups isolated from the primary network.

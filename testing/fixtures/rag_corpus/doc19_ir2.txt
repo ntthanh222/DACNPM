@@ -1,0 +1,1 @@
+﻿Incident response plans typically contain preparation, identification, containment, and recovery phases.

@@ -87,6 +87,27 @@ def test_qa_backend_compose_builds_backend_target_without_browser_packages():
     assert 'if [ "$INSTALL_BROWSER" = "true" ]' in dockerfile
 
 
+def test_backend_dockerfile_prefers_cpu_only_torch_wheel():
+    dockerfile = read_backend("Dockerfile")
+
+    assert "https://download.pytorch.org/whl/cpu" in dockerfile
+    assert "torch==2.13.0+cpu" in dockerfile
+    assert "CUDA/NVIDIA" in dockerfile
+
+
+def test_docker_build_context_excludes_local_virtualenvs():
+    dockerignore = read_project(".dockerignore")
+    start_script = read_project("scripts/windows/start.bat")
+    compose = read_project("docker-compose.yml")
+
+    assert "**/*venv/" in dockerignore
+    assert "**/test_env/" in dockerignore
+    assert "./.dockerignore:/app/.dockerignore:ro" in compose
+    assert "backend\\test_env" in start_script
+    assert "backend\\test_venv" in start_script
+    assert "backend\\test_rasa_venv" in start_script
+
+
 def test_rag_runtime_imports_are_package_absolute():
     for relative_path in (
         "api/hybrid_chatbot.py",

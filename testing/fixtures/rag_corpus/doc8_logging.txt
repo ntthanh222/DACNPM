@@ -1,0 +1,1 @@
+Centralized logging and active security monitoring help detect suspicious SSRF attempts, brute-force logins, and unauthorized data transfers. Keep audit logs safe from mutation.

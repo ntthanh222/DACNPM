@@ -94,6 +94,7 @@ class Settings(BaseSettings):
     # Rasa Configuration
     rasa_server_host: str = "localhost"
     rasa_server_port: int = 5005
+    rasa_confidence_threshold: float = 0.7
     rasa_action_server_port: int = 5055
     rasa_websocket_url: str = "ws://localhost:5005/websocket"
     rasa_url: Optional[str] = None

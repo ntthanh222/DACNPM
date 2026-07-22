@@ -11,7 +11,7 @@ sanitization before passing to services.
 from fastapi import APIRouter, HTTPException, Header, Request, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import logging
 from uuid import UUID, uuid4
 import html
@@ -59,11 +59,25 @@ class ChatRequest(BaseModel):
     context: Optional[Dict[str, Any]] = None
 
 
+class RetrievedDocument(BaseModel):
+    title: Optional[str] = None
+    source: Optional[str] = None
+    score: Optional[float] = None
+
+
 class ChatResponse(BaseModel):
     response: str
     intent: Optional[str] = None
     confidence: Optional[float] = None
     suggested_actions: Optional[list] = None
+    source: Optional[str] = None
+    fallback_used: Optional[bool] = None
+    rag_attempted: Optional[bool] = None
+    rag_enabled: Optional[bool] = None
+    rag_documents: Optional[List[RetrievedDocument]] = None
+    request_id: Optional[str] = None
+    model_name: Optional[str] = None
+    persistence_status: Optional[str] = None
 
 
 class StreamTicketResponse(BaseModel):
@@ -154,9 +168,10 @@ async def chat(
         # Anonymous sessions do not have a row in public.users and therefore
         # must not be persisted to chat_history (the FK would reject them).
         response_data = await chatbot_service.process_message(
-            sanitized_message,
-            user_id,
-            save_to_db=current_user_id is not None,
+            message=sanitized_message,
+            user_id=current_user_id,
+            session_id=x_session_id,
+            persist=current_user_id is not None,
         )
 
         logger.info(
@@ -169,7 +184,15 @@ async def chat(
             response=response_data['response'],
             intent=response_data.get('intent'),
             confidence=response_data.get('confidence'),
-            suggested_actions=response_data.get('suggested_actions')
+            suggested_actions=response_data.get('suggested_actions'),
+            source=response_data.get('source'),
+            fallback_used=response_data.get('fallback_used'),
+            rag_attempted=response_data.get('rag_attempted'),
+            rag_enabled=response_data.get('rag_enabled'),
+            rag_documents=response_data.get('rag_documents'),
+            request_id=response_data.get('request_id'),
+            model_name=response_data.get('model_name'),
+            persistence_status=response_data.get('persistence_status')
         )
     except ValueError as val_err:
         logger.warning(f"Validation error in chat: {val_err}")
@@ -270,9 +293,10 @@ async def chat_stream(
                 # Get response from chatbot service
                 chatbot_service = get_chatbot_service()
                 response_data = await chatbot_service.process_message(
-                    sanitized_message,
-                    user_id,
-                    save_to_db=current_user_id is not None,
+                    message=sanitized_message,
+                    user_id=current_user_id,
+                    session_id=x_session_id,
+                    persist=current_user_id is not None,
                 )
                 response_text = response_data.get('response', '')
 
@@ -281,9 +305,17 @@ async def chat_stream(
                     "type": "metadata",
                     "intent": response_data.get('intent'),
                     "confidence": response_data.get('confidence'),
-                    "suggested_actions": response_data.get('suggested_actions', [])
+                    "suggested_actions": response_data.get('suggested_actions', []),
+                    "source": response_data.get('source'),
+                    "fallback_used": response_data.get('fallback_used'),
+                    "rag_attempted": response_data.get('rag_attempted'),
+                    "rag_enabled": response_data.get('rag_enabled'),
+                    "rag_documents": response_data.get('rag_documents', []),
+                    "request_id": response_data.get('request_id'),
+                    "model_name": response_data.get('model_name'),
+                    "persistence_status": response_data.get('persistence_status')
                 }
-                yield f"data: {json.dumps(metadata)}\n\n"
+                yield f"event: metadata\ndata: {json.dumps(metadata)}\n\n"
 
                 # Stream the response in chunks
                 # Configure chunk size and delay via environment variables
@@ -296,7 +328,7 @@ async def chat_stream(
                         "type": "chunk",
                         "content": chunk
                     }
-                    yield f"data: {json.dumps(chunk_data)}\n\n"
+                    yield f"event: chunk\ndata: {json.dumps(chunk_data)}\n\n"
 
                     # Configurable delay for typing effect (can be set to 0 for instant delivery)
                     if chunk_delay > 0:
@@ -305,9 +337,20 @@ async def chat_stream(
                 # Send completion signal
                 complete_data = {
                     "type": "complete",
-                    "full_response": response_text
+                    "full_response": response_text,
+                    "intent": response_data.get('intent'),
+                    "confidence": response_data.get('confidence'),
+                    "suggested_actions": response_data.get('suggested_actions', []),
+                    "source": response_data.get('source'),
+                    "fallback_used": response_data.get('fallback_used'),
+                    "rag_attempted": response_data.get('rag_attempted'),
+                    "rag_enabled": response_data.get('rag_enabled'),
+                    "rag_documents": response_data.get('rag_documents', []),
+                    "request_id": response_data.get('request_id'),
+                    "model_name": response_data.get('model_name'),
+                    "persistence_status": response_data.get('persistence_status')
                 }
-                yield f"data: {json.dumps(complete_data)}\n\n"
+                yield f"event: complete\ndata: {json.dumps(complete_data)}\n\n"
 
             except Exception as e:
                 logger.error(f"Error in stream generation: {e}")

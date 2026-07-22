@@ -1,0 +1,1 @@
+Implement network segmentation to separate database environments from web app frontends and limit lateral movement during breach. Use firewalls and microsegmentation rules.

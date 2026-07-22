@@ -39,6 +39,11 @@ if not exist "%PROJECT_ROOT%\rasa\models\*.tar.gz" (
 )
 
 echo [OK] Model generated in rasa\models.
+python "%PROJECT_ROOT%\scripts\generate_model_manifest.py"
+if errorlevel 1 (
+    echo [ERROR] Failed to generate model manifest.
+    exit /b 1
+)
 echo Restarting Rasa-dependent services...
 docker compose up -d rasa backend crawler
 if errorlevel 1 (

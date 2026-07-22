@@ -1,0 +1,152 @@
+[
+  {
+    "query": "Làm thế nào để bảo mật Ubuntu server?",
+    "expected_document_ids": [
+      "doc1_ubuntu"
+    ],
+    "expected_topic": "ubuntu_hardening",
+    "must_not_retrieve": [
+      "doc9_api"
+    ]
+  },
+  {
+    "query": "Cách tạo mật khẩu mạnh và quản lý chúng",
+    "expected_document_ids": [
+      "doc2_password"
+    ],
+    "expected_topic": "password_security",
+    "must_not_retrieve": [
+      "doc1_ubuntu"
+    ]
+  },
+  {
+    "query": "Dấu hiệu của email lừa đảo phishing",
+    "expected_document_ids": [
+      "doc3_phishing"
+    ],
+    "expected_topic": "phishing_indicators",
+    "must_not_retrieve": [
+      "doc10_backup"
+    ]
+  },
+  {
+    "query": "Tra cứu thông tin lỗ hổng bảo mật CVE",
+    "expected_document_ids": [
+      "doc4_cve"
+    ],
+    "expected_topic": "cve_basics",
+    "must_not_retrieve": [
+      "doc6_network"
+    ]
+  },
+  {
+    "query": "Các bước ứng phó sự cố an ninh mạng",
+    "expected_document_ids": [
+      "doc5_incident"
+    ],
+    "expected_topic": "incident_response",
+    "must_not_retrieve": [
+      "doc2_password"
+    ]
+  },
+  {
+    "query": "Phân vùng mạng và bảo mật database",
+    "expected_document_ids": [
+      "doc6_network"
+    ],
+    "expected_topic": "network_segmentation",
+    "must_not_retrieve": [
+      "doc4_cve"
+    ]
+  },
+  {
+    "query": "Thiết lập xác thực hai lớp MFA bảo mật",
+    "expected_document_ids": [
+      "doc7_mfa"
+    ],
+    "expected_topic": "mfa_auth",
+    "must_not_retrieve": [
+      "doc8_logging"
+    ]
+  },
+  {
+    "query": "Ghi nhật ký hệ thống và giám sát bảo mật",
+    "expected_document_ids": [
+      "doc8_logging"
+    ],
+    "expected_topic": "logging_monitoring",
+    "must_not_retrieve": [
+      "doc1_ubuntu"
+    ]
+  },
+  {
+    "query": "Xác thực API bằng JWT an toàn",
+    "expected_document_ids": [
+      "doc9_api"
+    ],
+    "expected_topic": "secure_api_auth",
+    "must_not_retrieve": [
+      "doc3_phishing"
+    ]
+  },
+  {
+    "query": "Sao lưu dữ liệu phòng chống mã độc mã hóa",
+    "expected_document_ids": [
+      "doc10_backup"
+    ],
+    "expected_topic": "backup_recovery",
+    "must_not_retrieve": [
+      "doc7_mfa"
+    ]
+  },
+  {
+    "query": "how to secure linux server hardening",
+    "expected_document_ids": [
+      "doc1_ubuntu"
+    ],
+    "expected_topic": "ubuntu_hardening",
+    "must_not_retrieve": [
+      "doc10_backup"
+    ]
+  },
+  {
+    "query": "indicator of phishing email redirects",
+    "expected_document_ids": [
+      "doc3_phishing"
+    ],
+    "expected_topic": "phishing_indicators",
+    "must_not_retrieve": [
+      "doc5_incident"
+    ]
+  },
+  {
+    "query": "incident response containment isolate",
+    "expected_document_ids": [
+      "doc5_incident"
+    ],
+    "expected_topic": "incident_response",
+    "must_not_retrieve": [
+      "doc9_api"
+    ]
+  },
+  {
+    "query": "JWT api secure authentication HTTPS",
+    "expected_document_ids": [
+      "doc9_api"
+    ],
+    "expected_topic": "secure_api_auth",
+    "must_not_retrieve": [
+      "doc4_cve"
+    ]
+  },
+  {
+    "query": "backup offline tested restore decryption key",
+    "expected_document_ids": [
+      "doc10_backup"
+    ],
+    "expected_topic": "backup_recovery",
+    "must_not_retrieve": [
+      "doc1_ubuntu"
+    ]
+  }
+]

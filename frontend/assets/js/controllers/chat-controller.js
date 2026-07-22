@@ -179,13 +179,10 @@ class ChatController {
         const messageData = this.pendingMessages.get(messageId);
 
         if (messageData) {
-            // Save chat to database with the correct user message
-            this.saveChatToDatabase(messageData.message, botMessage, intent, messageData.entities || null);
-
             // Remove from queue after successful processing
             this.pendingMessages.delete(messageId);
 
-            console.log(`✅ Processed message ${messageId} and saved to database`);
+            console.log(`✅ Processed message ${messageId} (saved automatically by backend)`);
         } else {
             console.warn(`No message data found for messageId ${messageId}, skipping database save`);
         }

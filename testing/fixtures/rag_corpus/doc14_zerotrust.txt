@@ -1,0 +1,1 @@
+﻿Zero trust architecture assumes breach and verifies every request.

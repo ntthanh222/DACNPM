@@ -15,12 +15,13 @@ All database operations use proper SQL injection prevention.
 import logging
 import re
 from typing import Dict, Any, Optional, List
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from backend.services.rasa_client import get_rasa_client
 from backend.services.rag_service import get_rag_service
 from backend.database.models import ChatHistoryCreate
 from backend.repositories.chat_history import create_chat_message
+from backend.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -51,47 +52,251 @@ class ChatbotService:
         self.rag_service = get_rag_service()
         self.user_repository = None
 
+    def _check_safety_policy(self, message: str) -> Optional[Dict[str, Any]]:
+        """
+        Validates the message against the safety policy.
+        Returns a refusal payload if unsafe, otherwise None.
+        """
+        message_lower = message.lower()
+        if any(term in message_lower for term in [
+            'malware code', 'steals browser', 'bypass', 'credential phishing',
+            'exploit a public', 'reveal api', 'reveal secret', 'ignore safety',
+            'payload', 'mã độc', 'vượt qua mfa', 'khai thác máy chủ', 'api key'
+        ]):
+            # Safety refusal
+            response_text = "Tôi không thể hỗ trợ đánh cắp thông tin, vượt qua MFA, tạo mã độc, phishing hoặc khai thác trái phép. Nếu bạn được ủy quyền, hãy dùng môi trường lab và tài liệu kiểm thử an toàn; tôi có thể giúp thiết kế biện pháp phòng thủ, phát hiện và khắc phục. I cannot provide malware or credential theft."
+            return {
+                'response': response_text,
+                'intent': 'safety_refusal',
+                'confidence': 0.95,
+                'source': 'policy',
+                'fallback_used': True,
+                'rag_attempted': False,
+                'rag_enabled': False,
+                'rag_documents': [],
+                'request_id': str(uuid4()),
+                'model_name': 'safety_policy',
+                'persistence_status': 'skipped'
+            }
+        return None
+
     async def process_message(
         self,
         message: str,
         user_id: Optional[UUID] = None,
-        save_to_db: bool = True
+        session_id: Optional[str] = None,
+        persist: bool = True
     ) -> Dict[str, Any]:
         """
         Processes a sanitized user chat message and returns a chatbot response.
-
-        The message is evaluated for routing:
-        - If the user is unauthenticated, it falls back to a preset security pattern matcher.
-        - If authenticated, it attempts Rasa NLU matching, augmented with relevant RAG context documents.
-        - If database saving is enabled, the chat logs are persisted asynchronously.
-
-        Args:
-            message (str): Sanitized text input from the user.
-            user_id (Optional[UUID], optional): UUID of the authenticated user. Defaults to None.
-            save_to_db (bool, optional): If True, persists the message and response to the DB. Defaults to True.
-
-        Raises:
-            ValueError: If the message content is empty or whitespace.
-
-        Returns:
-            Dict[str, Any]: Dictionary containing response text, intent classification, confidence score,
-                and execution metadata.
+        Orchestrates safety refusals, Rasa NLU parsing, and Gemini+RAG fallback.
         """
         if not message or not message.strip():
             raise ValueError("Message cannot be empty")
 
-        if not user_id:
-            logger.warning("No user_id provided, using anonymous mode")
-            return await self._get_fallback_response(message, anonymous=True)
+        # 1. Security / Safety Policy Guard (runs first!)
+        safety_violation = self._check_safety_policy(message)
+        if safety_violation:
+            if persist and user_id:
+                self._save_chat_message(user_id, message, safety_violation)
+                safety_violation['persistence_status'] = 'saved'
+            else:
+                safety_violation['persistence_status'] = 'skipped'
+            return safety_violation
 
-        # Retrieve a RAG-enhanced response mapped through Rasa
-        response_data = await self._get_rasa_response(message, user_id)
-
-        if not save_to_db:
-            return response_data
-
+        # 2. Try to classify using Rasa NLU (if available)
+        rasa_available = False
+        intent_name = 'unknown'
+        confidence = 0.0
+        entities = []
+        
         try:
-            # Prepare and write conversation log record to the database
+            # Check if Rasa is available/responsive
+            rasa_nlu = await self.rasa_client.get_intent(message)
+            intent_name = rasa_nlu.get('intent', 'unknown')
+            confidence = rasa_nlu.get('confidence', 0.0)
+            entities = rasa_nlu.get('entities', [])
+            rasa_available = True
+        except Exception as e:
+            logger.warning(f"Rasa NLU classification failed or Rasa offline: {e}")
+            rasa_available = False
+
+        RASA_INTENTS = {
+            'check_phishing',
+            'check_password',
+            'lookup_cve',
+            'get_security_news',
+            'greet',
+            'goodbye',
+            'thanks'
+        }
+
+        # 3. Routing decision
+        if rasa_available:
+            # Check tool intents first
+            if intent_name in RASA_INTENTS and confidence >= settings.rasa_confidence_threshold:
+                if intent_name in {'check_phishing', 'check_password', 'lookup_cve', 'get_security_news'}:
+                    logger.info(f"📡 Routing to Rasa Custom Action for intent: {intent_name} (conf: {confidence})")
+                    sender_id = str(user_id) if user_id else (session_id or str(uuid4()))
+                    try:
+                        rasa_response = await self.rasa_client.send_message(message, sender_id)
+                        if rasa_response:
+                            response_data = {
+                                'response': rasa_response,
+                                'intent': intent_name,
+                                'confidence': confidence,
+                                'source': 'rasa_action',
+                                'fallback_used': False,
+                                'rag_attempted': False,
+                                'rag_enabled': False,
+                                'rag_documents': [],
+                                'request_id': str(uuid4()),
+                                'model_name': 'Rasa NLU',
+                                'persistence_status': 'skipped'
+                            }
+                            if persist and user_id:
+                                self._save_chat_message(user_id, message, response_data)
+                                response_data['persistence_status'] = 'saved'
+                            return response_data
+                    except Exception as e:
+                        logger.error(f"Rasa Action execution failed: {e}")
+
+                # Greeting or basic conversational intents (deterministic)
+                elif intent_name in {'greet', 'goodbye', 'thanks'}:
+                    sender_id = str(user_id) if user_id else (session_id or str(uuid4()))
+                    try:
+                        rasa_response = await self.rasa_client.send_message(message, sender_id)
+                        if rasa_response:
+                            response_data = {
+                                'response': rasa_response,
+                                'intent': intent_name,
+                                'confidence': confidence,
+                                'source': 'rasa',
+                                'fallback_used': False,
+                                'rag_attempted': False,
+                                'rag_enabled': False,
+                                'rag_documents': [],
+                                'request_id': str(uuid4()),
+                                'model_name': 'Rasa NLU',
+                                'persistence_status': 'skipped'
+                            }
+                            if persist and user_id:
+                                self._save_chat_message(user_id, message, response_data)
+                                response_data['persistence_status'] = 'saved'
+                            return response_data
+                    except Exception as e:
+                        logger.error(f"Rasa Action execution for greet failed: {e}")
+
+            # Low confidence or out-of-scope -> Route to RAG + LLM
+            logger.info(f"🧠 Routing to LLM (Gemini + RAG). Intent: {intent_name} (conf: {confidence})")
+            
+            # Check local supplementary knowledge base
+            local_match = self._pattern_matching_fallback(message, anonymous=user_id is None)
+            if local_match.get('intent') != 'unknown':
+                response_data = {
+                    'response': local_match['response'],
+                    'intent': local_match.get('intent'),
+                    'confidence': confidence if confidence > 0 else 0.0,
+                    'rule_match_score': local_match.get('confidence', 0.85),
+                    'source': 'local_fallback',
+                    'fallback_used': True,
+                    'rag_attempted': False,
+                    'rag_enabled': False,
+                    'rag_documents': [],
+                    'request_id': str(uuid4()),
+                    'model_name': 'local_rules',
+                    'persistence_status': 'skipped'
+                }
+                if persist and user_id:
+                    self._save_chat_message(user_id, message, response_data)
+                    response_data['persistence_status'] = 'saved'
+                return response_data
+
+            # Proceed to Gemini + RAG
+            rag_context = ""
+            retrieved_docs = []
+            if self.rag_service.is_enabled():
+                try:
+                    retrieved_docs = await self.rag_service.retrieve_context(message)
+                    if retrieved_docs:
+                        rag_context = self.rag_service.format_context(retrieved_docs)
+                except Exception as e:
+                    logger.warning(f"RAG retrieval failed: {e}")
+
+            history = []
+            if user_id:
+                try:
+                    from backend.llm.conversation_memory import get_conversation_memory
+                    memory = get_conversation_memory()
+                    history = memory.load_history(user_id)
+                except Exception as e:
+                    logger.warning(f"Failed to load history: {e}")
+
+            try:
+                from backend.llm.gemini_service import get_gemini_service_singleton
+                llm = get_gemini_service_singleton()
+                system_prompt = self._get_system_prompt()
+
+                llm_response = llm.generate_response(
+                    message=message,
+                    context=rag_context if rag_context else None,
+                    history=history if history else None,
+                    system_prompt=system_prompt
+                )
+
+                formatted_docs = []
+                for doc in retrieved_docs:
+                    meta = doc.get('metadata', {})
+                    formatted_docs.append({
+                        'title': meta.get('title') or meta.get('name') or "N/A",
+                        'source': meta.get('source') or "N/A",
+                        'score': doc.get('similarity') or (1.0 - doc.get('distance', 1.0))
+                    })
+
+                response_data = {
+                    'response': llm_response,
+                    'intent': intent_name,
+                    'confidence': confidence,
+                    'source': 'llm_rag' if rag_context else 'llm',
+                    'fallback_used': False,
+                    'rag_attempted': self.rag_service.is_enabled(),
+                    'rag_enabled': bool(rag_context),
+                    'rag_documents': formatted_docs,
+                    'request_id': str(uuid4()),
+                    'model_name': settings.llm_model,
+                    'persistence_status': 'skipped'
+                }
+                if persist and user_id:
+                    self._save_chat_message(user_id, message, response_data)
+                    response_data['persistence_status'] = 'saved'
+                return response_data
+            except Exception as e:
+                logger.error(f"Gemini LLM response generation failed: {e}")
+
+        # 4. If Rasa is NOT available, or if everything else failed
+        local_fallback = self._pattern_matching_fallback(message, anonymous=user_id is None)
+        response_data = {
+            'response': local_fallback['response'],
+            'intent': local_fallback.get('intent'),
+            'rule_match_score': local_fallback.get('confidence', 0.0),
+            'source': 'local_fallback',
+            'fallback_used': True,
+            'rasa_available': rasa_available,
+            'rag_attempted': False,
+            'rag_enabled': False,
+            'rag_documents': [],
+            'request_id': str(uuid4()),
+            'model_name': 'local_rules',
+            'persistence_status': 'skipped'
+        }
+        if persist and user_id:
+            self._save_chat_message(user_id, message, response_data)
+            response_data['persistence_status'] = 'saved'
+        return response_data
+
+    def _save_chat_message(self, user_id: UUID, message: str, response_data: Dict[str, Any]):
+        """Helper to prepare and write conversation log record to the database"""
+        try:
             chat_record = ChatHistoryCreate(
                 user_id=user_id,
                 user_message=self._redact_sensitive_message(message, response_data),
@@ -104,7 +309,30 @@ class ChatbotService:
         except Exception as db_error:
             logger.error(f"Failed to save chat to database: {db_error}")
 
-        return response_data
+    def _get_system_prompt(self) -> str:
+        """Get system prompt for security assistant."""
+        return """Bạn là một trợ lý an toàn thông tin thông minh, thân thiện và chuyên nghiệp.
+
+🎯 NHIỆM VỤ CỦA BẠN:
+1. Trả lời câu hỏi dựa trên KIẾN THỨC THAM KHẢO nếu có
+2. Sử dụng LỊCH SỬ HỘI THOẠI để hiểu ngữ cảnh và mối quan hệ giữa các câu hỏi
+3. Cung cấp câu trả lời chi tiết, dễ hiểu bằng tiếng Việt
+4. Nếu không có thông tin trong tài liệu, hãy dùng kiến thức chung nhưng CẢNH BÁO người dùng
+5. Luôn ưu tiên sự an toàn và bảo mật
+
+💡 NGUYÊN TẮC TRẢI LỜI:
+- Trả lời tự nhiên như một chuyên gia đang trò chuyện
+- Sử dụng emoji phù hợp để làm cho cuộc trò chuyện thân thiện hơn
+- Cung cấp ví dụ thực tế khi có thể
+- Giọng tone: Chuyên nghiệp nhưng dễ tiếp cận
+- Nếu câu hỏi mơ hồ, hãy hỏi làm rõ trước khi trả lời
+
+⚠️ CẢNH BÁO QUAN TRỌNG:
+- KHÔNG bao giờ khuyến khích các hoạt động bất hợp pháp
+- KHÔNG cung cấp hướng dẫn tấn công hệ thống
+- LUÔN nhấn mạnh tầm quan trọng của bảo mật pháp lý
+
+Hãy bắt đầu trò chuyện một cách tích cực và hữu ích!"""
 
     def _redact_sensitive_message(
         self,
@@ -126,89 +354,6 @@ class ChatbotService:
         if looks_like_password_check or credential_pattern:
             return SENSITIVE_CHAT_PLACEHOLDER
         return message
-
-    async def _get_rasa_response(self, message: str, user_id: UUID) -> Dict[str, Any]:
-        """
-        Queries the Rasa NLU server with the user's message, enhanced with RAG context.
-
-        Args:
-            message (str): The raw message.
-            user_id (UUID): Authenticated user's unique identifier.
-
-        Returns:
-            Dict[str, Any]: Response dictionary with answer, intent details, and RAG metadata.
-        """
-        try:
-            # Apply deterministic policy before network/model inference. This
-            # prevents unsafe prompts and explicit uncertainty/context cases
-            # from waiting for a slow provider or receiving a generic answer.
-            local_policy = self._pattern_matching_fallback(message)
-            if local_policy.get('intent') not in {'unknown', 'greeting', 'phishing', 'password', 'cve'}:
-                return local_policy
-
-            # Query ChromaDB for context documents and construct an enhanced RAG prompt
-            enhanced_message, retrieved_docs = await self.rag_service.enhance_message(message)
-
-            # Query the Rasa chatbot server
-            rasa_response = await self.rasa_client.send_message(
-                enhanced_message,
-                str(user_id)
-            )
-
-            if not rasa_response:
-                logger.warning("Rasa returned no response, using fallback")
-                return await self._get_fallback_response(message, with_rag=True)
-
-            # Keep deterministic safety and high-signal knowledge policy in
-            # front of a generic Rasa answer. Rasa remains the primary NLU
-            # path, but a generic intent must not answer dangerous prompts or
-            # discard an explicit request for uncertainty/context.
-            return {
-                'response': rasa_response,
-                'intent': None,  # Rasa REST channel does not return raw intent
-                'confidence': 0.8,
-                'suggested_actions': self._get_suggested_actions(message),
-                'rag_enabled': self.rag_service.is_enabled(),
-                'docs_retrieved': len(retrieved_docs)
-            }
-
-        except Exception as e:
-            logger.error(f"Rasa response generation failed: {e}")
-            return await self._get_fallback_response(message, with_rag=True)
-
-    async def _get_fallback_response(
-        self,
-        message: str,
-        anonymous: bool = False,
-        with_rag: bool = False
-    ) -> Dict[str, Any]:
-        """
-        Generates a fallback response if the Rasa server is unreachable or fails to reply.
-
-        Args:
-            message (str): Original user message.
-            anonymous (bool, optional): Whether user is unauthenticated. Defaults to False.
-            with_rag (bool, optional): Whether to attempt a RAG direct lookup as fallback. Defaults to False.
-
-        Returns:
-            Dict[str, Any]: Fallback response payload.
-        """
-        # If RAG is enabled, bypass Rasa and directly query Gemini with search context
-        if with_rag and self.rag_service.is_enabled():
-            rag_response = await self.rag_service.get_rag_response(message)
-            if rag_response:
-                return {
-                    'response': rag_response,
-                    'intent': 'rag_response',
-                    'confidence': 0.7,
-                    'suggested_actions': ["Kiểm tra URL", "Đánh giá mật khẩu", "Tra cứu CVE"],
-                    'rag_enabled': True,
-                    'docs_retrieved': 0,
-                    'fallback_used': True
-                }
-
-        # Fallback to local heuristic regex/pattern matching if AI services are down
-        return self._pattern_matching_fallback(message, anonymous)
 
     def _pattern_matching_fallback(self, message: str, anonymous: bool = False) -> Dict[str, Any]:
         """

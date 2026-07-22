@@ -17,6 +17,8 @@
 # Python environments and generated files
 **/venv/
 **/.venv/
+**/*venv/
+**/test_env/
 **/__pycache__/
 *.py[cod]
 *.pyd

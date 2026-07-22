@@ -22,7 +22,7 @@ if "%ERRORLEVEL%"=="10" (
         exit /b 1
     )
     if not exist "%ASCII_PROJECT_ROOT%" mkdir "%ASCII_PROJECT_ROOT%"
-    robocopy "%PROJECT_ROOT%" "%ASCII_PROJECT_ROOT%" /E /XD ".git" ".venv" "venv" "node_modules" "frontend\node_modules" "backend\venv" ".pytest_cache" "__pycache__" "cache" /XF "*.pyc" >nul
+    robocopy "%PROJECT_ROOT%" "%ASCII_PROJECT_ROOT%" /E /XD ".git" ".venv" "venv" "node_modules" "frontend\node_modules" "backend\venv" "backend\.venv" "backend\test_env" "backend\test_venv" "backend\test_rasa_venv" ".pytest_cache" "__pycache__" "cache" /XF "*.pyc" >nul
     if errorlevel 8 (
         echo [ERROR] Failed to sync project to ASCII Docker workspace.
         exit /b 1

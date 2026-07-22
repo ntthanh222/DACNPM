@@ -1,0 +1,1 @@
+﻿Vulnerability management requires continuous scanning and timely patching of software.

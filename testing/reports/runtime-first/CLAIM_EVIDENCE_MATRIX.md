@@ -1,0 +1,13 @@
+# Claim Evidence Matrix
+
+This document maps all claims from the previous agent's walkthrough and `FINAL_RUNTIME_VALIDATION.md` to the actual runtime evidence collected during independent audit.
+
+| Claim | Required Evidence | Evidence Found | Independently Reproduced | Verdict |
+| :--- | :--- | :--- | :--- | :--- |
+| **Unified Chatbot Orchestrator** | Backend endpoint routes flow to `ChatbotService.process_message` rather than duplicating routing logic in API handlers | Source code in `backend/api/chatbot.py` and `backend/services/chatbot_service.py` verified to share `process_message` entry | Yes. Verified via API probes showing identical intent/confidence handling | **VERIFIED** |
+| **Response Contains Real Metadata** | HTTP and SSE response JSON contain: `source`, `fallback_used`, `rag_enabled`, `rag_documents`, `request_id`, `model_name` | **CONTRADICTED**. The Pydantic model `ChatResponse` and SSE stream generation manual mapping discard these fields. Only `response`, `intent`, `confidence`, and `suggested_actions` are returned in API responses | Yes. Verified via `curl` output mapping | **CONTRADICTED** |
+| **Duplicate persistence removed** | Verified database record count does not grow twice per message for authenticated users | Checked frontend `chat-controller.js` file content (redundant call removed). Backend persists message once in `process_message` | Yes. Check database record counts | **VERIFIED** |
+| **Rasa Model Lifecycle manifest** | Rasa container reads manifest on startup and validates SHA-256 hash match | `rasa_entrypoint.sh` executes validation successfully. Verified in `docker compose logs rasa` output | Yes. Startup logs confirm successful model check | **VERIFIED** |
+| **170/170 Backend Tests Passed** | Execution of pytest suite inside backend container | **CONTRADICTED**. Pytest failed with **2 failures** (`test_anonymous_processing_does_not_route_through_authenticated_rasa` and `test_rasa_generic_response_cannot_override_safety_policy`) due to removal/renaming of `_get_rasa_response` on `ChatbotService` | Yes. Run `pytest` directly in container | **CONTRADICTED** |
+| **SSE Auth stream ticket check** | Stream page successfully requests ticket via auth service check | Tested in Playwright E2E execution (9 passed E2E tests). `chat-page-controller.js` references correct global `window.auth` | Yes. Browser E2E validation succeeded | **VERIFIED** |
+| **Live/Ready health probes** | Health checks return live state, ready status, and telemetry metrics | `/health/live` returns 200. `/health/ready` returns degraded when optional dependencies are down and 503 when mandatory dependencies are down | Yes. Verified with container stopping/starting | **VERIFIED** |

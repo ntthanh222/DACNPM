@@ -1,0 +1,1 @@
+Secure API authentication using cryptographically signed JSON Web Tokens (JWT), short expiration times, and secure HTTPS transport. Enforce roles in the backend, not in the frontend.

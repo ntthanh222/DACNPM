@@ -1,0 +1,1 @@
+Hardening Ubuntu servers by enforcing MFA, disabling unused ports, configuring SSH key access, disabling root login, and setting up firewall allowlists. Focus on regular updates and disabling compilers for normal users.

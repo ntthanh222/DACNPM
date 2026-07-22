@@ -1,0 +1,1 @@
+﻿Endpoint detection and response (EDR) provides visibility into malicious activity on hosts.

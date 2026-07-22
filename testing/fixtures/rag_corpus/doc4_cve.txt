@@ -1,0 +1,1 @@
+Common Vulnerabilities and Exposures (CVE) provides standard names for publicly known security vulnerabilities to prioritize patching. Critical CVEs need immediate patching within 24 hours.

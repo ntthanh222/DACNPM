@@ -1,0 +1,1 @@
+Identify phishing indicators by analyzing sender addresses, weird redirects, certificate issues, and urgent call-to-action phrasing. Sandboxing URLs before clicking prevents credential theft.

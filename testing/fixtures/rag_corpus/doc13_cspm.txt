@@ -1,0 +1,1 @@
+﻿Cloud security posture management helps identify misconfigurations in AWS and GCP.

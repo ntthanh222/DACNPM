@@ -1,34 +1,51 @@
-# Huong Dan Chay CyberSec Assistant
+# Hướng Dẫn Chạy CyberSec Assistant
 
-File nay de ban copy lenh va chay truc tiep tren Windows PowerShell.
+Tài liệu này dành cho Windows PowerShell. Dự án đang nằm ở:
 
-## 1. Chay nhanh tren Windows
+```text
+D:\Đồ án CNPM
+```
 
-Copy nguyen khoi nay vao PowerShell:
+Do Docker Desktop trên Windows có thể lỗi với đường dẫn có ký tự tiếng Việt, dự án dùng script để đồng bộ sang thư mục ASCII:
+
+```text
+D:\codex_docker_cybersec_ascii
+```
+
+## 1. Chạy Project Bằng Docker
+
+Mở PowerShell, chạy:
 
 ```powershell
 cd "D:\Đồ án CNPM"
 .\scripts\windows\start.bat
 ```
 
-Script `start.bat` se tu xu ly loi Docker Compose voi duong dan tieng Viet bang cach dong bo source sang `D:\codex_docker_cybersec_ascii`, roi chay Docker Compose tu duong dan ASCII do.
+Script này sẽ:
 
-Neu may ban khong mo duoc duong dan co dau, dung ban ASCII mirror:
+- đồng bộ source sang `D:\codex_docker_cybersec_ascii`;
+- build lại Docker image khi cần;
+- chạy Docker Compose từ thư mục ASCII;
+- tránh lỗi `x-docker-expose-session-sharedkey contains value with non-printable ASCII characters`.
+
+Nếu muốn chạy Docker Compose trực tiếp, dùng thư mục mirror:
 
 ```powershell
 cd "D:\codex_docker_cybersec_ascii"
 docker compose up -d --build
 ```
 
-## 2. Neu chay lan dau va bi bao thieu Rasa model
+Không nên chạy trực tiếp `docker compose up -d --build` trong `D:\Đồ án CNPM` nếu Docker Desktop còn lỗi với đường dẫn tiếng Việt.
 
-Neu thay loi:
+## 2. Chạy Lần Đầu Nếu Thiếu Rasa Model
+
+Nếu Docker báo lỗi thiếu Rasa model:
 
 ```text
-[ERROR] No Rasa model found in rasa\models.
+[ERROR] No Rasa model found in /app/models
 ```
 
-copy chay 2 lenh nay:
+chạy:
 
 ```powershell
 cd "D:\Đồ án CNPM"
@@ -36,21 +53,102 @@ cd "D:\Đồ án CNPM"
 .\scripts\windows\start.bat
 ```
 
-## 3. Mo ung dung
+## 3. Mở Ứng Dụng
 
-Sau khi start thanh cong, mo:
+Frontend:
 
 ```text
 http://localhost:3000/login.html
 ```
 
-Backend API:
+Backend API docs:
 
 ```text
 http://localhost:8000/docs
 ```
 
-Health check:
+Các service chính:
+
+```text
+Frontend:      http://localhost:3000
+Backend:       http://localhost:8000
+Crawler:       http://localhost:8002
+Rasa:          http://localhost:15005
+Rasa Actions:  http://localhost:15055
+Prometheus:    http://localhost:9090
+Grafana:       http://localhost:3001
+```
+
+Lưu ý: trong container, Rasa vẫn dùng port nội bộ `5005` và Rasa Actions dùng port nội bộ `5055`. Trên Windows host, dự án map ra `15005` và `15055` để tránh dải port bị Windows reserve.
+
+## 4. Tài Khoản Admin Development
+
+Trang đăng nhập:
+
+```text
+http://localhost:3000/login.html
+```
+
+Tài khoản admin local/development:
+
+```text
+Username: admin
+Email: admin@cybersec.local
+Password: [REDACTED_DEV_ADMIN_PASSWORD] (Hoặc sử dụng biến môi trường E2E_ADMIN_PASSWORD)
+```
+
+Mật khẩu trên chỉ dùng cho local/dev. Không dùng credential này cho production hoặc môi trường public.
+
+File credential local cũng đã được đồng bộ tại:
+
+```powershell
+cd "D:\Đồ án CNPM"
+notepad .\backend\ADMIN_CREDENTIALS.txt
+```
+
+File `backend\ADMIN_CREDENTIALS.txt` là file local đã được `.gitignore`. Không commit file này lên Git.
+
+Bạn có thể đăng nhập bằng `admin` hoặc `admin@cybersec.local`.
+
+## 5. Tài Khoản Grafana
+
+Grafana dùng để xem monitoring:
+
+```text
+http://localhost:3001
+```
+
+Tài khoản mặc định theo `docker-compose.yml`:
+
+```text
+Username: admin
+Password: admin
+```
+
+Chỉ dùng tài khoản này cho môi trường local/dev.
+
+## 6. Kiểm Tra Docker Đang Chạy
+
+Xem container:
+
+```powershell
+docker ps
+```
+
+Xem riêng các container của dự án:
+
+```powershell
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | Select-String "cybersec|codex_docker"
+```
+
+Chạy script kiểm tra trạng thái:
+
+```powershell
+cd "D:\Đồ án CNPM"
+.\scripts\windows\status.bat
+```
+
+Health check thủ công:
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing http://localhost:3000/health
@@ -58,111 +156,121 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8000/health
 Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:15005/
 Invoke-WebRequest -UseBasicParsing http://localhost:15055/health
+Invoke-WebRequest -UseBasicParsing http://localhost:9090/-/ready
 ```
 
-Neu cac lenh tren tra ve `200` hoac noi dung `healthy` la he thong dang chay. Rasa trong container van dung cong noi bo `5005` va Rasa Actions van dung cong noi bo `5055`, nhung tren Windows host du an dung `15005` va `15055` de tranh dai cong bi Windows reserve.
+Nếu các lệnh trả về `200`, `healthy`, hoặc nội dung OK tương đương thì stack đang chạy.
 
-## 4. Dang nhap admin development
+## 7. Dừng Project
 
-Trang dang nhap:
-
-```text
-http://localhost:3000/login.html
-```
-
-Tai khoan:
-
-```text
-Username: admin
-Email: admin@cybersec.local
-Password: xem trong file backend\ADMIN_CREDENTIALS.txt
-```
-
-Mo file credential bang lenh:
-
-```powershell
-notepad .\backend\ADMIN_CREDENTIALS.txt
-```
-
-Khong commit file nay len Git vi no chua mat khau local.
-
-## 5. Kiem tra Docker dang chay
-
-```powershell
-docker ps
-```
-
-Neu chi muon xem cac container cua du an:
-
-```powershell
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | Select-String "cybersec|codex_docker"
-```
-
-## 6. Dung he thong
-
-Tu thu muc du an goc:
+Từ thư mục gốc:
 
 ```powershell
 cd "D:\Đồ án CNPM"
 .\scripts\windows\stop.bat
 ```
 
-Neu dang o mirror ASCII:
+Hoặc nếu đang ở mirror ASCII:
 
 ```powershell
 cd "D:\codex_docker_cybersec_ascii"
 docker compose down
 ```
 
-## 7. Chay Docker Compose truc tiep
+## 8. Restart Và Xem Log
 
-Khong nen chay lenh nay trong `D:\Đồ án CNPM`:
-
-```powershell
-docker compose up -d --build
-```
-
-Vi Docker Compose co the loi:
-
-```text
-x-docker-expose-session-sharedkey contains value with non-printable ASCII characters
-```
-
-Neu Docker bao loi bind cong `5005` hoac `5055`, do la vi Windows co the reserve cac dai cong quanh `4937-5036` va `5045-5144`. File `docker-compose.yml` hien da map Rasa ra host `15005` va Rasa Actions ra host `15055`, nen hay dung `.\scripts\windows\start.bat` hoac mirror ASCII da dong bo.
-
-Neu muon chay Docker Compose truc tiep, copy chay:
+Restart backend/frontend:
 
 ```powershell
 cd "D:\codex_docker_cybersec_ascii"
-docker compose up -d --build
+docker compose restart backend frontend
 ```
 
-Neu can cap nhat mirror ASCII tu source goc truoc khi chay Docker Compose truc tiep, dung:
+Build lại toàn bộ:
 
 ```powershell
 cd "D:\Đồ án CNPM"
 .\scripts\windows\start.bat
 ```
 
-## 8. QA stack rieng
+Xem log backend:
 
-QA dung port rieng:
+```powershell
+cd "D:\codex_docker_cybersec_ascii"
+docker compose logs -f backend
+```
+
+Xem log frontend:
+
+```powershell
+cd "D:\codex_docker_cybersec_ascii"
+docker compose logs -f frontend
+```
+
+Xem log Rasa:
+
+```powershell
+cd "D:\codex_docker_cybersec_ascii"
+docker compose logs -f rasa
+```
+
+## 9. Chạy Test Nhanh
+
+Frontend unit/regression:
+
+```powershell
+cd "D:\Đồ án CNPM\frontend"
+npm test
+```
+
+Backend tests trong Docker:
+
+```powershell
+cd "D:\codex_docker_cybersec_ascii"
+docker exec codex_docker_cybersec_ascii-backend-1 pytest backend/tests -q
+```
+
+Regression slice nhanh:
+
+```powershell
+cd "D:\codex_docker_cybersec_ascii"
+docker exec codex_docker_cybersec_ascii-backend-1 pytest backend/tests/test_system_regressions.py backend/tests/test_local_connection.py -q
+```
+
+Script verify tổng hợp:
+
+```powershell
+cd "D:\Đồ án CNPM"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\verify-project.ps1
+```
+
+## 10. QA Stack Riêng
+
+QA dùng port riêng để tránh đụng development:
 
 ```text
 Frontend QA: http://localhost:3100/login.html
 Backend QA:  http://localhost:8100
 Postgres QA: localhost:55432
+Redis QA:    localhost:6380
 ```
 
-Tai khoan QA admin:
+Chạy QA stack:
+
+```powershell
+cd "D:\Đồ án CNPM"
+docker compose -f docker-compose.test.yml up -d --build
+```
+
+Tài khoản QA admin:
 
 ```text
 Username: qa_admin
 Email: qa-admin@example.test
-Password: dat bang bien moi truong QA_ADMIN_PASSWORD
+Password: đặt bằng biến môi trường QA_ADMIN_PASSWORD
 ```
 
-Reset QA admin an toan:
+Ví dụ reset QA admin an toàn:
 
 ```powershell
 cd "D:\Đồ án CNPM"
@@ -184,68 +292,122 @@ $env:QA_ADMIN_PASSWORD=$qaPass
 .\backend\venv\Scripts\python.exe testing\scripts\qa_admin_login_check.py
 ```
 
-Sau do dang nhap QA tai:
+Sau đó đăng nhập QA tại:
 
 ```text
 http://localhost:3100/login.html
 ```
 
-Dung username `qa_admin` va password trong bien `$qaPass` cua PowerShell hien tai.
+Dùng username `qa_admin` và password đang nằm trong biến `$qaPass` của PowerShell hiện tại.
 
-## 9. Lenh sua loi nhanh
+## 11. Dọn Docker An Toàn
 
-Restart backend/frontend:
+Xem dung lượng Docker:
 
 ```powershell
-cd "D:\codex_docker_cybersec_ascii"
-docker compose restart backend frontend
+docker system df
 ```
 
-Build lai va chay lai:
+Phân tích cleanup an toàn, không xóa dữ liệu:
+
+```powershell
+cd "D:\Đồ án CNPM"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\cleanup-safe.ps1
+```
+
+Dọn build cache Docker an toàn hơn `docker system prune -a`:
+
+```powershell
+docker builder prune -f
+```
+
+Không xóa volume nếu chưa biết volume đó chứa dữ liệu gì.
+
+## 12. Lỗi Thường Gặp
+
+### Lỗi non-printable ASCII khi Docker Compose
+
+Lỗi:
+
+```text
+x-docker-expose-session-sharedkey contains value with non-printable ASCII characters
+```
+
+Cách xử lý:
 
 ```powershell
 cd "D:\Đồ án CNPM"
 .\scripts\windows\start.bat
 ```
 
-Xem log backend:
+Script sẽ chạy Docker Compose từ `D:\codex_docker_cybersec_ascii`.
 
-```powershell
-cd "D:\codex_docker_cybersec_ascii"
-docker compose logs -f backend
+### Lỗi bind port 5005 hoặc 5055
+
+Windows có thể reserve các dải port quanh `4937-5036` và `5045-5144`. Dự án đã map:
+
+```text
+Rasa host port:         15005 -> container 5005
+Rasa Actions host port: 15055 -> container 5055
 ```
 
-Xem log frontend:
+Hãy dùng URL `http://localhost:15005` và `http://localhost:15055`.
 
-```powershell
-cd "D:\codex_docker_cybersec_ascii"
-docker compose logs -f frontend
-```
+### Đăng nhập admin thất bại
 
-## 10. Tom tat lenh can copy nhat
-
-Lan dau:
-
-```powershell
-cd "D:\Đồ án CNPM"
-.\scripts\windows\train.bat
-.\scripts\windows\start.bat
-```
-
-Nhung lan sau:
+Kiểm tra theo thứ tự:
 
 ```powershell
 cd "D:\Đồ án CNPM"
+.\scripts\windows\status.bat
+notepad .\backend\ADMIN_CREDENTIALS.txt
+```
+
+Sau đó thử lại:
+
+```text
+Username: admin
+Email: admin@cybersec.local
+Password: [REDACTED_DEV_ADMIN_PASSWORD] (Hoặc sử dụng biến môi trường E2E_ADMIN_PASSWORD)
+```
+
+Nếu vẫn lỗi, xem log backend:
+
+```powershell
+cd "D:\codex_docker_cybersec_ascii"
+docker compose logs --tail=100 backend
+```
+
+## 13. Tóm Tắt Lệnh Hay Dùng
+
+Chạy project:
+
+```powershell
+cd "D:\Đồ án CNPM"
 .\scripts\windows\start.bat
 ```
 
-Mo login:
+Mở app:
 
 ```text
 http://localhost:3000/login.html
 ```
 
-Dung he thong:
+Xem mật khẩu admin app:
+
+```powershell
+cd "D:\Đồ án CNPM"
+notepad .\backend\ADMIN_CREDENTIALS.txt
+```
+
+Kiểm tra trạng thái:
+
+```powershell
+cd "D:\Đồ án CNPM"
+.\scripts\windows\status.bat
+```
+
+Dừng project:
 
 ```powershell
 cd "D:\Đồ án CNPM"

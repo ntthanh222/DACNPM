@@ -1,0 +1,1 @@
+﻿Docker security best practices involve scanning images and not running as root.

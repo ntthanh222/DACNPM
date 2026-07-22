@@ -113,7 +113,7 @@ class EmbeddingService:
                 logger.warning(f"Could not initialize sentence-transformers: {e}")
                 logger.info("Falling back to TF-IDF embeddings")
                 self._init_tfidf()
-        elif self.backend == "sentence-transformers":
+        elif self.backend in ("sentence-transformers", "semantic"):
             self._init_sentence_transformers()
         elif self.backend in ("tfidf", "hash"):
             self._init_tfidf()

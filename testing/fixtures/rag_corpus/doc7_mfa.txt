@@ -1,0 +1,1 @@
+Multi-Factor Authentication (MFA) requires two or more verification factors: password, hardware token, biometric, or authenticator app. Avoid SMS-based MFA due to SIM swapping risk.

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class DocumentRetriever:
     """Retrieve relevant documents for RAG-augmented responses."""
 
-    def __init__(self, max_results: int = 5, min_score: float = 0.5):
+    def __init__(self, max_results: int = 5, min_score: float = 0.52):
         """
         Initialize document retriever.
 

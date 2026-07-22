@@ -24,9 +24,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set work directory
 WORKDIR /build
 
-# Install Python dependencies
+# Install Python dependencies. The backend runs CPU-only in Docker; installing
+# torch from the default PyPI index can pull multi-GB CUDA/NVIDIA wheels.
 COPY backend/requirements.txt .
 RUN pip install --user --upgrade pip && \
+    pip install --user \
+      --index-url https://download.pytorch.org/whl/cpu \
+      --trusted-host download.pytorch.org \
+      torch==2.13.0+cpu || \
+    pip install --user torch==2.13.0 && \
     pip install --user -r requirements.txt
 
 # ============================================

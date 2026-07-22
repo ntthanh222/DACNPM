@@ -1,0 +1,1 @@
+Incident response stages include containment to isolate systems, eradication of root causes, recovery from secure backups, and documenting post-incident lessons. Preserving audit logs is crucial.
